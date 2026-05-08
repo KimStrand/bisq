@@ -17,12 +17,17 @@
 
 package bisq.core.trade.validation;
 
+import bisq.core.btc.model.AddressEntry;
 import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.offer.Offer;
+import bisq.core.trade.model.bisq_v1.Trade;
 
+import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.SignatureDecodeException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
@@ -33,6 +38,7 @@ import org.bitcoinj.script.ScriptBuilder;
 
 import java.util.Arrays;
 
+import static bisq.core.trade.validation.TransactionValidation.checkDerEncodedEcdsaSignature;
 import static bisq.core.trade.validation.TransactionValidation.checkMultiSigPubKey;
 import static bisq.core.trade.validation.TransactionValidation.checkTransaction;
 import static bisq.core.trade.validation.TransactionValidation.toVerifiedTransaction;
@@ -132,6 +138,144 @@ public final class PayoutTxValidation {
 
 
     /* --------------------------------------------------------------------- */
+    // Payout transaction signature
+    /* --------------------------------------------------------------------- */
+
+    public static byte[] checkBuyersPayoutTxSignature(byte[] buyerSignature,
+                                                      String buyerPayoutAddress,
+                                                      Trade trade,
+                                                      byte[] buyerMultiSigPubKey,
+                                                      byte[] sellerMultiSigPubKey,
+                                                      BtcWalletService btcWalletService) {
+        String sellerPayoutAddress = btcWalletService.getOrCreateAddressEntry(trade.getId(),
+                AddressEntry.Context.TRADE_PAYOUT).getAddressString();
+        Offer offer = checkNotNull(trade.getOffer(), "trade.getOffer() must not be null");
+        Transaction depositTx = checkNotNull(trade.getDepositTx(), "trade.getDepositTx() must not be null");
+        Coin tradeAmount = checkNotNull(trade.getAmount(), "trade.getAmount() must not be null");
+        Coin buyerSecurityDeposit = checkNotNull(offer.getBuyerSecurityDeposit(), "offer.getBuyerSecurityDeposit() must not be null");
+        Coin buyerPayoutAmount = tradeAmount.add(buyerSecurityDeposit);
+        @SuppressWarnings("UnnecessaryLocalVariable")
+        Coin sellerSecurityDeposit = checkNotNull(offer.getSellerSecurityDeposit(), "offer.getSellerSecurityDeposit() must not be null");
+        Coin sellerPayoutAmount = sellerSecurityDeposit;
+        return checkPayoutTxSignature(buyerSignature,
+                btcWalletService,
+                depositTx,
+                buyerPayoutAmount,
+                sellerPayoutAmount,
+                buyerPayoutAddress,
+                sellerPayoutAddress,
+                buyerMultiSigPubKey,
+                buyerMultiSigPubKey,
+                sellerMultiSigPubKey,
+                "buyerSignature");
+    }
+
+    public static byte[] checkPayoutTxSignature(byte[] txSignature,
+                                                BtcWalletService btcWalletService,
+                                                Transaction depositTx,
+                                                Coin buyerPayoutAmount,
+                                                Coin sellerPayoutAmount,
+                                                String buyerPayoutAddressString,
+                                                String sellerPayoutAddressString,
+                                                byte[] signingMultiSigPubKey,
+                                                byte[] buyerMultiSigPubKey,
+                                                byte[] sellerMultiSigPubKey,
+                                                String signatureName) {
+        checkNotNull(btcWalletService, "btcWalletService must not be null");
+        NetworkParameters params = checkNotNull(btcWalletService.getParams(),
+                "btcWalletService.getParams() must not be null");
+        return checkPayoutTxSignature(txSignature,
+                depositTx,
+                buyerPayoutAmount,
+                sellerPayoutAmount,
+                buyerPayoutAddressString,
+                sellerPayoutAddressString,
+                signingMultiSigPubKey,
+                buyerMultiSigPubKey,
+                sellerMultiSigPubKey,
+                params,
+                signatureName);
+    }
+
+    public static byte[] checkPayoutTxSignature(byte[] txSignature,
+                                                Transaction depositTx,
+                                                Coin buyerPayoutAmount,
+                                                Coin sellerPayoutAmount,
+                                                String buyerPayoutAddressString,
+                                                String sellerPayoutAddressString,
+                                                byte[] signingMultiSigPubKey,
+                                                byte[] buyerMultiSigPubKey,
+                                                byte[] sellerMultiSigPubKey,
+                                                NetworkParameters params,
+                                                String signatureName) {
+        String checkedSignatureName = checkNonBlankString(signatureName, "signatureName");
+        byte[] checkedTxSignature = checkDerEncodedEcdsaSignature(txSignature);
+        Transaction checkedDepositTx = checkNotNull(depositTx, "depositTx must not be null");
+        Coin checkedBuyerPayoutAmount = checkIsNotNegative(buyerPayoutAmount, "buyerPayoutAmount");
+        Coin checkedSellerPayoutAmount = checkIsNotNegative(sellerPayoutAmount, "sellerPayoutAmount");
+        String checkedBuyerPayoutAddressString = checkNonBlankString(buyerPayoutAddressString,
+                "buyerPayoutAddressString");
+        String checkedSellerPayoutAddressString = checkNonBlankString(sellerPayoutAddressString,
+                "sellerPayoutAddressString");
+        byte[] checkedSigningMultiSigPubKey = checkMultiSigPubKey(signingMultiSigPubKey);
+        byte[] checkedBuyerMultiSigPubKey = checkMultiSigPubKey(buyerMultiSigPubKey);
+        byte[] checkedSellerMultiSigPubKey = checkMultiSigPubKey(sellerMultiSigPubKey);
+        NetworkParameters checkedParams = checkNotNull(params, "params must not be null");
+
+        checkArgument(Arrays.equals(checkedSigningMultiSigPubKey, checkedBuyerMultiSigPubKey) ||
+                        Arrays.equals(checkedSigningMultiSigPubKey, checkedSellerMultiSigPubKey),
+                "%s signer pubkey must be one of the payout tx multisig pubkeys",
+                checkedSignatureName);
+
+        Transaction payoutTx = createUnsignedPayoutTx(checkedDepositTx,
+                checkedBuyerPayoutAmount,
+                checkedSellerPayoutAmount,
+                checkedBuyerPayoutAddressString,
+                checkedSellerPayoutAddressString,
+                checkedParams);
+        PayoutTxValidationUtils.checkPayoutTxOutputSumNotGreaterThanDepositOutputValue(checkedDepositTx,
+                checkedBuyerPayoutAmount,
+                checkedSellerPayoutAmount,
+                "payoutTx");
+        PayoutTxValidationUtils.checkPayoutTxInputSpendsDepositOutputZero(payoutTx,
+                checkedDepositTx,
+                "payoutTx");
+        PayoutTxValidationUtils.checkPayoutTxOutputAmountsAndAddresses(payoutTx,
+                checkedBuyerPayoutAmount,
+                checkedSellerPayoutAmount,
+                checkedBuyerPayoutAddressString,
+                checkedSellerPayoutAddressString,
+                checkedParams,
+                "payoutTx",
+                "At least one payout amount must be positive");
+
+        TransactionOutput depositOutput = PayoutTxValidationUtils.getDepositOutputZero(checkedDepositTx);
+        Script redeemScript = get2of2MultiSigRedeemScript(checkedBuyerMultiSigPubKey, checkedSellerMultiSigPubKey);
+        boolean isExpectedP2wshOutput = Arrays.equals(depositOutput.getScriptPubKey().getProgram(),
+                ScriptBuilder.createP2WSHOutputScript(redeemScript).getProgram());
+        checkArgument(isExpectedP2wshOutput,
+                "depositTx output 0 must be the expected P2WSH 2-of-2 multisig script");
+
+        Sha256Hash sigHash = payoutTx.hashForWitnessSignature(0,
+                redeemScript,
+                depositOutput.getValue(),
+                Transaction.SigHash.ALL,
+                false);
+        try {
+            ECKey.ECDSASignature ecdsaSignature = ECKey.ECDSASignature.decodeFromDER(checkedTxSignature);
+            ECKey signingKey = ECKey.fromPublicOnly(checkedSigningMultiSigPubKey);
+            checkArgument(signingKey.verify(sigHash, ecdsaSignature),
+                    "%s is not valid for the expected payout tx",
+                    checkedSignatureName);
+        } catch (SignatureDecodeException e) {
+            throw new IllegalArgumentException("Invalid " + checkedSignatureName, e);
+        }
+
+        return checkedTxSignature;
+    }
+
+
+    /* --------------------------------------------------------------------- */
     // Payout transaction input script
     /* --------------------------------------------------------------------- */
 
@@ -217,5 +361,24 @@ public final class PayoutTxValidation {
         ECKey buyerKey = ECKey.fromPublicOnly(buyerPubKey);
         ECKey sellerKey = ECKey.fromPublicOnly(sellerPubKey);
         return ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(sellerKey, buyerKey));
+    }
+
+    private static Transaction createUnsignedPayoutTx(Transaction depositTx,
+                                                      Coin buyerPayoutAmount,
+                                                      Coin sellerPayoutAmount,
+                                                      String buyerPayoutAddressString,
+                                                      String sellerPayoutAddressString,
+                                                      NetworkParameters params) {
+        TransactionOutput depositOutput = PayoutTxValidationUtils.getDepositOutputZero(depositTx);
+        Transaction transaction = new Transaction(params);
+        transaction.addInput(depositOutput);
+        if (buyerPayoutAmount.isPositive()) {
+            transaction.addOutput(buyerPayoutAmount, Address.fromString(params, buyerPayoutAddressString));
+        }
+        if (sellerPayoutAmount.isPositive()) {
+            transaction.addOutput(sellerPayoutAmount, Address.fromString(params, sellerPayoutAddressString));
+        }
+        checkArgument(!transaction.getOutputs().isEmpty(), "payoutTx must have at least one output");
+        return transaction;
     }
 }

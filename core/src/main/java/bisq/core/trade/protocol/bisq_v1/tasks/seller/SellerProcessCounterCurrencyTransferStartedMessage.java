@@ -22,6 +22,7 @@ import bisq.core.trade.model.bisq_v1.Trade;
 import bisq.core.trade.protocol.bisq_v1.messages.CounterCurrencyTransferStartedMessage;
 import bisq.core.trade.protocol.bisq_v1.model.TradingPeer;
 import bisq.core.trade.protocol.bisq_v1.tasks.TradeTask;
+import bisq.core.trade.validation.PayoutTxValidation;
 
 import bisq.common.taskrunner.TaskRunner;
 
@@ -49,30 +50,38 @@ public class SellerProcessCounterCurrencyTransferStartedMessage extends TradeTas
             TradingPeer tradingPeer = processModel.getTradePeer();
             BtcWalletService btcWalletService = processModel.getBtcWalletService();
 
-            String buyerPayoutAddress = checkBitcoinAddress(message.getBuyerPayoutAddress(), btcWalletService);
-            byte[] buyerSignature = message.getBuyerSignature();
-
             String counterCurrencyTxId = message.getCounterCurrencyTxId();
-            checkArgument(counterCurrencyTxId == null || counterCurrencyTxId.length() < MAX_COUNTER_CURRENCY_DATA_LENGTH,
-                    "counterCurrencyTxId must be shorter than %s chars", MAX_COUNTER_CURRENCY_DATA_LENGTH);
+            if (counterCurrencyTxId != null) {
+                checkArgument(counterCurrencyTxId.length() < MAX_COUNTER_CURRENCY_DATA_LENGTH,
+                        "counterCurrencyTxId must be shorter than %s chars", MAX_COUNTER_CURRENCY_DATA_LENGTH);
+                trade.setCounterCurrencyTxId(counterCurrencyTxId);
+            }
 
             String counterCurrencyExtraData = message.getCounterCurrencyExtraData();
-            checkArgument(counterCurrencyExtraData == null || counterCurrencyExtraData.length() < MAX_COUNTER_CURRENCY_DATA_LENGTH,
-                    "counterCurrencyExtraData must be shorter than %s chars", MAX_COUNTER_CURRENCY_DATA_LENGTH);
+            if (counterCurrencyExtraData != null) {
+                checkArgument(counterCurrencyExtraData.length() < MAX_COUNTER_CURRENCY_DATA_LENGTH,
+                        "counterCurrencyExtraData must be shorter than %s chars", MAX_COUNTER_CURRENCY_DATA_LENGTH);
+                trade.setCounterCurrencyExtraData(counterCurrencyExtraData);
+            }
+
+            // Verify if buyers signature is valid for payout transaction
+            String buyerPayoutAddress = checkBitcoinAddress(message.getBuyerPayoutAddress(), btcWalletService);
+            byte[] buyerMultiSigPubKey = checkNotNull(tradingPeer.getMultiSigPubKey(),
+                    "tradingPeer.getMultiSigPubKey() must not be null");
+            byte[] sellerMultiSigPubKey = checkNotNull(processModel.getMyMultiSigPubKey(),
+                    "processModel.getMyMultiSigPubKey() must not be null");
+            byte[] buyerSignature = PayoutTxValidation.checkBuyersPayoutTxSignature(message.getBuyerSignature(),
+                    buyerPayoutAddress,
+                    trade,
+                    buyerMultiSigPubKey,
+                    sellerMultiSigPubKey,
+                    btcWalletService);
 
             tradingPeer.setPayoutAddressString(buyerPayoutAddress);
             tradingPeer.setSignature(buyerSignature);
 
             // update to the latest peer address of our peer if the message is correct
             trade.setTradingPeerNodeAddress(processModel.getTempTradingPeerNodeAddress());
-
-            if (counterCurrencyTxId != null) {
-                trade.setCounterCurrencyTxId(counterCurrencyTxId);
-            }
-
-            if (counterCurrencyExtraData != null) {
-                trade.setCounterCurrencyExtraData(counterCurrencyExtraData);
-            }
 
             trade.setState(Trade.State.SELLER_RECEIVED_FIAT_PAYMENT_INITIATED_MSG);
 

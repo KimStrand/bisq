@@ -84,7 +84,10 @@ public class MakerProcessesInputsForDepositTxRequest extends TradeTask {
 
             Coin tradeAmount = TradeAmountValidation.checkTradeAmount(request.getTradeAmountAsCoin(), offer.getMinAmount(), offer.getAmount());
             Coin tradeTxFee = MinerFeeValidation.checkTradeTxFeeIsInTolerance(request.getTxFeeAsCoin(), feeService);
-            checkArgument(tradeTxFee.equals(trade.getTradeTxFee()), "Trade tx fee from message must match tx fee from request");
+            checkArgument(tradeTxFee.equals(trade.getTradeTxFee()),
+                    "Taker's tx fee from message (%s) must match the expected trade tx fee (%s)",
+                    tradeTxFee.toFriendlyString(), trade.getTradeTxFee().toFriendlyString());
+
             TradeFeeValidation.checkTakerFee(request.getTakerFeeAsCoin(), request.isCurrencyForTakerFeeBtc(), tradeAmount);
 
             trade.setAmount(tradeAmount);

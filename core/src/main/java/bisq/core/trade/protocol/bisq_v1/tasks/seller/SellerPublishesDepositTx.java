@@ -49,7 +49,9 @@ public class SellerPublishesDepositTx extends TradeTask {
                                 // Now as we have published the deposit tx we set it in trade
                                 trade.applyDepositTx(depositTx);
 
-                                trade.setState(Trade.State.SELLER_PUBLISHED_DEPOSIT_TX);
+                                if (!trade.isDepositConfirmed()) {
+                                    trade.setState(Trade.State.SELLER_PUBLISHED_DEPOSIT_TX);
+                                }
 
                                 processModel.getBtcWalletService().swapTradeEntryToAvailableEntry(processModel.getOffer().getId(),
                                         AddressEntry.Context.RESERVED_FOR_TRADE);
