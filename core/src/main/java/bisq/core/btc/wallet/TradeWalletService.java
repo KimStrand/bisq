@@ -72,6 +72,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
+import static bisq.core.btc.wallet.validation.DelayedPayoutTxSignatureValidation.checkCanonicalDelayedPayoutTxSignature;
 import static bisq.core.btc.wallet.validation.WitnessValidation.checkCanonicalP2WpkhWitness;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -751,8 +752,8 @@ public class TradeWalletService {
             throws AddressFormatException, TransactionVerificationException, SignatureDecodeException {
 
         Script redeemScript = get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
-        ECKey.ECDSASignature buyerECDSASignature = ECKey.ECDSASignature.decodeFromDER(buyerSignature).toCanonicalised();
-        ECKey.ECDSASignature sellerECDSASignature = ECKey.ECDSASignature.decodeFromDER(sellerSignature).toCanonicalised();
+        ECKey.ECDSASignature buyerECDSASignature = checkCanonicalDelayedPayoutTxSignature(buyerSignature, "buyer");
+        ECKey.ECDSASignature sellerECDSASignature = checkCanonicalDelayedPayoutTxSignature(sellerSignature, "seller");
         TransactionSignature buyerTxSig = new TransactionSignature(buyerECDSASignature, Transaction.SigHash.ALL, false);
         TransactionSignature sellerTxSig = new TransactionSignature(sellerECDSASignature, Transaction.SigHash.ALL, false);
         TransactionInput input = delayedPayoutTx.getInput(0);
