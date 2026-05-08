@@ -24,12 +24,9 @@ import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.crypto.TransactionSignature;
 
-import lombok.extern.slf4j.Slf4j;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-@Slf4j
 public final class WitnessValidation {
     private static final int P2WPKH_WITNESS_PUSH_COUNT = 2;
     private static final int MAX_DER_SIGNATURE_WITH_SIGHASH_LENGTH = 73;

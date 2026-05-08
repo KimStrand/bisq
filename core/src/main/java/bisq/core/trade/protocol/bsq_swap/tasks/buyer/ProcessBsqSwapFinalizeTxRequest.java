@@ -120,8 +120,8 @@ public abstract class ProcessBsqSwapFinalizeTxRequest extends BsqSwapTask {
                 log.warn("Sellers BTC change is not as expected. This can happen if fee estimation for buyersBsqInputs did not " +
                         "succeed (e.g. dust change, max. iterations reached,...");
                 log.warn("buyersBtcPayout={}, sumInputs={}, sellersTxFee={}, buyersTxFee={}, expectedChange={}, change={}",
-                        buyersBtcPayout.toFriendlyString(), sumInputs.toFriendlyString(), sellersTxFee.toFriendlyString(),
-                        buyersTxFee.toFriendlyString(), expectedChange.toFriendlyString(), change);
+                        buyersBtcPayout.getValue(), sumInputs.getValue(), sellersTxFee.getValue(),
+                        buyersTxFee.getValue(), expectedChange.getValue(), change);
             }
             // By enforcing that it must not be larger than expectedChange we guarantee that peer did not cheat on
             // tx fees.
