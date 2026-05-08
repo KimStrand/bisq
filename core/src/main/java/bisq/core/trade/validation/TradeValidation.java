@@ -48,14 +48,27 @@ public final class TradeValidation {
     /* --------------------------------------------------------------------- */
 
     public static String checkTradeId(String tradeId, TradeMessage tradeMessage) {
-        checkArgument(isTradeIdValid(tradeId, tradeMessage), "TradeId %s is not valid", tradeId);
+        checkNotNull(tradeMessage, "tradeMessage must not be null");
+        checkNonBlankString(tradeId, "tradeId");
+        String tradeIdFromMessage = checkNonBlankString(tradeMessage.getTradeId(), "tradeMessage.tradeId");
+        checkArgument(tradeId.equals(tradeIdFromMessage), "TradeId %s is not matching " +
+                "tradeId from message %s", tradeId, tradeIdFromMessage);
         return tradeId;
     }
 
     public static boolean isTradeIdValid(String tradeId, TradeMessage tradeMessage) {
-        checkNonBlankString(tradeId, "tradeId");
-        checkNotNull(tradeMessage, "tradeMessage must not be null");
-        return tradeId.equals(tradeMessage.getTradeId());
+        return isTradeIdValid(tradeMessage, tradeId);
+    }
+
+    public static boolean isTradeIdValid(TradeMessage tradeMessage, String expectedTradeId) {
+        try {
+            checkNotNull(tradeMessage, "tradeMessage must not be null");
+            checkNonBlankString(expectedTradeId, "expectedTradeId");
+            String tradeId = checkNonBlankString(tradeMessage.getTradeId(), "tradeMessage.tradeId");
+            return tradeId.equals(expectedTradeId);
+        } catch (RuntimeException e) {
+            return false;
+        }
     }
 
 

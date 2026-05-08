@@ -51,9 +51,9 @@ public class BuyerProcessDelayedPayoutTxSignatureRequest extends TradeTask {
             TradingPeer tradePeer = processModel.getTradePeer();
 
             Transaction preparedDelayedPayoutTx = toVerifiedTransaction(request.getDelayedPayoutTx(), btcWalletService);
-            processModel.setPreparedDelayedPayoutTx(preparedDelayedPayoutTx);
-
             byte[] delayedPayoutTxSellerSignature = checkDerEncodedEcdsaSignature(request.getDelayedPayoutTxSellerSignature());
+
+            processModel.setPreparedDelayedPayoutTx(preparedDelayedPayoutTx);
             tradePeer.setDelayedPayoutTxSignature(delayedPayoutTxSellerSignature);
 
             // When we receive that message the taker has published the taker fee, so we apply it to the trade.

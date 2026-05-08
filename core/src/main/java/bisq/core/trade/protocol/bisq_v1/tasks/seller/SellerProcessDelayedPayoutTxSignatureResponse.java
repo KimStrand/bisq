@@ -55,13 +55,13 @@ public class SellerProcessDelayedPayoutTxSignatureResponse extends TradeTask {
             Transaction myDepositTx = checkNotNull(processModel.getDepositTx(), "processModel.getDepositTx() must not be null");
 
             byte[] delayedPayoutTxBuyerSignature = checkDerEncodedEcdsaSignature(response.getDelayedPayoutTxBuyerSignature());
-            tradePeer.setDelayedPayoutTxSignature(delayedPayoutTxBuyerSignature);
-
             Transaction parsedBuyersDepositTxWithWitnesses = toVerifiedTransaction(response.getDepositTx(), btcWalletService);
             Transaction buyersDepositTxWithWitnesses = checkDepositTxMatchesIgnoringWitnessesAndScriptSigs(
                     parsedBuyersDepositTxWithWitnesses,
                     myDepositTx,
                     btcWalletService);
+
+            tradePeer.setDelayedPayoutTxSignature(delayedPayoutTxBuyerSignature);
             tradeWalletService.sellerAddsBuyerWitnessesToDepositTx(myDepositTx, buyersDepositTxWithWitnesses);
 
             // update to the latest peer address of our peer if the message is correct

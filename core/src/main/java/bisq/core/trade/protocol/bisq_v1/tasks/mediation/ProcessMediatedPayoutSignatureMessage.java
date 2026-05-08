@@ -26,6 +26,7 @@ import bisq.common.taskrunner.TaskRunner;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static bisq.core.trade.validation.TransactionValidation.checkDerEncodedEcdsaSignature;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @Slf4j
@@ -42,7 +43,8 @@ public class ProcessMediatedPayoutSignatureMessage extends TradeTask {
             MediatedPayoutTxSignatureMessage message = (MediatedPayoutTxSignatureMessage) processModel.getTradeMessage();
             checkNotNull(message);
 
-            processModel.getTradePeer().setMediatedPayoutTxSignature(message.getTxSignature());
+            byte[] txSignature = checkDerEncodedEcdsaSignature(message.getTxSignature());
+            processModel.getTradePeer().setMediatedPayoutTxSignature(txSignature);
 
             // update to the latest peer address of our peer if the message is correct
             trade.setTradingPeerNodeAddress(processModel.getTempTradingPeerNodeAddress());

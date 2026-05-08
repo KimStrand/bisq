@@ -79,7 +79,8 @@ public class BuyerProcessDepositTxAndDelayedPayoutTxMessage extends TradeTask {
             trade.applyDepositTx(committedDepositTx);
 
             byte[] peersDelayedPayoutTxBytes = checkSerializedTransaction(message.getDelayedPayoutTx(), btcWalletService);
-            byte[] myDelayedPayoutTxBytes = trade.getDelayedPayoutTxBytes();
+            byte[] myDelayedPayoutTxBytes = checkNotNull(trade.getDelayedPayoutTxBytes(),
+                    "trade.getDelayedPayoutTxBytes() must not be null");
             checkArgument(Arrays.equals(peersDelayedPayoutTxBytes, myDelayedPayoutTxBytes),
                     "peersDelayedPayoutTx and myDelayedPayoutTx must be the same" +
                             "\n myDelayedPayoutTx: " + Utilities.bytesAsHexString(myDelayedPayoutTxBytes) +
