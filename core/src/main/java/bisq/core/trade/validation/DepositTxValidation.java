@@ -27,14 +27,19 @@ import bisq.core.trade.model.bisq_v1.Trade;
 import bisq.core.trade.validation.exceptions.InvalidTxException;
 
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -61,6 +66,75 @@ public final class DepositTxValidation {
 
         NetworkParameters params = checkNotNull(btcWalletService.getParams(), "params must not be null");
         return checkDepositTxMatchesIgnoringWitnessesAndScriptSigs(depositTx, expectedDepositTx, params);
+    }
+
+    public static Transaction checkMakersPreparedDepositTx(Transaction preparedDepositTx,
+                                                           Offer offer,
+                                                           Coin tradeAmount,
+                                                           Coin tradeTxFee,
+                                                           List<RawTransactionInput> makerInputs,
+                                                           List<RawTransactionInput> takerInputs,
+                                                           byte[] makerMultiSigPubKey,
+                                                           byte[] takerMultiSigPubKey,
+                                                           NetworkParameters params) {
+        Transaction checkedPreparedDepositTx = checkTransaction(checkNotNull(preparedDepositTx,
+                "preparedDepositTx must not be null"));
+        Offer checkedOffer = checkNotNull(offer, "offer must not be null");
+        Coin checkedTradeAmount = checkNotNull(tradeAmount, "tradeAmount must not be null");
+        Coin checkedTradeTxFee = checkNotNull(tradeTxFee, "tradeTxFee must not be null");
+        List<RawTransactionInput> checkedMakerInputs = checkNotNull(makerInputs, "makerInputs must not be null");
+        List<RawTransactionInput> checkedTakerInputs = checkNotNull(takerInputs, "takerInputs must not be null");
+        byte[] checkedMakerMultiSigPubKey = TransactionValidation.checkMultiSigPubKey(makerMultiSigPubKey);
+        byte[] checkedTakerMultiSigPubKey = TransactionValidation.checkMultiSigPubKey(takerMultiSigPubKey);
+        NetworkParameters checkedParams = checkNotNull(params, "params must not be null");
+        Coin offerMinAmount = checkNotNull(checkedOffer.getMinAmount(), "offer.getMinAmount() must not be null");
+        Coin offerAmount = checkNotNull(checkedOffer.getAmount(), "offer.getAmount() must not be null");
+        Coin buyerSecurityDeposit = checkNotNull(checkedOffer.getBuyerSecurityDeposit(),
+                "offer.getBuyerSecurityDeposit() must not be null");
+        Coin sellerSecurityDeposit = checkNotNull(checkedOffer.getSellerSecurityDeposit(),
+                "offer.getSellerSecurityDeposit() must not be null");
+
+        checkArgument(!checkedTradeAmount.isLessThan(offerMinAmount),
+                "tradeAmount must not be less than offerMinAmount");
+        checkArgument(!checkedTradeAmount.isGreaterThan(offerAmount),
+                "tradeAmount must not be greater than offerAmount");
+        checkArgument(checkedTradeTxFee.isPositive(), "tradeTxFee must be positive");
+
+        checkCanonicalDepositTxShape(checkedPreparedDepositTx,
+                combinedInputs(checkedMakerInputs, checkedTakerInputs),
+                checkedParams);
+        checkPreparedDepositTxInputOrder(checkedPreparedDepositTx,
+                checkedOffer.isBuyOffer(),
+                checkedMakerInputs,
+                checkedTakerInputs,
+                checkedParams);
+        checkPreparedDepositTxInputAmounts(checkedOffer.isBuyOffer(),
+                offerAmount,
+                buyerSecurityDeposit,
+                sellerSecurityDeposit,
+                checkedTradeAmount,
+                checkedTradeTxFee,
+                checkedMakerInputs,
+                checkedTakerInputs);
+
+        byte[] buyerPubKey = checkedOffer.isBuyOffer() ? checkedMakerMultiSigPubKey : checkedTakerMultiSigPubKey;
+        byte[] sellerPubKey = checkedOffer.isBuyOffer() ? checkedTakerMultiSigPubKey : checkedMakerMultiSigPubKey;
+        Coin expectedMsOutputAmount = buyerSecurityDeposit
+                .add(sellerSecurityDeposit)
+                .add(checkedTradeTxFee)
+                .add(checkedTradeAmount);
+        checkPreparedDepositTxOutputs(checkedPreparedDepositTx,
+                checkedOffer,
+                offerAmount,
+                sellerSecurityDeposit,
+                checkedTradeAmount,
+                checkedTradeTxFee,
+                checkedMakerInputs,
+                checkedTakerInputs,
+                expectedMsOutputAmount,
+                buyerPubKey,
+                sellerPubKey);
+        return checkedPreparedDepositTx;
     }
 
 
@@ -222,6 +296,159 @@ public final class DepositTxValidation {
     private static void stripWitnessAndScriptSig(TransactionInput input) {
         input.setScriptSig(ScriptBuilder.createEmpty());
         input.setWitness(TransactionWitness.EMPTY);
+    }
+
+    private static List<RawTransactionInput> combinedInputs(List<RawTransactionInput> makerInputs,
+                                                            List<RawTransactionInput> takerInputs) {
+        List<RawTransactionInput> inputs = new ArrayList<>(makerInputs.size() + takerInputs.size());
+        inputs.addAll(makerInputs);
+        inputs.addAll(takerInputs);
+        return inputs;
+    }
+
+    private static void checkPreparedDepositTxInputOrder(Transaction preparedDepositTx,
+                                                         boolean makerIsBuyer,
+                                                         List<RawTransactionInput> makerInputs,
+                                                         List<RawTransactionInput> takerInputs,
+                                                         NetworkParameters params) {
+        int expectedInputCount = makerInputs.size() + takerInputs.size();
+        checkArgument(preparedDepositTx.getInputs().size() == expectedInputCount,
+                "Prepared deposit tx input count mismatch. txInputs=%s, makerInputs=%s, takerInputs=%s",
+                preparedDepositTx.getInputs().size(),
+                makerInputs.size(),
+                takerInputs.size());
+
+        if (makerIsBuyer) {
+            checkInputOutpoints(preparedDepositTx, 0, makerInputs, params, "maker");
+            checkInputOutpoints(preparedDepositTx, makerInputs.size(), takerInputs, params, "taker");
+        } else {
+            checkInputOutpoints(preparedDepositTx, 0, takerInputs, params, "taker");
+            checkInputOutpoints(preparedDepositTx, takerInputs.size(), makerInputs, params, "maker");
+        }
+    }
+
+    private static void checkInputOutpoints(Transaction preparedDepositTx,
+                                            int startIndex,
+                                            List<RawTransactionInput> expectedInputs,
+                                            NetworkParameters params,
+                                            String inputOwner) {
+        for (int i = 0; i < expectedInputs.size(); i++) {
+            RawTransactionInput expectedInput = checkNotNull(expectedInputs.get(i),
+                    "%s input at position %s must not be null",
+                    inputOwner,
+                    i);
+            TransactionOutPoint expectedOutpoint = WalletUtils.getConnectedOutPoint(expectedInput, params);
+            TransactionOutPoint actualOutpoint = preparedDepositTx.getInput(startIndex + i).getOutpoint();
+            checkArgument(actualOutpoint.getIndex() == expectedOutpoint.getIndex() &&
+                            actualOutpoint.getHash().equals(expectedOutpoint.getHash()),
+                    "Prepared deposit tx input %s does not match expected %s input %s",
+                    startIndex + i,
+                    inputOwner,
+                    i);
+        }
+    }
+
+    private static void checkPreparedDepositTxInputAmounts(boolean makerIsBuyer,
+                                                           Coin offerAmount,
+                                                           Coin buyerSecurityDeposit,
+                                                           Coin sellerSecurityDeposit,
+                                                           Coin tradeAmount,
+                                                           Coin tradeTxFee,
+                                                           List<RawTransactionInput> makerInputs,
+                                                           List<RawTransactionInput> takerInputs) {
+        Coin expectedMakerInputAmount = makerIsBuyer
+                ? buyerSecurityDeposit
+                : sellerSecurityDeposit.add(offerAmount);
+        Coin makerInputAmount = sumInputValues(makerInputs);
+        checkArgument(makerInputAmount.equals(expectedMakerInputAmount),
+                "Maker input amount mismatch. actual=%s, expected=%s",
+                makerInputAmount,
+                expectedMakerInputAmount);
+
+        Coin expectedTakerInputAmount = makerIsBuyer
+                ? sellerSecurityDeposit.add(tradeAmount).add(tradeTxFee.multiply(2))
+                : buyerSecurityDeposit.add(tradeTxFee.multiply(2));
+        Coin takerInputAmount = sumInputValues(takerInputs);
+        checkArgument(takerInputAmount.equals(expectedTakerInputAmount),
+                "Taker input amount mismatch. actual=%s, expected=%s",
+                takerInputAmount,
+                expectedTakerInputAmount);
+    }
+
+    private static void checkPreparedDepositTxOutputs(Transaction preparedDepositTx,
+                                                      Offer offer,
+                                                      Coin offerAmount,
+                                                      Coin sellerSecurityDeposit,
+                                                      Coin tradeAmount,
+                                                      Coin tradeTxFee,
+                                                      List<RawTransactionInput> makerInputs,
+                                                      List<RawTransactionInput> takerInputs,
+                                                      Coin expectedMsOutputAmount,
+                                                      byte[] buyerPubKey,
+                                                      byte[] sellerPubKey) {
+        checkArgument(!preparedDepositTx.getOutputs().isEmpty(),
+                "Prepared deposit tx must have at least the multisig output");
+
+        TransactionOutput multisigOutput = preparedDepositTx.getOutput(0);
+        checkArgument(multisigOutput.getValue().equals(expectedMsOutputAmount),
+                "Prepared deposit tx multisig output amount mismatch. actual=%s, expected=%s",
+                multisigOutput.getValue(),
+                expectedMsOutputAmount);
+        Script expectedMultiSigOutputScript = get2of2MultiSigOutputScript(buyerPubKey, sellerPubKey);
+        checkArgument(multisigOutput.getScriptPubKey().equals(expectedMultiSigOutputScript),
+                "Prepared deposit tx multisig output script does not match expected trade multisig script");
+
+        Coin expectedMakerChange = offer.isBuyOffer()
+                ? Coin.ZERO
+                : sumInputValues(makerInputs)
+                .subtract(sellerSecurityDeposit)
+                .subtract(tradeAmount);
+        checkArgument(!expectedMakerChange.isNegative(), "expectedMakerChange must not be negative");
+        checkArgument(offer.isBuyOffer() ||
+                        !expectedMakerChange.isGreaterThan(offerAmount.subtract(tradeAmount)),
+                "expectedMakerChange must not be greater than remaining offer amount");
+
+        int expectedOutputCount = expectedMakerChange.isZero() ? 1 : 2;
+        checkArgument(preparedDepositTx.getOutputs().size() == expectedOutputCount,
+                expectedMakerChange.isZero()
+                        ? "Maker's preparedDepositTx must not have a change output"
+                        : "Maker's preparedDepositTx must have exactly one change output");
+        if (!expectedMakerChange.isZero()) {
+            Coin makerChangeOutput = preparedDepositTx.getOutput(1).getValue();
+            checkArgument(makerChangeOutput.equals(expectedMakerChange),
+                    "Maker's preparedDepositTx change output value does not match the expected maker change");
+        }
+
+        Coin inputTotal = sumInputValues(makerInputs).add(sumInputValues(takerInputs));
+        Coin outputTotal = preparedDepositTx.getOutputs().stream()
+                .map(TransactionOutput::getValue)
+                .reduce(Coin.ZERO, Coin::add);
+        Coin actualTxFee = inputTotal.subtract(outputTotal);
+        checkArgument(actualTxFee.equals(tradeTxFee),
+                "Prepared deposit tx fee mismatch. actual=%s, expected=%s",
+                actualTxFee,
+                tradeTxFee);
+    }
+
+    private static Coin sumInputValues(List<RawTransactionInput> inputs) {
+        Coin sum = Coin.ZERO;
+        for (int i = 0; i < inputs.size(); i++) {
+            RawTransactionInput input = checkNotNull(inputs.get(i),
+                    "input at position %s must not be null",
+                    i);
+            checkArgument(input.value > 0,
+                    "input at position %s must have positive value",
+                    i);
+            sum = sum.add(Coin.valueOf(input.value));
+        }
+        return sum;
+    }
+
+    private static Script get2of2MultiSigOutputScript(byte[] buyerPubKey, byte[] sellerPubKey) {
+        ECKey buyerKey = ECKey.fromPublicOnly(buyerPubKey);
+        ECKey sellerKey = ECKey.fromPublicOnly(sellerPubKey);
+        return ScriptBuilder.createP2WSHOutputScript(
+                ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(sellerKey, buyerKey)));
     }
 
 
