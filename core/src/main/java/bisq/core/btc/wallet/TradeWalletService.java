@@ -789,7 +789,7 @@ public class TradeWalletService {
                                                           byte[] buyerSignature,
                                                           byte[] sellerSignature,
                                                           Coin inputValue)
-            throws AddressFormatException, TransactionVerificationException, SignatureDecodeException {
+            throws AddressFormatException, TransactionVerificationException {
 
         Script redeemScript = get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
         ECKey.ECDSASignature buyerECDSASignature = checkCanonicalDelayedPayoutTxSignature(buyerSignature, "buyer");

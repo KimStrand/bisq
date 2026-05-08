@@ -74,7 +74,7 @@ public class BsqSwapCalculation {
     }
 
     public static Coin getBuyersBsqInputValue(long bsqTradeAmount, long buyersTradeFee) {
-        return Coin.valueOf(bsqTradeAmount + buyersTradeFee);
+        return Coin.valueOf(bsqTradeAmount).add(Coin.valueOf(buyersTradeFee));
     }
 
     public static Coin getBuyersBtcPayoutValue(BsqSwapTrade trade, int buyersVBytesSize, long buyerTradeFee) {
@@ -118,7 +118,7 @@ public class BsqSwapCalculation {
     }
 
     private static Coin getBuyersBtcPayoutValue(long btcTradeAmount, long buyerTxFee) {
-        return Coin.valueOf(btcTradeAmount - buyerTxFee);
+        return Coin.valueOf(btcTradeAmount).subtract(Coin.valueOf(buyerTxFee));
     }
 
     // Seller
@@ -157,7 +157,7 @@ public class BsqSwapCalculation {
     }
 
     public static Coin getSellersBtcInputValue(long btcTradeAmount, long sellerTxFee) {
-        return Coin.valueOf(btcTradeAmount + sellerTxFee);
+        return Coin.valueOf(btcTradeAmount).add(Coin.valueOf(sellerTxFee));
     }
 
     public static Coin getSellersBsqPayoutValue(BsqSwapTrade trade, long sellerTradeFee) {
@@ -165,7 +165,7 @@ public class BsqSwapCalculation {
     }
 
     public static Coin getSellersBsqPayoutValue(long bsqTradeAmount, long sellerTradeFee) {
-        return Coin.valueOf(bsqTradeAmount - sellerTradeFee);
+        return Coin.valueOf(bsqTradeAmount).subtract(Coin.valueOf(sellerTradeFee));
     }
 
     // Tx fee estimation
@@ -232,7 +232,10 @@ public class BsqSwapCalculation {
     }
 
     public static long getAdjustedTxFee(long txFeePerVbyte, int vBytes, long tradeFee) {
-        return txFeePerVbyte * vBytes - tradeFee;
+        return Coin.valueOf(txFeePerVbyte)
+                .multiply(vBytes)
+                .subtract(Coin.valueOf(tradeFee))
+                .value;
     }
 
     // Convert BTC trade amount to BSQ amount
