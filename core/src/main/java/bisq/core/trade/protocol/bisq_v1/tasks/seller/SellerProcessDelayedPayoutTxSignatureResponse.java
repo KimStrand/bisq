@@ -17,6 +17,7 @@
 
 package bisq.core.trade.protocol.bisq_v1.tasks.seller;
 
+import bisq.core.btc.model.RawTransactionInput;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TradeWalletService;
 import bisq.core.trade.model.bisq_v1.Trade;
@@ -27,6 +28,8 @@ import bisq.core.trade.protocol.bisq_v1.tasks.TradeTask;
 import bisq.common.taskrunner.TaskRunner;
 
 import org.bitcoinj.core.Transaction;
+
+import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -62,7 +65,14 @@ public class SellerProcessDelayedPayoutTxSignatureResponse extends TradeTask {
                     btcWalletService);
 
             tradePeer.setDelayedPayoutTxSignature(delayedPayoutTxBuyerSignature);
-            tradeWalletService.sellerAddsBuyerWitnessesToDepositTx(myDepositTx, buyersDepositTxWithWitnesses);
+            List<RawTransactionInput> buyerRawTransactionInputs = checkNotNull(tradePeer.getRawTransactionInputs(),
+                    "tradePeer.getRawTransactionInputs() must not be null");
+            List<RawTransactionInput> sellerRawTransactionInputs = checkNotNull(processModel.getRawTransactionInputs(),
+                    "processModel.getRawTransactionInputs() must not be null");
+            tradeWalletService.sellerAddsBuyerWitnessesToDepositTx(myDepositTx,
+                    buyersDepositTxWithWitnesses,
+                    buyerRawTransactionInputs,
+                    sellerRawTransactionInputs);
 
             // update to the latest peer address of our peer if the message is correct
             trade.setTradingPeerNodeAddress(processModel.getTempTradingPeerNodeAddress());

@@ -656,18 +656,55 @@ public class TradeWalletService {
         WalletService.verifyTransaction(myDepositTx);
     }
 
+    private void connectDepositTxInputs(Transaction depositTx,
+                                        int inputOffset,
+                                        List<RawTransactionInput> rawTransactionInputs,
+                                        String inputOwner) {
+        for (int i = 0; i < rawTransactionInputs.size(); i++) {
+            RawTransactionInput rawTransactionInput = rawTransactionInputs.get(i);
+            TransactionInput input = depositTx.getInput(inputOffset + i);
+            TransactionOutPoint connectedOutPoint = WalletUtils.getConnectedOutPoint(rawTransactionInput, params);
+            TransactionOutput connectedOutput = checkNotNull(connectedOutPoint.getConnectedOutput(),
+                    "%s input %s has no connected output", inputOwner, i);
+            checkArgument(input.getOutpoint().getHash().equals(connectedOutPoint.getHash()),
+                    "%s input %s outpoint hash does not match raw input. txOutpoint=%s, rawOutpoint=%s",
+                    inputOwner,
+                    i,
+                    input.getOutpoint().getHash(),
+                    connectedOutPoint.getHash());
+            checkArgument(input.getOutpoint().getIndex() == connectedOutPoint.getIndex(),
+                    "%s input %s outpoint index does not match raw input. txOutpoint=%s, rawOutpoint=%s",
+                    inputOwner,
+                    i,
+                    input.getOutpoint().getIndex(),
+                    connectedOutPoint.getIndex());
+            input.connect(connectedOutput);
+        }
+    }
+
 
     public void sellerAddsBuyerWitnessesToDepositTx(Transaction myDepositTx,
-                                                    Transaction buyersDepositTxWithWitnesses)
+                                                    Transaction buyersDepositTxWithWitnesses,
+                                                    List<RawTransactionInput> buyerRawTransactionInputs,
+                                                    List<RawTransactionInput> sellerRawTransactionInputs)
             throws TransactionVerificationException {
         Transaction checkedMyDepositTx = checkNotNull(myDepositTx, "myDepositTx must not be null");
         Transaction checkedBuyersDepositTxWithWitnesses = checkNotNull(buyersDepositTxWithWitnesses,
                 "buyersDepositTxWithWitnesses must not be null");
+        List<RawTransactionInput> checkedBuyerRawTransactionInputs = checkNotNull(buyerRawTransactionInputs,
+                "buyerRawTransactionInputs must not be null");
+        List<RawTransactionInput> checkedSellerRawTransactionInputs = checkNotNull(sellerRawTransactionInputs,
+                "sellerRawTransactionInputs must not be null");
         int numberInputs = checkedMyDepositTx.getInputs().size();
         checkArgument(checkedBuyersDepositTxWithWitnesses.getInputs().size() == numberInputs,
                 "Deposit transactions must have the same number of inputs. myDepositTxInputs=%s, buyersDepositTxInputs=%s",
                 numberInputs,
                 checkedBuyersDepositTxWithWitnesses.getInputs().size());
+        checkArgument(numberInputs == checkedBuyerRawTransactionInputs.size() + checkedSellerRawTransactionInputs.size(),
+                "Deposit tx input count does not match raw input data. txInputs=%s, buyerInputs=%s, sellerInputs=%s",
+                numberInputs,
+                checkedBuyerRawTransactionInputs.size(),
+                checkedSellerRawTransactionInputs.size());
 
         for (int i = 0; i < numberInputs; i++) {
             var txInput = checkedMyDepositTx.getInput(i);
@@ -679,6 +716,9 @@ public class TradeWalletService {
             }
         }
 
+        connectDepositTxInputs(checkedMyDepositTx, 0, checkedBuyerRawTransactionInputs, "buyer");
+        connectDepositTxInputs(checkedMyDepositTx, checkedBuyerRawTransactionInputs.size(), checkedSellerRawTransactionInputs, "seller");
+        WalletService.checkAllScriptSignaturesForTx(checkedMyDepositTx);
         WalletService.verifyTransaction(checkedMyDepositTx);
     }
 
