@@ -48,7 +48,7 @@ class TradeValidationTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> TradeValidation.checkTradeId("trade-id", ValidationTestUtils.tradeMessage("other-trade-id")));
 
-        assertEquals("TradeId trade-id is not valid", exception.getMessage());
+        assertEquals("TradeId trade-id is not matching tradeId from message other-trade-id", exception.getMessage());
     }
 
     @Test
@@ -68,12 +68,12 @@ class TradeValidationTest {
 
     @Test
     void isTradeIdValidRejectsNullTradeId() {
-        assertThrows(NullPointerException.class, () -> TradeValidation.isTradeIdValid(null, ValidationTestUtils.tradeMessage("trade-id")));
+        assertFalse(TradeValidation.isTradeIdValid(null, ValidationTestUtils.tradeMessage("trade-id")));
     }
 
     @Test
     void isTradeIdValidRejectsNullTradeMessage() {
-        assertThrows(NullPointerException.class, () -> TradeValidation.isTradeIdValid("trade-id", null));
+        assertFalse(TradeValidation.isTradeIdValid("trade-id", null));
     }
 
     /* --------------------------------------------------------------------- */

@@ -28,10 +28,13 @@ import bisq.common.taskrunner.TaskRunner;
 import lombok.extern.slf4j.Slf4j;
 
 import static bisq.core.trade.validation.TransactionValidation.checkBitcoinAddress;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @Slf4j
 public class SellerProcessCounterCurrencyTransferStartedMessage extends TradeTask {
+    private static final int MAX_COUNTER_CURRENCY_DATA_LENGTH = 100;
+
     public SellerProcessCounterCurrencyTransferStartedMessage(TaskRunner<Trade> taskHandler, Trade trade) {
         super(taskHandler, trade);
     }
@@ -47,20 +50,27 @@ public class SellerProcessCounterCurrencyTransferStartedMessage extends TradeTas
             BtcWalletService btcWalletService = processModel.getBtcWalletService();
 
             String buyerPayoutAddress = checkBitcoinAddress(message.getBuyerPayoutAddress(), btcWalletService);
-            tradingPeer.setPayoutAddressString(buyerPayoutAddress);
+            byte[] buyerSignature = message.getBuyerSignature();
 
-            tradingPeer.setSignature(checkNotNull(message.getBuyerSignature()));
+            String counterCurrencyTxId = message.getCounterCurrencyTxId();
+            checkArgument(counterCurrencyTxId == null || counterCurrencyTxId.length() < MAX_COUNTER_CURRENCY_DATA_LENGTH,
+                    "counterCurrencyTxId must be shorter than %s chars", MAX_COUNTER_CURRENCY_DATA_LENGTH);
+
+            String counterCurrencyExtraData = message.getCounterCurrencyExtraData();
+            checkArgument(counterCurrencyExtraData == null || counterCurrencyExtraData.length() < MAX_COUNTER_CURRENCY_DATA_LENGTH,
+                    "counterCurrencyExtraData must be shorter than %s chars", MAX_COUNTER_CURRENCY_DATA_LENGTH);
+
+            tradingPeer.setPayoutAddressString(buyerPayoutAddress);
+            tradingPeer.setSignature(buyerSignature);
 
             // update to the latest peer address of our peer if the message is correct
             trade.setTradingPeerNodeAddress(processModel.getTempTradingPeerNodeAddress());
 
-            String counterCurrencyTxId = message.getCounterCurrencyTxId();
-            if (counterCurrencyTxId != null && counterCurrencyTxId.length() < 100) {
+            if (counterCurrencyTxId != null) {
                 trade.setCounterCurrencyTxId(counterCurrencyTxId);
             }
 
-            String counterCurrencyExtraData = message.getCounterCurrencyExtraData();
-            if (counterCurrencyExtraData != null && counterCurrencyExtraData.length() < 100) {
+            if (counterCurrencyExtraData != null) {
                 trade.setCounterCurrencyExtraData(counterCurrencyExtraData);
             }
 
