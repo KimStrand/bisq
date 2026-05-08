@@ -109,8 +109,8 @@ public abstract class ProcessTxInputsMessage extends BsqSwapTask {
                         "The change would be used as miner fee in such cases.");
                 log.warn("sellersBsqPayoutAmount={}, sumInputs={}, getBuyersTradeFee={}, " +
                                 "getSellersTradeFee={}, expectedChange={},change={}",
-                        sellersBsqPayoutAmount.toFriendlyString(), sumInputs.toFriendlyString(), getBuyersTradeFee(),
-                        getSellersTradeFee(), expectedChange.toFriendlyString(), change);
+                        sellersBsqPayoutAmount.getValue(), sumInputs.getValue(), getBuyersTradeFee(),
+                        getSellersTradeFee(), expectedChange.getValue(), change);
             }
             // By enforcing that it must not be larger than expectedChange we guarantee that peer did not cheat on
             // trade fees.
