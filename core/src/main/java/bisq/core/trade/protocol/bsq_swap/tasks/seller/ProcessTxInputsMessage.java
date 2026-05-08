@@ -68,19 +68,20 @@ public abstract class ProcessTxInputsMessage extends BsqSwapTask {
             checkArgument(!inputs.isEmpty(), "Buyers BSQ inputs must not be empty");
             inputs.forEach(input -> input.validate(btcWalletService));
 
-            long sumInputs = inputs.stream().mapToLong(rawTransactionInput -> rawTransactionInput.value).sum();
-            long buyersBsqInputAmount = BsqSwapCalculation.getBuyersBsqInputValue(trade, getBuyersTradeFee()).getValue();
-            checkArgument(sumInputs >= buyersBsqInputAmount,
+            Coin sumInputs = inputs.stream()
+                    .map(input -> Coin.valueOf(input.value))
+                    .reduce(Coin.ZERO, Coin::add);
+            Coin buyersBsqInputAmount = BsqSwapCalculation.getBuyersBsqInputValue(trade, getBuyersTradeFee());
+            checkArgument(!sumInputs.isLessThan(buyersBsqInputAmount),
                     "Buyers BSQ input amount do not match our calculated required BSQ input amount");
 
             DaoFacade daoFacade = protocolModel.getDaoFacade();
 
-            long sumValidBsqInputValue = inputs.stream()
-                    .mapToLong(input -> daoFacade.getUnspentTxOutputValue(
-                            new TxOutputKey(input.getParentTxId(btcWalletService), (int) input.index))
-                    )
-                    .sum();
-            checkArgument(sumInputs == sumValidBsqInputValue,
+            Coin sumValidBsqInputValue = inputs.stream()
+                    .map(input -> Coin.valueOf(daoFacade.getUnspentTxOutputValue(
+                            new TxOutputKey(input.getParentTxId(btcWalletService), (int) input.index))))
+                    .reduce(Coin.ZERO, Coin::add);
+            checkArgument(sumInputs.equals(sumValidBsqInputValue),
                     "Buyers BSQ input amount must match input amount from unspentTxOutputMap in DAO state");
 
             long numValidBsqInputs = inputs.stream()
@@ -99,18 +100,21 @@ public abstract class ProcessTxInputsMessage extends BsqSwapTask {
             Coin sellersBsqPayoutAmount = BsqSwapCalculation.getSellersBsqPayoutValue(trade, getSellersTradeFee());
             protocolModel.setPayout(sellersBsqPayoutAmount.getValue());
 
-            long expectedChange = sumInputs - sellersBsqPayoutAmount.getValue() - getBuyersTradeFee() - getSellersTradeFee();
-            if (expectedChange != change) {
+            Coin expectedChange = sumInputs
+                    .subtract(sellersBsqPayoutAmount)
+                    .subtract(Coin.valueOf(getBuyersTradeFee()))
+                    .subtract(Coin.valueOf(getSellersTradeFee()));
+            if (expectedChange.value != change) {
                 log.warn("Buyers BSQ change is not as expected. This can happen if change would be below dust. " +
                         "The change would be used as miner fee in such cases.");
                 log.warn("sellersBsqPayoutAmount={}, sumInputs={}, getBuyersTradeFee={}, " +
                                 "getSellersTradeFee={}, expectedChange={},change={}",
-                        sellersBsqPayoutAmount.value, sumInputs, getBuyersTradeFee(),
-                        getSellersTradeFee(), expectedChange, change);
+                        sellersBsqPayoutAmount.toFriendlyString(), sumInputs.toFriendlyString(), getBuyersTradeFee(),
+                        getSellersTradeFee(), expectedChange.toFriendlyString(), change);
             }
             // By enforcing that it must not be larger than expectedChange we guarantee that peer did not cheat on
             // trade fees.
-            checkArgument(change <= expectedChange,
+            checkArgument(change <= expectedChange.value,
                     "Change must be smaller or equal to expectedChange");
 
             NetworkParameters params = btcWalletService.getParams();

@@ -63,9 +63,6 @@ public class BuyerVerifiesPreparedDelayedPayoutTx extends TradeTask {
             TradeWalletService tradeWalletService = processModel.getTradeWalletService();
             DelayedPayoutTxReceiverService delayedPayoutTxReceiverService = processModel.getDelayedPayoutTxReceiverService();
 
-            Transaction peersPreparedDelayedPayoutTx = checkNotNull(processModel.getPreparedDelayedPayoutTx());
-            checkDelayedPayoutTx(peersPreparedDelayedPayoutTx, trade, btcWalletService);
-
             int burningManSelectionHeight = DelayedPayoutTxValidation.checkBurningManSelectionHeight(processModel.getBurningManSelectionHeight(),
                     delayedPayoutTxReceiverService);
 
@@ -73,7 +70,10 @@ public class BuyerVerifiesPreparedDelayedPayoutTx extends TradeTask {
 
             Transaction preparedDepositTx = toVerifiedTransaction(processModel.getPreparedDepositTx(), btcWalletService);
             long multisigOutputAmount = preparedDepositTx.getOutput(0).getValue().value;
-            long inputAmount = checkDelayedPayoutTxInputAmount(multisigOutputAmount, trade);
+            long inputAmount = checkDelayedPayoutTxInputAmount(multisigOutputAmount, trade, tradeTxFeeAsLong);
+
+            Transaction peersPreparedDelayedPayoutTx = checkNotNull(processModel.getPreparedDelayedPayoutTx());
+            checkDelayedPayoutTx(peersPreparedDelayedPayoutTx, trade, btcWalletService);
 
             List<Tuple2<Long, String>> delayedPayoutTxReceivers = processModel.getDelayedPayoutTxReceiverService().getReceivers(
                     burningManSelectionHeight,

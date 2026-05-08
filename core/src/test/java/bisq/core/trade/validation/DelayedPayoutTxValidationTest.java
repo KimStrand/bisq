@@ -281,6 +281,19 @@ class DelayedPayoutTxValidationTest {
     }
 
     @Test
+    void checkDelayedPayoutTxInputAmountUsesCallerValidatedTradeTxFee() {
+        Offer offer = ValidationTestUtils.offer(true, Coin.valueOf(10_000), Coin.valueOf(12_000), Coin.valueOf(40_000));
+        Trade trade = ValidationTestUtils.trade(offer, Coin.valueOf(999), Coin.valueOf(20_000));
+        long validatedTradeTxFee = 300;
+        long expectedInputAmount = 42_300;
+
+        assertEquals(expectedInputAmount,
+                DelayedPayoutTxValidation.checkDelayedPayoutTxInputAmount(expectedInputAmount,
+                        trade,
+                        validatedTradeTxFee));
+    }
+
+    @Test
     void checkDelayedPayoutTxInputAmountRejectsUnexpectedInputAmount() {
         Offer offer = ValidationTestUtils.offer(true, Coin.valueOf(10_000), Coin.valueOf(12_000), Coin.valueOf(40_000));
         Trade trade = ValidationTestUtils.trade(offer, Coin.valueOf(300), Coin.valueOf(20_000));
@@ -298,6 +311,17 @@ class DelayedPayoutTxValidationTest {
                 () -> DelayedPayoutTxValidation.checkDelayedPayoutTxInputAmount(0, trade));
         assertThrows(IllegalArgumentException.class,
                 () -> DelayedPayoutTxValidation.checkDelayedPayoutTxInputAmount(-1, trade));
+    }
+
+    @Test
+    void checkDelayedPayoutTxInputAmountRejectsNonPositiveCallerValidatedTradeTxFee() {
+        Offer offer = ValidationTestUtils.offer(true, Coin.valueOf(10_000), Coin.valueOf(12_000), Coin.valueOf(40_000));
+        Trade trade = ValidationTestUtils.trade(offer, Coin.valueOf(300), Coin.valueOf(20_000));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> DelayedPayoutTxValidation.checkDelayedPayoutTxInputAmount(42_000, trade, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> DelayedPayoutTxValidation.checkDelayedPayoutTxInputAmount(42_000, trade, -1));
     }
 
     @Test

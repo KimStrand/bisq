@@ -176,24 +176,39 @@ public final class DelayedPayoutTxValidation {
     /* --------------------------------------------------------------------- */
 
     public static long checkDelayedPayoutTxInputAmount(long inputAmount, Trade trade) {
+        Trade checkedTrade = checkNotNull(trade, "trade must not be null");
+        Coin tradeTxFee = Coin.valueOf(checkIsPositive(checkedTrade.getTradeTxFeeAsLong(), "tradeTxFee"));
+        return checkDelayedPayoutTxInputAmount(inputAmount, checkedTrade, tradeTxFee);
+    }
+
+    public static long checkDelayedPayoutTxInputAmount(long inputAmount, Trade trade, long tradeTxFee) {
+        return checkDelayedPayoutTxInputAmount(inputAmount,
+                trade,
+                Coin.valueOf(checkIsPositive(tradeTxFee, "tradeTxFee")));
+    }
+
+    public static long checkDelayedPayoutTxInputAmount(long inputAmount, Trade trade, Coin tradeTxFee) {
         checkIsPositive(inputAmount, "inputAmount");
         Trade checkedTrade = checkNotNull(trade, "trade must not be null");
+        Coin checkedInputAmount = Coin.valueOf(inputAmount);
+        Coin checkedTradeTxFee = checkIsPositive(tradeTxFee, "tradeTxFee");
+
         Offer offer = checkNotNull(checkedTrade.getOffer(), "trade.getOffer() must not be null");
-        long tradeAmount = checkIsPositive(checkedTrade.getAmountAsLong(), "tradeAmount");
-        long buyerDeposit = checkIsPositive(offer.getBuyerSecurityDeposit(),
-                "offer.getBuyerSecurityDeposit()").getValue();
-        long sellerDeposit = checkIsPositive(offer.getSellerSecurityDeposit(),
-                "offer.getSellerSecurityDeposit()").getValue();
-        long tradeTxFee = checkIsPositive(checkedTrade.getTradeTxFeeAsLong(), "tradeTxFee");
-        long expectedAmount = tradeAmount +
-                buyerDeposit +
-                sellerDeposit +
-                tradeTxFee;
-        checkArgument(inputAmount == expectedAmount,
+        Coin tradeAmount = Coin.valueOf(checkIsPositive(checkedTrade.getAmountAsLong(), "tradeAmount"));
+        Coin buyerDeposit = checkIsPositive(offer.getBuyerSecurityDeposit(),
+                "offer.getBuyerSecurityDeposit()");
+        Coin sellerDeposit = checkIsPositive(offer.getSellerSecurityDeposit(),
+                "offer.getSellerSecurityDeposit()");
+        Coin expectedAmount = tradeAmount
+                .add(buyerDeposit)
+                .add(sellerDeposit)
+                .add(checkedTradeTxFee);
+        checkArgument(checkedInputAmount.equals(expectedAmount),
                 "inputAmount must match expectedAmount. " +
                         "Trade amount: %s, buyer deposit: %s, seller deposit: %s, " +
                         "trade fee: %s, expected amount: %s",
-                tradeAmount, buyerDeposit, sellerDeposit, tradeTxFee, expectedAmount);
+                tradeAmount.toFriendlyString(), buyerDeposit.toFriendlyString(), sellerDeposit.toFriendlyString(),
+                checkedTradeTxFee.toFriendlyString(), expectedAmount.toFriendlyString());
         return inputAmount;
     }
 

@@ -23,6 +23,10 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.crypto.TransactionSignature;
 
+import java.math.BigInteger;
+
+import java.util.Arrays;
+
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -64,6 +68,26 @@ public class WitnessValidationTest {
     }
 
     @Test
+    void checkCanonicalP2WpkhWitnessRejectsMalformedSignatureEncoding() {
+        TransactionWitness witness = new TransactionWitness(2);
+        witness.setPush(0, new byte[]{0x30, 0x01, 0x01, Transaction.SigHash.ALL.byteValue()});
+        witness.setPush(1, new ECKey().getPubKey());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> WitnessValidation.checkCanonicalP2WpkhWitness(witness, 0));
+    }
+
+    @Test
+    void checkCanonicalP2WpkhWitnessRejectsNonCanonicalHighSSignature() {
+        TransactionWitness witness = new TransactionWitness(2);
+        witness.setPush(0, bitcoinSignature(BigInteger.ONE, ECKey.CURVE.getN().subtract(BigInteger.ONE)));
+        witness.setPush(1, new ECKey().getPubKey());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> WitnessValidation.checkCanonicalP2WpkhWitness(witness, 0));
+    }
+
+    @Test
     void checkCanonicalP2WpkhWitnessRejectsNonAllSignatureHashMode() {
         TransactionWitness witness = new TransactionWitness(2);
         witness.setPush(0, canonicalSignature(Transaction.SigHash.SINGLE, false));
@@ -94,6 +118,20 @@ public class WitnessValidationTest {
                 () -> WitnessValidation.checkCanonicalP2WpkhWitness(witness, 0));
     }
 
+    @Test
+    void checkCanonicalP2WpkhWitnessRejectsInvalidCompressedPubKey() {
+        byte[] invalidCompressedPubKey = new byte[33];
+        Arrays.fill(invalidCompressedPubKey, (byte) 0xff);
+        invalidCompressedPubKey[0] = 0x02;
+
+        TransactionWitness witness = new TransactionWitness(2);
+        witness.setPush(0, canonicalSignature(Transaction.SigHash.ALL, false));
+        witness.setPush(1, invalidCompressedPubKey);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> WitnessValidation.checkCanonicalP2WpkhWitness(witness, 0));
+    }
+
     private static TransactionWitness canonicalP2wpkhWitness() {
         ECKey key = new ECKey();
         return TransactionWitness.redeemP2WPKH(canonicalTransactionSignature(Transaction.SigHash.ALL, false), key);
@@ -108,5 +146,12 @@ public class WitnessValidationTest {
         ECKey key = new ECKey();
         ECKey.ECDSASignature signature = key.sign(Sha256Hash.ZERO_HASH).toCanonicalised();
         return new TransactionSignature(signature, sigHash, anyoneCanPay);
+    }
+
+    private static byte[] bitcoinSignature(BigInteger r, BigInteger s) {
+        byte[] derSignature = new ECKey.ECDSASignature(r, s).encodeToDER();
+        byte[] bitcoinSignature = Arrays.copyOf(derSignature, derSignature.length + 1);
+        bitcoinSignature[derSignature.length] = Transaction.SigHash.ALL.byteValue();
+        return bitcoinSignature;
     }
 }

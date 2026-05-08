@@ -68,8 +68,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
@@ -77,11 +76,9 @@ import static bisq.core.btc.wallet.validation.WitnessValidation.checkCanonicalP2
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+@Slf4j
 public class TradeWalletService {
-    private static final Logger log = LoggerFactory.getLogger(TradeWalletService.class);
     public static final Coin MIN_DELAYED_PAYOUT_TX_FEE = Coin.valueOf(1000);
-    private static final int P2WPKH_WITNESS_PUSH_COUNT = 2;
-    private static final int COMPRESSED_PUB_KEY_LENGTH = 33;
 
     private final WalletsSetup walletsSetup;
     private final Preferences preferences;
@@ -97,6 +94,7 @@ public class TradeWalletService {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor, initialization
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     @Inject
@@ -113,6 +111,7 @@ public class TradeWalletService {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // AesKey
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     void setAesKey(@Nullable KeyParameter newAesKey) {
@@ -685,6 +684,7 @@ public class TradeWalletService {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Delayed payout tx
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Transaction createDelayedUnsignedPayoutTx(Transaction depositTx,
@@ -903,6 +903,7 @@ public class TradeWalletService {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Mediated payoutTx
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public byte[] signMediatedPayoutTx(Transaction depositTx,
@@ -968,6 +969,7 @@ public class TradeWalletService {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Emergency payoutTx
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Tuple2<String, String> emergencyBuildPayoutTxFrom2of2MultiSig(String depositTxHex,
@@ -1061,6 +1063,7 @@ public class TradeWalletService {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // BsqSwap tx
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public Transaction sellerBuildBsqSwapTx(List<RawTransactionInput> buyersBsqInputs,
@@ -1152,6 +1155,7 @@ public class TradeWalletService {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Broadcast tx
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void broadcastTx(Transaction tx, TxBroadcaster.Callback callback) {
@@ -1191,6 +1195,7 @@ public class TradeWalletService {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Private methods
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     // This method might be replace by RawTransactionInput constructor taking the TransactionInput as param.
