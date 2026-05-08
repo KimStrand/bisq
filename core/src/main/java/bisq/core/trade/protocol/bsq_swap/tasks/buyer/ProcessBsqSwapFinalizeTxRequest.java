@@ -97,29 +97,35 @@ public abstract class ProcessBsqSwapFinalizeTxRequest extends BsqSwapTask {
             checkArgument(change == 0 || Restrictions.isAboveDust(Coin.valueOf(change)),
                     "BTC change must be 0 or above dust");
 
-            long sumInputs = sellersRawBtcInputs.stream().mapToLong(input -> input.value).sum();
+            Coin sumInputs = sellersRawBtcInputs.stream()
+                    .map(input -> Coin.valueOf(input.value))
+                    .reduce(Coin.ZERO, Coin::add);
             int sellersTxSize = BsqSwapCalculation.getVBytesSize(sellersRawBtcInputs, change);
-            long sellersBtcInputAmount = BsqSwapCalculation.getSellersBtcInputValue(trade, sellersTxSize, getSellersTradeFee()).getValue();
+            Coin sellersBtcInputAmount = BsqSwapCalculation.getSellersBtcInputValue(trade, sellersTxSize, getSellersTradeFee());
             // It can be that there have been dust change which got added to miner fees, so sumInputs could be a bit larger.
-            checkArgument(sumInputs >= sellersBtcInputAmount,
+            checkArgument(!sumInputs.isLessThan(sellersBtcInputAmount),
                     "Sellers BTC input amount do not match our calculated required BTC input amount");
 
             int buyersTxSize = BsqSwapCalculation.getVBytesSize(buyersBsqInputs, protocolModel.getChange());
             long txFeePerVbyte = trade.getTxFeePerVbyte();
-            long buyersTxFee = BsqSwapCalculation.getAdjustedTxFee(txFeePerVbyte, buyersTxSize, getBuyersTradeFee());
-            long sellersTxFee = BsqSwapCalculation.getAdjustedTxFee(txFeePerVbyte, sellersTxSize, getSellersTradeFee());
-            long buyersBtcPayout = protocolModel.getPayout();
-            long expectedChange = sumInputs - buyersBtcPayout - sellersTxFee - buyersTxFee;
-            boolean isChangeAboveDust = Restrictions.isAboveDust(Coin.valueOf(expectedChange));
-            if (expectedChange != change && isChangeAboveDust) {
+            Coin buyersTxFee = Coin.valueOf(BsqSwapCalculation.getAdjustedTxFee(txFeePerVbyte, buyersTxSize, getBuyersTradeFee()));
+            Coin sellersTxFee = Coin.valueOf(BsqSwapCalculation.getAdjustedTxFee(txFeePerVbyte, sellersTxSize, getSellersTradeFee()));
+            Coin buyersBtcPayout = Coin.valueOf(protocolModel.getPayout());
+            Coin expectedChange = sumInputs
+                    .subtract(buyersBtcPayout)
+                    .subtract(sellersTxFee)
+                    .subtract(buyersTxFee);
+            boolean isChangeAboveDust = Restrictions.isAboveDust(expectedChange);
+            if (expectedChange.value != change && isChangeAboveDust) {
                 log.warn("Sellers BTC change is not as expected. This can happen if fee estimation for buyersBsqInputs did not " +
                         "succeed (e.g. dust change, max. iterations reached,...");
                 log.warn("buyersBtcPayout={}, sumInputs={}, sellersTxFee={}, buyersTxFee={}, expectedChange={}, change={}",
-                        buyersBtcPayout, sumInputs, sellersTxFee, buyersTxFee, expectedChange, change);
+                        buyersBtcPayout.toFriendlyString(), sumInputs.toFriendlyString(), sellersTxFee.toFriendlyString(),
+                        buyersTxFee.toFriendlyString(), expectedChange.toFriendlyString(), change);
             }
             // By enforcing that it must not be larger than expectedChange we guarantee that peer did not cheat on
             // tx fees.
-            checkArgument(change <= expectedChange,
+            checkArgument(change <= expectedChange.value,
                     "Change must be smaller or equal to expectedChange");
 
             NetworkParameters params = btcWalletService.getParams();

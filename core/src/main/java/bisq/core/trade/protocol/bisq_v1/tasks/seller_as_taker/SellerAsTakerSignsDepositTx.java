@@ -66,7 +66,9 @@ public class SellerAsTakerSignsDepositTx extends TradeTask {
                     sellerMultiSigAddressEntry.getPubKey()),
                     "sellerMultiSigPubKey from AddressEntry must match the one from the trade data. trade id =" + id);
 
-            Coin sellerInput = Coin.valueOf(sellerInputs.stream().mapToLong(input -> input.value).sum());
+            Coin sellerInput = sellerInputs.stream()
+                    .map(input -> Coin.valueOf(input.value))
+                    .reduce(Coin.ZERO, Coin::add);
 
             Coin totalFee = trade.getTradeTxFee().multiply(2); // Fee for deposit and payout tx
             Coin multiSigValue = sellerInput.subtract(totalFee);

@@ -69,7 +69,9 @@ public class BuyerAsTakerSignsDepositTx extends TradeTask {
             Optional<AddressEntry> addressEntryOptional = walletService.getAddressEntry(id, AddressEntry.Context.MULTI_SIG);
             checkArgument(addressEntryOptional.isPresent(), "addressEntryOptional must be present");
             AddressEntry buyerMultiSigAddressEntry = addressEntryOptional.get();
-            Coin buyerInput = Coin.valueOf(buyerInputs.stream().mapToLong(input -> input.value).sum());
+            Coin buyerInput = buyerInputs.stream()
+                    .map(input -> Coin.valueOf(input.value))
+                    .reduce(Coin.ZERO, Coin::add);
 
             Coin multiSigValue = buyerInput.subtract(trade.getTradeTxFee().multiply(2));
             processModel.getBtcWalletService().setCoinLockedInMultiSigAddressEntry(buyerMultiSigAddressEntry, multiSigValue.value);
@@ -130,7 +132,9 @@ public class BuyerAsTakerSignsDepositTx extends TradeTask {
                 "tradeAmount must not be less than offerMinAmount");
         checkArgument(!tradeAmount.isGreaterThan(offerAmount),
                 "tradeAmount must not be greater than offerAmount");
-        Coin sellerInput = Coin.valueOf(sellerInputs.stream().mapToLong(input -> input.value).sum());
+        Coin sellerInput = sellerInputs.stream()
+                .map(input -> Coin.valueOf(input.value))
+                .reduce(Coin.ZERO, Coin::add);
         Coin expectedMakerChange = sellerInput.subtract(sellerSecurityDeposit.add(tradeAmount));
         checkArgument(!expectedMakerChange.isNegative(), "expectedMakerChange must not be negative");
         checkArgument(!expectedMakerChange.isGreaterThan(offerAmount.subtract(tradeAmount)),

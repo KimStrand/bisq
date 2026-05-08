@@ -331,7 +331,7 @@ public final class DepositTxValidation {
     private static long getValidatedInputValue(List<RawTransactionInput> rawTransactionInputs,
                                                BtcWalletService walletService,
                                                String peerRole) {
-        long inputValue = 0;
+        Coin inputValue = Coin.ZERO;
         for (int listPos = 0; listPos < rawTransactionInputs.size(); listPos++) {
             RawTransactionInput input = rawTransactionInputs.get(listPos);
             checkNotNull(input, "%s raw transaction input at position %s must not be null", peerRole, listPos);
@@ -348,9 +348,9 @@ public final class DepositTxValidation {
                     peerRole,
                     listPos,
                     input.index);
-            inputValue = Math.addExact(inputValue, input.value);
+            inputValue = inputValue.add(Coin.valueOf(input.value));
         }
-        return inputValue;
+        return inputValue.value;
     }
 
     public static void validateDepositInputs(Trade trade) throws InvalidTxException {
