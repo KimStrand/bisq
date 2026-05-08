@@ -73,12 +73,15 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 
+import static bisq.core.btc.wallet.validation.WitnessValidation.checkCanonicalP2WpkhWitness;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TradeWalletService {
     private static final Logger log = LoggerFactory.getLogger(TradeWalletService.class);
     public static final Coin MIN_DELAYED_PAYOUT_TX_FEE = Coin.valueOf(1000);
+    private static final int P2WPKH_WITNESS_PUSH_COUNT = 2;
+    private static final int COMPRESSED_PUB_KEY_LENGTH = 33;
 
     private final WalletsSetup walletsSetup;
     private final Preferences preferences;
@@ -579,7 +582,7 @@ public class TradeWalletService {
                             " is not native segwit P2WPKH (scriptPubKey=" + scriptPubKey + ")");
                 }
                 if (!TransactionWitness.EMPTY.equals(makersInput.getWitness())) {
-                    input.setWitness(makersInput.getWitness());
+                    input.setWitness(checkCanonicalP2WpkhWitness(makersInput.getWitness(), i));
                 }
                 depositTx.addInput(input);
             }
@@ -645,7 +648,7 @@ public class TradeWalletService {
             txInput.setScriptSig(takersScriptSig);
             TransactionWitness witness = takersInput.getWitness();
             if (!TransactionWitness.EMPTY.equals(witness)) {
-                txInput.setWitness(witness);
+                txInput.setWitness(checkCanonicalP2WpkhWitness(witness, i));
             }
         }
 
@@ -672,7 +675,7 @@ public class TradeWalletService {
 
             if (TransactionWitness.EMPTY.equals(txInput.getWitness()) &&
                     !TransactionWitness.EMPTY.equals(witnessFromBuyer)) {
-                txInput.setWitness(witnessFromBuyer);
+                txInput.setWitness(checkCanonicalP2WpkhWitness(witnessFromBuyer, i));
             }
         }
 
