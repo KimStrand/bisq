@@ -339,6 +339,61 @@ class PayoutTxValidationTest {
                 PARAMS));
     }
 
+    @Test
+    void checkPayoutTxSignatureAcceptsExpectedBuyerSignature() {
+        PayoutFixture fixture = createPayoutFixture(BUYER_PAYOUT_AMOUNT, SELLER_PAYOUT_AMOUNT);
+        byte[] buyerSignature = createDerSignature(fixture.payoutTx, fixture.depositTx, BUYER_MULTI_SIG_KEY);
+
+        assertSame(buyerSignature, PayoutTxValidation.checkPayoutTxSignature(buyerSignature,
+                fixture.depositTx,
+                BUYER_PAYOUT_AMOUNT,
+                SELLER_PAYOUT_AMOUNT,
+                BUYER_PAYOUT_ADDRESS,
+                SELLER_PAYOUT_ADDRESS,
+                BUYER_MULTI_SIG_KEY.getPubKey(),
+                BUYER_MULTI_SIG_KEY.getPubKey(),
+                SELLER_MULTI_SIG_KEY.getPubKey(),
+                PARAMS,
+                "buyerSignature"));
+    }
+
+    @Test
+    void checkPayoutTxSignatureRejectsSignatureFromUnexpectedKey() {
+        PayoutFixture fixture = createPayoutFixture(BUYER_PAYOUT_AMOUNT, SELLER_PAYOUT_AMOUNT);
+        byte[] wrongSignature = createDerSignature(fixture.payoutTx, fixture.depositTx, new ECKey());
+
+        assertThrows(IllegalArgumentException.class, () -> PayoutTxValidation.checkPayoutTxSignature(wrongSignature,
+                fixture.depositTx,
+                BUYER_PAYOUT_AMOUNT,
+                SELLER_PAYOUT_AMOUNT,
+                BUYER_PAYOUT_ADDRESS,
+                SELLER_PAYOUT_ADDRESS,
+                BUYER_MULTI_SIG_KEY.getPubKey(),
+                BUYER_MULTI_SIG_KEY.getPubKey(),
+                SELLER_MULTI_SIG_KEY.getPubKey(),
+                PARAMS,
+                "buyerSignature"));
+    }
+
+    @Test
+    void checkPayoutTxSignatureRejectsSignatureForDifferentPayoutAddress() {
+        PayoutFixture fixture = createPayoutFixture(BUYER_PAYOUT_AMOUNT, SELLER_PAYOUT_AMOUNT);
+        String otherBuyerAddress = SegwitAddress.fromKey(PARAMS, new ECKey()).toString();
+        byte[] buyerSignature = createDerSignature(fixture.payoutTx, fixture.depositTx, BUYER_MULTI_SIG_KEY);
+
+        assertThrows(IllegalArgumentException.class, () -> PayoutTxValidation.checkPayoutTxSignature(buyerSignature,
+                fixture.depositTx,
+                BUYER_PAYOUT_AMOUNT,
+                SELLER_PAYOUT_AMOUNT,
+                otherBuyerAddress,
+                SELLER_PAYOUT_ADDRESS,
+                BUYER_MULTI_SIG_KEY.getPubKey(),
+                BUYER_MULTI_SIG_KEY.getPubKey(),
+                SELLER_MULTI_SIG_KEY.getPubKey(),
+                PARAMS,
+                "buyerSignature"));
+    }
+
     /* --------------------------------------------------------------------- */
     // Payout amount validation
     /* --------------------------------------------------------------------- */
@@ -459,6 +514,17 @@ class PayoutTxValidationTest {
                 sigHashMode,
                 false);
         return new TransactionSignature(key.sign(sigHash), sigHashMode, false);
+    }
+
+    private static byte[] createDerSignature(Transaction payoutTx,
+                                             Transaction depositTx,
+                                             ECKey key) {
+        Sha256Hash sigHash = payoutTx.hashForWitnessSignature(0,
+                REDEEM_SCRIPT,
+                depositTx.getOutput(0).getValue(),
+                Transaction.SigHash.ALL,
+                false);
+        return key.sign(sigHash).encodeToDER();
     }
 
     private static void setP2wshWitness(Transaction payoutTx,

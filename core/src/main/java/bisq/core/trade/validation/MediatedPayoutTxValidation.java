@@ -192,6 +192,54 @@ public final class MediatedPayoutTxValidation {
         return checkedPayoutTx;
     }
 
+    public static byte[] checkPeerMediatedPayoutTxSignature(byte[] txSignature,
+                                                            Trade trade,
+                                                            BtcWalletService btcWalletService) {
+        checkNotNull(trade, "trade must not be null");
+        checkNotNull(btcWalletService, "btcWalletService must not be null");
+
+        ProcessModel processModel = checkNotNull(trade.getProcessModel(), "processModel must not be null");
+        Contract contract = checkNotNull(trade.getContract(), "contract must not be null");
+        TradingPeer tradingPeer = checkNotNull(processModel.getTradePeer(), "tradingPeer must not be null");
+        Transaction depositTx = checkNotNull(trade.getDepositTx(), "trade.getDepositTx() must not be null");
+
+        Coin buyerPayoutAmount = Coin.valueOf(processModel.getBuyerPayoutAmountFromMediation());
+        Coin sellerPayoutAmount = Coin.valueOf(processModel.getSellerPayoutAmountFromMediation());
+        Coin expectedTotalPayoutAmount = getExpectedTotalPayoutAmount(trade);
+        Coin validatedBuyerPayoutAmount = checkMediatedPayoutAmounts(buyerPayoutAmount,
+                sellerPayoutAmount,
+                expectedTotalPayoutAmount);
+
+        boolean isMyRoleBuyer = contract.isMyRoleBuyer(processModel.getPubKeyRing());
+        String myPayoutAddressString = btcWalletService.getOrCreateAddressEntry(trade.getId(),
+                AddressEntry.Context.TRADE_PAYOUT).getAddressString();
+        String peersPayoutAddressString = tradingPeer.getPayoutAddressString();
+        String buyerPayoutAddressString = isMyRoleBuyer ? myPayoutAddressString : peersPayoutAddressString;
+        String sellerPayoutAddressString = isMyRoleBuyer ? peersPayoutAddressString : myPayoutAddressString;
+        String validatedBuyerPayoutAddressString = checkMediatedPayoutAddresses(buyerPayoutAddressString,
+                validatedBuyerPayoutAmount,
+                sellerPayoutAddressString,
+                sellerPayoutAmount,
+                btcWalletService);
+
+        byte[] myMultiSigPubKey = processModel.getMyMultiSigPubKey();
+        byte[] peersMultiSigPubKey = tradingPeer.getMultiSigPubKey();
+        byte[] buyerMultiSigPubKey = isMyRoleBuyer ? myMultiSigPubKey : peersMultiSigPubKey;
+        byte[] sellerMultiSigPubKey = isMyRoleBuyer ? peersMultiSigPubKey : myMultiSigPubKey;
+
+        return PayoutTxValidation.checkPayoutTxSignature(txSignature,
+                btcWalletService,
+                depositTx,
+                validatedBuyerPayoutAmount,
+                sellerPayoutAmount,
+                validatedBuyerPayoutAddressString,
+                sellerPayoutAddressString,
+                peersMultiSigPubKey,
+                buyerMultiSigPubKey,
+                sellerMultiSigPubKey,
+                "mediatedPayoutTxSignature");
+    }
+
 
     /* --------------------------------------------------------------------- */
     // Trade-derived payout amount
