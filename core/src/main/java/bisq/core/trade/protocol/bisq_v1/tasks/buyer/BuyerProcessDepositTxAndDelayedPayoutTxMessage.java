@@ -45,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import static bisq.core.trade.model.bisq_v1.Trade.State.BUYER_RECEIVED_DEPOSIT_TX_PUBLISHED_MSG;
 import static bisq.core.trade.model.bisq_v1.Trade.State.BUYER_SAW_DEPOSIT_TX_IN_NETWORK;
+import static bisq.core.trade.validation.DepositTxValidation.checkCanonicalDepositTxFields;
 import static bisq.core.trade.validation.DepositTxValidation.checkDepositTxMatchesIgnoringWitnessesAndScriptSigs;
 import static bisq.core.trade.validation.TransactionValidation.checkSerializedTransaction;
 import static bisq.core.trade.validation.TransactionValidation.toVerifiedTransaction;
@@ -70,7 +71,8 @@ public class BuyerProcessDepositTxAndDelayedPayoutTxMessage extends TradeTask {
             TradingPeer tradePeer = processModel.getTradePeer();
             PubKeyRing pubKeyRing = processModel.getPubKeyRing();
 
-            Transaction peersDepositTx = toVerifiedTransaction(message.getDepositTx(), btcWalletService);
+            Transaction peersDepositTx = checkCanonicalDepositTxFields(toVerifiedTransaction(message.getDepositTx(),
+                    btcWalletService));
             Transaction myDepositTx = checkNotNull(processModel.getDepositTx(),
                     "processModel.getDepositTx() must not be null");
             checkDepositTxMatchesIgnoringWitnessesAndScriptSigs(peersDepositTx,
