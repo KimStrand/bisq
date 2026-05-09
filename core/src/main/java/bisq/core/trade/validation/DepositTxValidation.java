@@ -21,25 +21,22 @@ import bisq.core.btc.model.RawTransactionInput;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.TradeWalletService;
 import bisq.core.btc.wallet.WalletUtils;
+import bisq.core.btc.wallet.utils.DepositTransactionUtils;
 import bisq.core.offer.Offer;
 import bisq.core.trade.model.bisq_v1.Contract;
 import bisq.core.trade.model.bisq_v1.Trade;
 import bisq.core.trade.validation.exceptions.InvalidTxException;
 
 import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptBuilder;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -101,7 +98,7 @@ public final class DepositTxValidation {
         checkArgument(checkedTradeTxFee.isPositive(), "tradeTxFee must be positive");
 
         checkCanonicalDepositTxShape(checkedPreparedDepositTx,
-                combinedInputs(checkedMakerInputs, checkedTakerInputs),
+                DepositTransactionUtils.combinedInputs(checkedMakerInputs, checkedTakerInputs),
                 checkedParams);
         checkPreparedDepositTxInputOrder(checkedPreparedDepositTx,
                 checkedOffer.isBuyOffer(),
@@ -277,33 +274,14 @@ public final class DepositTxValidation {
         checkTransaction(depositTx);
         checkTransaction(expectedDepositTx);
 
-        byte[] strippedDepositTx = strippedSerializedTransaction(depositTx, params);
-        byte[] strippedExpectedDepositTx = strippedSerializedTransaction(expectedDepositTx, params);
+        byte[] strippedDepositTx = DepositTransactionUtils.toSerializedTransactionWithoutWitnessAndScriptSig(depositTx, params);
+        byte[] strippedExpectedDepositTx = DepositTransactionUtils.toSerializedTransactionWithoutWitnessAndScriptSig(expectedDepositTx, params);
         checkArgument(Arrays.equals(strippedDepositTx, strippedExpectedDepositTx),
                 "Deposit tx does not match expected deposit tx when witness and scriptSig data is stripped. " +
                         "depositTxId=%s, expectedDepositTxId=%s",
                 depositTx.getTxId(),
                 expectedDepositTx.getTxId());
         return depositTx;
-    }
-
-    private static byte[] strippedSerializedTransaction(Transaction transaction, NetworkParameters params) {
-        Transaction strippedTransaction = new Transaction(params, transaction.bitcoinSerialize());
-        strippedTransaction.getInputs().forEach(DepositTxValidation::stripWitnessAndScriptSig);
-        return strippedTransaction.bitcoinSerialize(false);
-    }
-
-    private static void stripWitnessAndScriptSig(TransactionInput input) {
-        input.setScriptSig(ScriptBuilder.createEmpty());
-        input.setWitness(TransactionWitness.EMPTY);
-    }
-
-    private static List<RawTransactionInput> combinedInputs(List<RawTransactionInput> makerInputs,
-                                                            List<RawTransactionInput> takerInputs) {
-        List<RawTransactionInput> inputs = new ArrayList<>(makerInputs.size() + takerInputs.size());
-        inputs.addAll(makerInputs);
-        inputs.addAll(takerInputs);
-        return inputs;
     }
 
     private static void checkPreparedDepositTxInputOrder(Transaction preparedDepositTx,
@@ -359,7 +337,7 @@ public final class DepositTxValidation {
         Coin expectedMakerInputAmount = makerIsBuyer
                 ? buyerSecurityDeposit
                 : sellerSecurityDeposit.add(offerAmount);
-        Coin makerInputAmount = sumInputValues(makerInputs);
+        Coin makerInputAmount = DepositTransactionUtils.sumInputValues(makerInputs);
         checkArgument(makerInputAmount.equals(expectedMakerInputAmount),
                 "Maker input amount mismatch. actual=%s, expected=%s",
                 makerInputAmount,
@@ -368,7 +346,7 @@ public final class DepositTxValidation {
         Coin expectedTakerInputAmount = makerIsBuyer
                 ? sellerSecurityDeposit.add(tradeAmount).add(tradeTxFee.multiply(2))
                 : buyerSecurityDeposit.add(tradeTxFee.multiply(2));
-        Coin takerInputAmount = sumInputValues(takerInputs);
+        Coin takerInputAmount = DepositTransactionUtils.sumInputValues(takerInputs);
         checkArgument(takerInputAmount.equals(expectedTakerInputAmount),
                 "Taker input amount mismatch. actual=%s, expected=%s",
                 takerInputAmount,
@@ -394,20 +372,19 @@ public final class DepositTxValidation {
                 "Prepared deposit tx multisig output amount mismatch. actual=%s, expected=%s",
                 multisigOutput.getValue(),
                 expectedMsOutputAmount);
-        Script expectedMultiSigOutputScript = get2of2MultiSigOutputScript(buyerPubKey, sellerPubKey);
+        Script expectedMultiSigOutputScript = DepositTransactionUtils.get2of2MultiSigOutputScript(buyerPubKey, sellerPubKey);
         checkArgument(multisigOutput.getScriptPubKey().equals(expectedMultiSigOutputScript),
                 "Prepared deposit tx multisig output script does not match expected trade multisig script");
 
         Coin expectedMakerChange = offer.isBuyOffer()
                 ? Coin.ZERO
-                : sumInputValues(makerInputs)
+                : DepositTransactionUtils.sumInputValues(makerInputs)
                 .subtract(sellerSecurityDeposit)
                 .subtract(tradeAmount);
         checkArgument(!expectedMakerChange.isNegative(), "expectedMakerChange must not be negative");
         checkArgument(offer.isBuyOffer() ||
                         !expectedMakerChange.isGreaterThan(offerAmount.subtract(tradeAmount)),
                 "expectedMakerChange must not be greater than remaining offer amount");
-
         int expectedOutputCount = expectedMakerChange.isZero() ? 1 : 2;
         checkArgument(preparedDepositTx.getOutputs().size() == expectedOutputCount,
                 expectedMakerChange.isZero()
@@ -419,7 +396,7 @@ public final class DepositTxValidation {
                     "Maker's preparedDepositTx change output value does not match the expected maker change");
         }
 
-        Coin inputTotal = sumInputValues(makerInputs).add(sumInputValues(takerInputs));
+        Coin inputTotal = DepositTransactionUtils.sumInputValues(makerInputs).add(DepositTransactionUtils.sumInputValues(takerInputs));
         Coin outputTotal = preparedDepositTx.getOutputs().stream()
                 .map(TransactionOutput::getValue)
                 .reduce(Coin.ZERO, Coin::add);
@@ -428,27 +405,6 @@ public final class DepositTxValidation {
                 "Prepared deposit tx fee mismatch. actual=%s, expected=%s",
                 actualTxFee,
                 tradeTxFee);
-    }
-
-    private static Coin sumInputValues(List<RawTransactionInput> inputs) {
-        Coin sum = Coin.ZERO;
-        for (int i = 0; i < inputs.size(); i++) {
-            RawTransactionInput input = checkNotNull(inputs.get(i),
-                    "input at position %s must not be null",
-                    i);
-            checkArgument(input.value > 0,
-                    "input at position %s must have positive value",
-                    i);
-            sum = sum.add(Coin.valueOf(input.value));
-        }
-        return sum;
-    }
-
-    private static Script get2of2MultiSigOutputScript(byte[] buyerPubKey, byte[] sellerPubKey) {
-        ECKey buyerKey = ECKey.fromPublicOnly(buyerPubKey);
-        ECKey sellerKey = ECKey.fromPublicOnly(sellerPubKey);
-        return ScriptBuilder.createP2WSHOutputScript(
-                ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(sellerKey, buyerKey)));
     }
 
 
