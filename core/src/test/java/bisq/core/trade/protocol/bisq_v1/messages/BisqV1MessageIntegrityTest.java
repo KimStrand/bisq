@@ -271,8 +271,10 @@ public class BisqV1MessageIntegrityTest {
         assertThrows(IllegalArgumentException.class, () -> newResponse(args -> args.lockTime = -1));
     }
 
+    // lockTime=0 (BTC nLockTime "no lock") would defeat the delayed-payout arbitration window,
+    // letting the peer broadcast the DPT immediately. Reject at message layer.
     @Test
-    void inputsForDepositTxResponseAcceptsStructurallyValidZeroLockTime() {
+    void inputsForDepositTxResponseRejectsZeroLockTime() {
         assertThrows(IllegalArgumentException.class, () -> newResponse(args -> args.lockTime = 0));
     }
 
@@ -307,7 +309,7 @@ public class BisqV1MessageIntegrityTest {
     }
 
     @Test
-    void inputsForDepositTxRequestAcceptsZeroBurningManSelectionHeightAtMessageLayer() {
+    void inputsForDepositTxRequestRejectsZeroBurningManSelectionHeight() {
         assertThrows(IllegalArgumentException.class, () -> newRequest(args -> args.burningManSelectionHeight = 0));
     }
 
