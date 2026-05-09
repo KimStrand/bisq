@@ -133,6 +133,11 @@ public final class TransactionValidation {
     /* --------------------------------------------------------------------- */
 
     public static byte[] checkDerEncodedEcdsaSignature(byte[] bitcoinSignature) {
+        toVerifiedDerEncodedEcdsaSignature(bitcoinSignature);
+        return bitcoinSignature;
+    }
+
+    public static ECKey.ECDSASignature toVerifiedDerEncodedEcdsaSignature(byte[] bitcoinSignature) {
         checkNonEmptyBytes(bitcoinSignature, "bitcoinSignature");
         try {
             ECKey.ECDSASignature signature = ECKey.ECDSASignature.decodeFromDER(bitcoinSignature);
@@ -144,7 +149,7 @@ public final class TransactionValidation {
                     "bitcoinSignature s value is outside of allowed range");
             checkArgument(signature.isCanonical(),
                     "bitcoinSignature must use low-S canonical encoding");
-            return bitcoinSignature;
+            return signature;
         } catch (SignatureDecodeException e) {
             throw new IllegalArgumentException("Invalid bitcoin signature", e);
         }
