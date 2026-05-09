@@ -111,9 +111,9 @@ public class BurningManDataExportService implements DaoSetupService, DaoStateLis
         log.info("Exported {} Burning Man receiver entries to {}.json", entries.size(), fileName);
     }
 
-    private List<BurningManAddressList.Entry> getEntries(int chainHeight) {
+    private List<BurningManAddressList.Entry> getEntries(int burningManSelectionHeight) {
         Map<String, Double> shareByAddress = new TreeMap<>();
-        burningManService.getActiveBurningManCandidates(chainHeight).stream()
+        burningManService.getActiveBurningManCandidates(burningManSelectionHeight).stream()
                 .filter(candidate -> candidate.getReceiverAddress().isPresent())
                 .forEach(candidate -> {
                     String address = candidate.getReceiverAddress().get();

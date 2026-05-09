@@ -103,7 +103,6 @@ The lists must be non-empty, positive, distinct, and sorted.
 
 After receiving the peer list, each side selects the highest common version. The selected version is persisted in:
 
-- `TradingPeer.supportedBurningManAddressListVersions`
 - `ProcessModel.burningManAddressListVersion`
 - `Contract.burningManAddressListVersion`
 

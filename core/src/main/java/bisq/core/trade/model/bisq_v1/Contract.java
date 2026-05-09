@@ -155,6 +155,9 @@ public final class Contract implements NetworkPayload {
         this.takerPaymentMethodId = takerPaymentMethodId;
         this.burningManAddressListVersion = burningManAddressListVersion;
 
+        checkArgument(burningManAddressListVersion >= 0,
+                "burningManAddressListVersion must not be negative");
+
         // Either makerPaymentMethodId is set, or obtained from offerPayload.
         if (makerPaymentMethodId == null) {
             makerPaymentMethodId = checkNotNull(offerPayload).getPaymentMethodId();
