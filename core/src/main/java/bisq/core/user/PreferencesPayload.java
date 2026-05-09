@@ -255,7 +255,12 @@ public final class PreferencesPayload implements PersistableEnvelope {
         if (proto.hasSelectedPaymentAccountForCreateOffer() && proto.getSelectedPaymentAccountForCreateOffer().hasPaymentMethod())
             paymentAccount = PaymentAccount.fromProto(proto.getSelectedPaymentAccountForCreateOffer(), coreProtoResolver);
 
-        double maxPriceDistanceInPercent = getClampedMaxPriceDistanceInPercent(proto.getMaxPriceDistanceInPercent());
+        double persistedMaxPriceDistanceInPercent = proto.getMaxPriceDistanceInPercent();
+        double maxPriceDistanceInPercent = getClampedMaxPriceDistanceInPercent(persistedMaxPriceDistanceInPercent);
+        if (Double.compare(persistedMaxPriceDistanceInPercent, maxPriceDistanceInPercent) != 0) {
+            log.warn("Persisted maxPriceDistanceInPercent {} is outside the allowed range and was clamped to {}.",
+                    persistedMaxPriceDistanceInPercent, maxPriceDistanceInPercent);
+        }
         return new PreferencesPayload(
                 proto.getUserLanguage(),
                 Country.fromProto(userCountry),

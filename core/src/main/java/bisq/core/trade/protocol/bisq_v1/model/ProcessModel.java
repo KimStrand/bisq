@@ -33,6 +33,7 @@ import bisq.core.payment.PaymentAccount;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.proto.CoreProtoResolver;
 import bisq.core.provider.fee.FeeService;
+import bisq.core.provider.price.PriceFeedService;
 import bisq.core.support.dispute.arbitration.arbitrator.ArbitratorManager;
 import bisq.core.support.dispute.mediation.mediator.MediatorManager;
 import bisq.core.support.dispute.refund.refundagent.RefundAgentManager;
@@ -420,5 +421,9 @@ public class ProcessModel implements ProtocolModel<TradingPeer> {
 
     public FeeService getFeeService() {
         return provider.getFeeService();
+    }
+
+    public PriceFeedService getPriceFeedService() {
+        return provider.getPriceFeedService();
     }
 }
