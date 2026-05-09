@@ -34,6 +34,9 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -70,15 +73,21 @@ public class DelayedPayoutTxReceiverService implements DaoStateListener {
     // We prefer a rather high fee rate to not risk that the DPT gets stuck if required fee rate would
     // spike when opening arbitration.
     private static final long DPT_MIN_TX_FEE_RATE = 10;
+    @VisibleForTesting
+    static final double BM_ADDRESS_LIST_SHARE_RANGE_TOLERANCE = 0.5;
 
     private final DaoStateService daoStateService;
     private final BurningManService burningManService;
+    private final BurningManAddressListService burningManAddressListService;
     private int currentChainHeight;
 
     @Inject
-    public DelayedPayoutTxReceiverService(DaoStateService daoStateService, BurningManService burningManService) {
+    public DelayedPayoutTxReceiverService(DaoStateService daoStateService,
+                                          BurningManService burningManService,
+                                          BurningManAddressListService burningManAddressListService) {
         this.daoStateService = daoStateService;
         this.burningManService = burningManService;
+        this.burningManAddressListService = burningManAddressListService;
 
         daoStateService.addDaoStateListener(this);
         daoStateService.getLastBlock().ifPresent(this::applyBlock);
@@ -116,12 +125,18 @@ public class DelayedPayoutTxReceiverService implements DaoStateListener {
                 SNAPSHOT_SELECTION_GRID_SIZE);
     }
 
-
     public List<Tuple2<Long, String>> getReceivers(int burningManSelectionHeight,
                                                    long inputAmount,
-                                                   long tradeTxFee) {
+                                                   long tradeTxFee,
+                                                   int burningManAddressListVersion) {
         checkArgument(burningManSelectionHeight >= MIN_SNAPSHOT_HEIGHT, "Selection height must be >= " + MIN_SNAPSHOT_HEIGHT);
-        Collection<BurningManCandidate> burningManCandidates = burningManService.getActiveBurningManCandidates(burningManSelectionHeight);
+        Collection<BurningManCandidate> allBurningManCandidates = burningManService.getActiveBurningManCandidates(burningManSelectionHeight);
+
+        Optional<BurningManAddressList> optionalAddressList = getEnforceableAddressList(burningManAddressListVersion);
+        List<BurningManCandidate> burningManCandidates = filterCandidates(allBurningManCandidates, optionalAddressList);
+        String legacyBurningManAddress = optionalAddressList
+                .map(BurningManAddressList::getLegacyBurningManAddress)
+                .orElseGet(() -> burningManService.getLegacyBurningManAddress(burningManSelectionHeight));
 
         // We need to use the same txFeePerVbyte value for both traders.
         // We use the tradeTxFee value which is calculated from the average of taker fee tx size and deposit tx size.
@@ -140,7 +155,7 @@ public class DelayedPayoutTxReceiverService implements DaoStateListener {
         if (burningManCandidates.isEmpty()) {
             // If there are no compensation requests (e.g. at dev testing) we fall back to the legacy BM
             long spendableAmount = getSpendableAmount(1, inputAmount, txFeePerVbyte);
-            return List.of(new Tuple2<>(spendableAmount, burningManService.getLegacyBurningManAddress(burningManSelectionHeight)));
+            return List.of(new Tuple2<>(spendableAmount, legacyBurningManAddress));
         }
 
         long spendableAmount = getSpendableAmount(burningManCandidates.size(), inputAmount, txFeePerVbyte);
@@ -181,10 +196,112 @@ public class DelayedPayoutTxReceiverService implements DaoStateListener {
             // If the available is larger than DPT_MIN_REMAINDER_TO_LEGACY_BM we send it to legacy BM
             // Otherwise we use it as miner fee
             if (available > DPT_MIN_REMAINDER_TO_LEGACY_BM) {
-                receivers.add(new Tuple2<>(available, burningManService.getLegacyBurningManAddress(burningManSelectionHeight)));
+                receivers.add(new Tuple2<>(available, legacyBurningManAddress));
             }
         }
         return receivers;
+    }
+
+    public List<Integer> getSupportedBurningManAddressListVersions() {
+        return burningManAddressListService.getSupportedVersions();
+    }
+
+    public int selectBurningManAddressListVersion(Collection<Integer> peerVersions) {
+        return burningManAddressListService.selectHighestCommonVersion(peerVersions);
+    }
+
+    public void validateDelayedPayoutTxReceivers(List<Tuple2<Long, String>> receivers,
+                                                 int burningManAddressListVersion) {
+        if (burningManAddressListVersion <= 0) {
+            return;
+        }
+
+        Optional<BurningManAddressList> optionalAddressList = getEnforceableAddressList(burningManAddressListVersion);
+        if (optionalAddressList.isEmpty()) {
+            return;
+        }
+
+        BurningManAddressList addressList = optionalAddressList.get();
+        Set<String> allowedAddresses = addressList.getAllowedAddresses();
+        receivers.forEach(receiver -> checkArgument(allowedAddresses.contains(receiver.second),
+                "Delayed payout tx receiver %s is not part of Burning Man address list version %s",
+                receiver.second,
+                burningManAddressListVersion));
+    }
+
+    private Optional<BurningManAddressList> getEnforceableAddressList(int burningManAddressListVersion) {
+        if (burningManAddressListVersion <= 0) {
+            return Optional.empty();
+        }
+
+        BurningManAddressList addressList = burningManAddressListService.getAddressList(burningManAddressListVersion);
+        if (!addressList.isForCurrentNetwork()) {
+            log.warn("Burning Man address list version {} is for network {}, but current network is {}. " +
+                            "Skipping Burning Man address list filtering.",
+                    burningManAddressListVersion,
+                    addressList.getNetwork(),
+                    Config.baseCurrencyNetwork().name());
+            return Optional.empty();
+        }
+        return Optional.of(addressList);
+    }
+
+    private List<BurningManCandidate> filterCandidates(Collection<BurningManCandidate> candidates,
+                                                       Optional<BurningManAddressList> optionalAddressList) {
+        if (optionalAddressList.isEmpty()) {
+            return candidates.stream().collect(Collectors.toList());
+        }
+
+        BurningManAddressList addressList = optionalAddressList.get();
+        Set<String> allowedAddresses = addressList.getAllowedAddresses();
+        Map<String, Double> cappedBurnAmountShareByAddress = addressList.getCappedBurnAmountShareByAddress();
+        return candidates.stream()
+                .filter(candidate -> candidate.getReceiverAddress().isPresent())
+                .filter(candidate -> {
+                    String receiverAddress = candidate.getReceiverAddress().get();
+                    boolean allowed = allowedAddresses.contains(receiverAddress);
+                    if (!allowed) {
+                        log.warn("Skipping Burning Man receiver {} because it is not in address list version {}",
+                                receiverAddress,
+                                addressList.getListVersion());
+                    }
+                    return allowed;
+                })
+                .filter(candidate -> isCappedBurnAmountShareInRange(candidate, addressList, cappedBurnAmountShareByAddress))
+                .collect(Collectors.toList());
+    }
+
+    private boolean isCappedBurnAmountShareInRange(BurningManCandidate candidate,
+                                                   BurningManAddressList addressList,
+                                                   Map<String, Double> cappedBurnAmountShareByAddress) {
+        String receiverAddress = candidate.getReceiverAddress().orElseThrow();
+        Double referenceShare = cappedBurnAmountShareByAddress.get(receiverAddress);
+        if (referenceShare == null && receiverAddress.equals(addressList.getLegacyBurningManAddress())) {
+            return true;
+        }
+
+        if (referenceShare == null) {
+            log.warn("Skipping Burning Man receiver {} because no cappedBurnAmountShare exists in address list version {}",
+                    receiverAddress,
+                    addressList.getListVersion());
+            return false;
+        }
+
+        double cappedBurnAmountShare = candidate.getCappedBurnAmountShare();
+        double lowerBound = Math.max(0, referenceShare * (1 - BM_ADDRESS_LIST_SHARE_RANGE_TOLERANCE));
+        double upperBound = referenceShare * (1 + BM_ADDRESS_LIST_SHARE_RANGE_TOLERANCE);
+        boolean inRange = cappedBurnAmountShare >= lowerBound && cappedBurnAmountShare <= upperBound;
+        if (!inRange) {
+            log.warn("Skipping Burning Man receiver {} because cappedBurnAmountShare {} is outside address list " +
+                            "version {} range [{}, {}] with reference share {}",
+                    receiverAddress,
+                    cappedBurnAmountShare,
+                    addressList.getListVersion(),
+                    lowerBound,
+                    upperBound,
+                    referenceShare);
+        }
+        return inRange;
     }
 
     private static long getSpendableAmount(int numOutputs, long inputAmount, long txFeePerVbyte) {

@@ -17,6 +17,7 @@
 
 package bisq.core.dao;
 
+import bisq.core.dao.burningman.BurningManDataExportService;
 import bisq.core.dao.burningman.accounting.BurningManAccountingService;
 import bisq.core.dao.burningman.accounting.node.AccountingNode;
 import bisq.core.dao.burningman.accounting.node.AccountingNodeProvider;
@@ -85,6 +86,7 @@ public class DaoSetup {
                     ProposalStateMonitoringService proposalStateMonitoringService,
                     BlindVoteStateMonitoringService blindVoteStateMonitoringService,
                     DaoStateSnapshotService daoStateSnapshotService,
+                    BurningManDataExportService burningManDataExportService,
                     BurningManAccountingService burningManAccountingService) {
 
         bsqNode = bsqNodeProvider.getBsqNode();
@@ -114,6 +116,7 @@ public class DaoSetup {
         daoSetupServices.add(proposalStateMonitoringService);
         daoSetupServices.add(blindVoteStateMonitoringService);
         daoSetupServices.add(daoStateSnapshotService);
+        daoSetupServices.add(burningManDataExportService);
         daoSetupServices.add(burningManAccountingService);
 
         daoSetupServices.add(bsqNode);

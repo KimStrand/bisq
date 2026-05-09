@@ -90,6 +90,8 @@ public final class TradingPeer implements TradePeer {
     private byte[] hashOfPaymentAccountPayload;
     @Nullable
     private String paymentMethodId;
+    @Nullable
+    private List<Integer> supportedBurningManAddressListVersions;
 
     public TradingPeer() {
     }
@@ -111,6 +113,8 @@ public final class TradingPeer implements TradePeer {
         Optional.ofNullable(accountAgeWitnessSignature).ifPresent(e -> builder.setAccountAgeWitnessSignature(ByteString.copyFrom(e)));
         Optional.ofNullable(mediatedPayoutTxSignature).ifPresent(e -> builder.setMediatedPayoutTxSignature(ByteString.copyFrom(e)));
         Optional.ofNullable(hashOfPaymentAccountPayload).ifPresent(e -> builder.setHashOfPaymentAccountPayload(ByteString.copyFrom(e)));
+        Optional.ofNullable(supportedBurningManAddressListVersions)
+                .ifPresent(builder::addAllSupportedBurningManAddressListVersions);
         builder.setCurrentDate(currentDate);
         return builder.build();
     }
@@ -139,6 +143,9 @@ public final class TradingPeer implements TradePeer {
             tradingPeer.setCurrentDate(proto.getCurrentDate());
             tradingPeer.setMediatedPayoutTxSignature(ProtoUtil.byteArrayOrNullFromProto(proto.getMediatedPayoutTxSignature()));
             tradingPeer.setHashOfPaymentAccountPayload(ProtoUtil.byteArrayOrNullFromProto(proto.getHashOfPaymentAccountPayload()));
+            tradingPeer.setSupportedBurningManAddressListVersions(proto.getSupportedBurningManAddressListVersionsList().isEmpty() ?
+                    null :
+                    proto.getSupportedBurningManAddressListVersionsList());
             return tradingPeer;
         }
     }

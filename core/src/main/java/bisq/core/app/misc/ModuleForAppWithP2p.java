@@ -83,6 +83,7 @@ public class ModuleForAppWithP2p extends AppModule {
         CoinFormatter btcFormatter = new ImmutableCoinFormatter(config.networkParameters.getMonetaryFormat());
         bind(CoinFormatter.class).annotatedWith(named(FormattingUtils.BTC_FORMATTER_KEY)).toInstance(btcFormatter);
 
+        bind(File.class).annotatedWith(named(APP_DATA_DIR)).toInstance(config.appDataDir);
         bind(File.class).annotatedWith(named(STORAGE_DIR)).toInstance(config.storageDir);
         bind(File.class).annotatedWith(named(KEY_STORAGE_DIR)).toInstance(config.keyStorageDir);
 

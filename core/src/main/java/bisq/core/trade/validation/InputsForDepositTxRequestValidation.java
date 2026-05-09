@@ -75,6 +75,7 @@ public final class InputsForDepositTxRequestValidation {
         PubKeyRing takerPubKeyRing = checkNotNull(request.getTakerPubKeyRing(),
                 "takerPubKeyRing must not be null");
         DelayedPayoutTxValidation.checkBurningManSelectionHeight(request.getBurningManSelectionHeight(), delayedPayoutTxReceiverService);
+        delayedPayoutTxReceiverService.selectBurningManAddressListVersion(request.getSupportedBurningManAddressListVersions());
         TransactionValidation.checkTransactionId(request.getTakerFeeTxId());
         byte[] accountAgeWitnessNonce = checkedOfferId.getBytes(Charsets.UTF_8);
         PublicKey takerSignatureKey = checkNotNull(takerPubKeyRing.getSignaturePubKey(),

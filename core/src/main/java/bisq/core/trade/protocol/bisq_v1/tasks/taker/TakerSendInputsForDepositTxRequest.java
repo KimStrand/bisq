@@ -106,6 +106,8 @@ public class TakerSendInputsForDepositTxRequest extends TradeTask {
 
             int burningManSelectionHeight = processModel.getDelayedPayoutTxReceiverService().getBurningManSelectionHeight();
             processModel.setBurningManSelectionHeight(burningManSelectionHeight);
+            List<Integer> supportedBurningManAddressListVersions =
+                    processModel.getDelayedPayoutTxReceiverService().getSupportedBurningManAddressListVersions();
 
 
             String takersPaymentMethodId = takersPaymentAccountPayload.getPaymentMethodId();
@@ -135,7 +137,8 @@ public class TakerSendInputsForDepositTxRequest extends TradeTask {
                     new Date().getTime(),
                     hashOfTakersPaymentAccountPayload,
                     takersPaymentMethodId,
-                    burningManSelectionHeight);
+                    burningManSelectionHeight,
+                    supportedBurningManAddressListVersions);
             log.info("Send {} with offerId {} and uid {} to peer {}",
                     request.getClass().getSimpleName(), request.getTradeId(),
                     request.getUid(), trade.getTradingPeerNodeAddress());

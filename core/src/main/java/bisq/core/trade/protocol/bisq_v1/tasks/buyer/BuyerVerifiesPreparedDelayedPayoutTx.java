@@ -75,10 +75,15 @@ public class BuyerVerifiesPreparedDelayedPayoutTx extends TradeTask {
             Transaction peersPreparedDelayedPayoutTx = checkNotNull(processModel.getPreparedDelayedPayoutTx());
             checkDelayedPayoutTx(peersPreparedDelayedPayoutTx, trade, btcWalletService);
 
-            List<Tuple2<Long, String>> delayedPayoutTxReceivers = processModel.getDelayedPayoutTxReceiverService().getReceivers(
+            int burningManAddressListVersion = processModel.getBurningManAddressListVersion();
+            List<Tuple2<Long, String>> delayedPayoutTxReceivers = delayedPayoutTxReceiverService.getReceivers(
                     burningManSelectionHeight,
                     inputAmount,
-                    tradeTxFeeAsLong);
+                    tradeTxFeeAsLong,
+                    burningManAddressListVersion);
+            delayedPayoutTxReceiverService.validateDelayedPayoutTxReceivers(
+                    delayedPayoutTxReceivers,
+                    burningManAddressListVersion);
 
             boolean isAltcoin = offer.getPaymentMethod().isBlockchain();
             long lockTime = checkLockTime(trade.getLockTime(), isAltcoin, btcWalletService);

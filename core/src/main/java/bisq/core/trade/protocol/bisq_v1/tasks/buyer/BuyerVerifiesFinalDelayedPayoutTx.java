@@ -18,6 +18,7 @@
 package bisq.core.trade.protocol.bisq_v1.tasks.buyer;
 
 import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.dao.burningman.DelayedPayoutTxReceiverService;
 import bisq.core.trade.model.bisq_v1.Trade;
 import bisq.core.trade.protocol.bisq_v1.tasks.TradeTask;
 
@@ -46,6 +47,7 @@ public class BuyerVerifiesFinalDelayedPayoutTx extends TradeTask {
             runInterceptHook();
 
             BtcWalletService btcWalletService = processModel.getBtcWalletService();
+            DelayedPayoutTxReceiverService delayedPayoutTxReceiverService = processModel.getDelayedPayoutTxReceiverService();
             Transaction finalDelayedPayoutTx = trade.getDelayedPayoutTx();
             checkNotNull(finalDelayedPayoutTx, "trade.getDelayedPayoutTx() must not be null");
 
@@ -62,11 +64,17 @@ public class BuyerVerifiesFinalDelayedPayoutTx extends TradeTask {
             long inputAmount = depositTx.getOutput(0).getValue().value;
             long tradeTxFeeAsLong = trade.getTradeTxFeeAsLong();
             int selectionHeight = processModel.getBurningManSelectionHeight();
-            List<Tuple2<Long, String>> delayedPayoutTxReceivers = processModel.getDelayedPayoutTxReceiverService().getReceivers(
+            int burningManAddressListVersion = processModel.getBurningManAddressListVersion();
+            List<Tuple2<Long, String>> delayedPayoutTxReceivers = delayedPayoutTxReceiverService.getReceivers(
                     selectionHeight,
                     inputAmount,
-                    tradeTxFeeAsLong);
-            log.info("Verify delayedPayoutTx using selectionHeight {} and receivers {}", selectionHeight, delayedPayoutTxReceivers);
+                    tradeTxFeeAsLong,
+                    burningManAddressListVersion);
+            delayedPayoutTxReceiverService.validateDelayedPayoutTxReceivers(
+                    delayedPayoutTxReceivers,
+                    burningManAddressListVersion);
+            log.info("Verify delayedPayoutTx using selectionHeight {}, BM address list version {} and receivers {}",
+                    selectionHeight, burningManAddressListVersion, delayedPayoutTxReceivers);
             long lockTime = trade.getLockTime();
             Transaction buyersDelayedPayoutTx = processModel.getTradeWalletService().createDelayedUnsignedPayoutTx(
                     depositTx,

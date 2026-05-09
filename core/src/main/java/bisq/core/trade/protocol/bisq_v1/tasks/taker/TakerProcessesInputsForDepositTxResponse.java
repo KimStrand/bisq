@@ -19,6 +19,7 @@ package bisq.core.trade.protocol.bisq_v1.tasks.taker;
 
 import bisq.core.btc.model.RawTransactionInput;
 import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.dao.burningman.DelayedPayoutTxReceiverService;
 import bisq.core.offer.Offer;
 import bisq.core.trade.model.bisq_v1.Trade;
 import bisq.core.trade.protocol.bisq_v1.messages.InputsForDepositTxResponse;
@@ -59,11 +60,17 @@ public class TakerProcessesInputsForDepositTxResponse extends TradeTask {
             checkNotNull(response);
 
             BtcWalletService btcWalletService = processModel.getBtcWalletService();
+            DelayedPayoutTxReceiverService delayedPayoutTxReceiverService = processModel.getDelayedPayoutTxReceiverService();
             TradingPeer tradingPeer = processModel.getTradePeer();
             Offer offer = checkNotNull(processModel.getOffer(), "Offer must not be null");
 
             tradingPeer.setHashOfPaymentAccountPayload(response.getHashOfMakersPaymentAccountPayload());
             tradingPeer.setPaymentMethodId(response.getMakersPaymentMethodId());
+            List<Integer> supportedBurningManAddressListVersions = response.getSupportedBurningManAddressListVersions();
+            tradingPeer.setSupportedBurningManAddressListVersions(supportedBurningManAddressListVersions);
+            int burningManAddressListVersion = delayedPayoutTxReceiverService.selectBurningManAddressListVersion(
+                    supportedBurningManAddressListVersions);
+            processModel.setBurningManAddressListVersion(burningManAddressListVersion);
 
             tradingPeer.setAccountId(response.getMakerAccountId());
 

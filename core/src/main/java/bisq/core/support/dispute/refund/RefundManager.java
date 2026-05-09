@@ -332,11 +332,17 @@ public final class RefundManager extends DisputeManager<RefundDisputeList> {
         long inputAmount = depositTx.getOutput(0).getValue().value;
         int selectionHeight = dispute.getBurningManSelectionHeight();
 
+        int burningManAddressListVersion = dispute.getContract().getBurningManAddressListVersion();
         List<Tuple2<Long, String>> delayedPayoutTxReceivers = delayedPayoutTxReceiverService.getReceivers(
                 selectionHeight,
                 inputAmount,
-                dispute.getTradeTxFee());
-        log.info("Verify delayedPayoutTx using selectionHeight {} and receivers {}", selectionHeight, delayedPayoutTxReceivers);
+                dispute.getTradeTxFee(),
+                burningManAddressListVersion);
+        delayedPayoutTxReceiverService.validateDelayedPayoutTxReceivers(
+                delayedPayoutTxReceivers,
+                burningManAddressListVersion);
+        log.info("Verify delayedPayoutTx using selectionHeight {}, BM address list version {} and receivers {}",
+                selectionHeight, burningManAddressListVersion, delayedPayoutTxReceivers);
         checkArgument(delayedPayoutTx.getOutputs().size() == delayedPayoutTxReceivers.size(),
                 "Size of outputs and delayedPayoutTxReceivers must be the same");
 

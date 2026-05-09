@@ -313,6 +313,30 @@ public class BisqV1MessageIntegrityTest {
         assertThrows(IllegalArgumentException.class, () -> newRequest(args -> args.burningManSelectionHeight = 0));
     }
 
+    @Test
+    void inputsForDepositTxRequestRejectsInvalidBurningManAddressListVersions() {
+        assertThrows(IllegalArgumentException.class, () -> newRequest(args ->
+                args.supportedBurningManAddressListVersions = List.of()));
+        assertThrows(IllegalArgumentException.class, () -> newRequest(args ->
+                args.supportedBurningManAddressListVersions = List.of(0)));
+        assertThrows(IllegalArgumentException.class, () -> newRequest(args ->
+                args.supportedBurningManAddressListVersions = List.of(1, 1)));
+        assertThrows(IllegalArgumentException.class, () -> newRequest(args ->
+                args.supportedBurningManAddressListVersions = List.of(2, 1)));
+    }
+
+    @Test
+    void inputsForDepositTxResponseRejectsInvalidBurningManAddressListVersions() {
+        assertThrows(IllegalArgumentException.class, () -> newResponse(args ->
+                args.supportedBurningManAddressListVersions = List.of()));
+        assertThrows(IllegalArgumentException.class, () -> newResponse(args ->
+                args.supportedBurningManAddressListVersions = List.of(0)));
+        assertThrows(IllegalArgumentException.class, () -> newResponse(args ->
+                args.supportedBurningManAddressListVersions = List.of(1, 1)));
+        assertThrows(IllegalArgumentException.class, () -> newResponse(args ->
+                args.supportedBurningManAddressListVersions = List.of(2, 1)));
+    }
+
     private static InputsForDepositTxResponse newResponse(Consumer<ResponseArgs> customizer) {
         ResponseArgs args = new ResponseArgs();
         customizer.accept(args);
@@ -331,7 +355,8 @@ public class BisqV1MessageIntegrityTest {
                 args.currentDate,
                 args.lockTime,
                 args.hashOfMakersPaymentAccountPayload,
-                args.makersPaymentMethodId);
+                args.makersPaymentMethodId,
+                args.supportedBurningManAddressListVersions);
     }
 
     private static InputsForDepositTxRequest newRequest(Consumer<RequestArgs> customizer) {
@@ -363,7 +388,8 @@ public class BisqV1MessageIntegrityTest {
                 args.currentDate,
                 args.hashOfTakersPaymentAccountPayload,
                 args.takersPaymentMethodId,
-                args.burningManSelectionHeight);
+                args.burningManSelectionHeight,
+                args.supportedBurningManAddressListVersions);
     }
 
     private static protobuf.RefreshTradeStateRequest refreshTradeStateRequest(String tradeId, String uid) {
@@ -424,6 +450,7 @@ public class BisqV1MessageIntegrityTest {
         private long lockTime = 1L;
         private byte[] hashOfMakersPaymentAccountPayload = bytes(20);
         private String makersPaymentMethodId = "SEPA";
+        private List<Integer> supportedBurningManAddressListVersions = List.of(1);
     }
 
     private static class RequestArgs {
@@ -454,5 +481,6 @@ public class BisqV1MessageIntegrityTest {
         private byte[] hashOfTakersPaymentAccountPayload = bytes(24);
         private String takersPaymentMethodId = "SEPA";
         private int burningManSelectionHeight = 1;
+        private List<Integer> supportedBurningManAddressListVersions = List.of(1);
     }
 }
