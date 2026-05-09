@@ -80,6 +80,7 @@ public class Config {
     public static final String WALLET_DIR = "walletDir";
     public static final String USE_DEV_PRIVILEGE_KEYS = "useDevPrivilegeKeys";
     public static final String DUMP_STATISTICS = "dumpStatistics";
+    public static final String DUMP_BURNING_MAN_DATA = "dumpBurningManData";
     public static final String IGNORE_DEV_MSG = "ignoreDevMsg";
     public static final String PROVIDERS = "providers";
     public static final String SEED_NODES = "seedNodes";
@@ -189,6 +190,7 @@ public class Config {
     public final boolean useDevModeHeader;
     public final boolean useDevPrivilegeKeys;
     public final boolean dumpStatistics;
+    public final boolean dumpBurningManData;
     public final boolean ignoreDevMsg;
     public final List<String> providers;
     public final List<String> seedNodes;
@@ -426,6 +428,13 @@ public class Config {
 
         ArgumentAcceptingOptionSpec<Boolean> dumpStatisticsOpt =
                 parser.accepts(DUMP_STATISTICS, "If set to true dump trade statistics to a json file in appDataDir")
+                        .withRequiredArg()
+                        .ofType(boolean.class)
+                        .defaultsTo(false);
+
+        ArgumentAcceptingOptionSpec<Boolean> dumpBurningManDataOpt =
+                parser.accepts(DUMP_BURNING_MAN_DATA,
+                                "If set to true dump active Burning Man receiver data to a json file in the data dir")
                         .withRequiredArg()
                         .ofType(boolean.class)
                         .defaultsTo(false);
@@ -848,6 +857,7 @@ public class Config {
             this.useDevModeHeader = options.valueOf(useDevModeHeaderOpt);
             this.useDevPrivilegeKeys = options.valueOf(useDevPrivilegeKeysOpt);
             this.dumpStatistics = options.valueOf(dumpStatisticsOpt);
+            this.dumpBurningManData = options.valueOf(dumpBurningManDataOpt);
             this.ignoreDevMsg = options.valueOf(ignoreDevMsgOpt);
             this.providers = options.valuesOf(providersOpt);
             this.seedNodes = options.valuesOf(seedNodesOpt);
