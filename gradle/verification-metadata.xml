@@ -8,8 +8,216 @@
          <trust file=".*-sources[.]jar" regex="true"/>
       </trusted-artifacts>
    </configuration>
+
    <components>
-      <component group="aopalliance" name="aopalliance" version="1.0">
+
+       <component group="org.codehaus.groovy" name="groovy" version="3.0.13">
+           <artifact name="groovy-3.0.13.jar">
+               <sha256 value="044569c20b1438263470585627da1b2c9722f1fb8d89f94e78c0ff219abd0146"
+                       origin="Manually computed by Alva"/>
+           </artifact>
+           <artifact name="groovy-3.0.13.pom">
+               <sha256 value="9a1cb18a8a01fe42da530f4059cedfd0948d6e8cf3100dae1ee2977c1ea55acc"
+                       origin="Manually computed by Alva"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-ant" version="3.0.13">
+           <artifact name="groovy-ant-3.0.13.pom">
+               <sha256 value="6f07c9dbf501d45c43e40d0b9b09d6e92c4681d9d61f1867636a401febbc9092"
+                       origin="Manually computed by Alva"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-astbuilder" version="3.0.13">
+           <artifact name="groovy-astbuilder-3.0.13.pom">
+               <sha256 value="208aa8d42692a4d19eca96f87c5c62a2c97a284389a5803a33e530bbd6064f09"
+                       origin="Manually computed by Alva"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-console" version="3.0.13">
+           <artifact name="groovy-console-3.0.13.pom">
+               <sha256 value="00e84cdda323531d4212f8c58ade3924ddb1d9b1f3360973a8a240b8032044c3"
+                       origin="Manually computed by Alva"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-datetime" version="3.0.13">
+           <artifact name="groovy-datetime-3.0.13.pom">
+               <sha256 value="89c4216d180d7e928e633c8b415a857f17e28153c7384dbc392fca48044286d3"
+                       origin="Manually computed by Alva"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-dateutil" version="3.0.13">
+           <artifact name="groovy-dateutil-3.0.13.pom">
+               <sha256 value="d7358a271f3eb1aad7c7df80a57362358261932a8db59b7df49d655dd495db7e"
+                       origin="Manually computed by Alva"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-groovydoc" version="3.0.13">
+           <artifact name="groovy-groovydoc-3.0.13.pom">
+               <sha256 value="034846307b8283ac60d33678731992e5eff4508955fd570c6d6fc6e7d4006cee"
+                       origin="Manually computed by Alva"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-json" version="3.0.13">
+           <artifact name="groovy-json-3.0.13.pom">
+               <sha256 value="0ee3f90ab537028eb9bcc1d9e6eb01515bbbb5c03cb16cc72fbda85f5da63952"
+                       origin="Manually computed by Alva"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-nio" version="3.0.13">
+           <artifact name="groovy-nio-3.0.13.pom">
+               <sha256 value="fcef4d828c5d5dd9094492ab21c9b80dfec69062615cdcfca889d730322b62c5"
+                       origin="Manually computed by Alva"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-sql" version="3.0.13">
+           <artifact name="groovy-sql-3.0.13.pom">
+               <sha256 value="3e1f2a2a8c79d2af4c8eb67bff4479894492fab7a5bfd39132c72f4c80657a4b"
+                       origin="Manually computed by Alva"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-templates" version="3.0.13">
+           <artifact name="groovy-templates-3.0.13.pom">
+               <sha256 value="ee7ca0364ca13cddade1a624ab7989dffeedc9d19b4e13e99ec172c78fdec174"
+                       origin="Manually computed by Alva"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-test" version="3.0.13">
+           <artifact name="groovy-test-3.0.13.pom">
+               <sha256 value="55c0eafdb4d09619e2456a940f29d88ff585a4034bfd565912d6109285e04b9d"
+                       origin="Manually computed by Alva"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-xml" version="3.0.13">
+           <artifact name="groovy-xml-3.0.13.pom">
+               <sha256 value="945e632416fa6931d6533042b6b9584f59d827cec1533eab147ddee334a7687e"
+                       origin="Manually computed by Alva"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy" version="3.0.21">
+           <artifact name="groovy-3.0.21.pom">
+               <sha256 value="b8e9e8a5e2462d2fcc146ce41da96079b8931e70db3eab9d59d689863d096b17"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-ant" version="3.0.21">
+           <artifact name="groovy-ant-3.0.21.pom">
+               <sha256 value="844286c0848f8ccce3b80c431be5afa0b5fd3686e5d244311f38c097a3d940df"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-astbuilder" version="3.0.21">
+           <artifact name="groovy-astbuilder-3.0.21.pom">
+               <sha256 value="3109aa1d12318373d46bbb894aa111f04e6fd5846189fbbee6f0691618cc0e29"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-bom" version="3.0.21">
+           <artifact name="groovy-bom-3.0.21.pom">
+               <sha256 value="92cc36affd20f568b5092c0b94ecf585ddeb0a281b6c8ba7256570bb185d6534"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-console" version="3.0.21">
+           <artifact name="groovy-console-3.0.21.pom">
+               <sha256 value="a993859a427dff053e89bc83df4cdc4b9ec47fcf6b1ecf45cbff09fb756af6e6"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-datetime" version="3.0.21">
+           <artifact name="groovy-datetime-3.0.21.pom">
+               <sha256 value="00ecc961fa2a786bd7c89f7aac146ec832a461f57a3c8d8dea811ef8127be69e"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-dateutil" version="3.0.21">
+           <artifact name="groovy-dateutil-3.0.21.pom">
+               <sha256 value="86ad6e1d812c36a46a4322ec166018c7354037a539a472b1826b770efd98bde8"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-groovydoc" version="3.0.21">
+           <artifact name="groovy-groovydoc-3.0.21.pom">
+               <sha256 value="f45d3a42e749b19f3cb81a2f9643828919f0267f9c2535c704e3fac7ea9ae664"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-json" version="3.0.21">
+           <artifact name="groovy-json-3.0.21.pom">
+               <sha256 value="b2717dcbd04f6ccbcd5781e3119280e76ff27166085746c06043dc6243c47b87"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-nio" version="3.0.21">
+           <artifact name="groovy-nio-3.0.21.pom">
+               <sha256 value="089ef3bd205e33b8bbe1c94647f65d8bf6dbb5053184360c27c4af6b915b2968"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-sql" version="3.0.21">
+           <artifact name="groovy-sql-3.0.21.pom">
+               <sha256 value="4d5b1e1911f330d1bbf9a7856a938705e3bd6aaaafe862d5cf9a2a9a15138a32"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-templates" version="3.0.21">
+           <artifact name="groovy-templates-3.0.21.pom">
+               <sha256 value="577bb8cf05867ab121b8bf9bb382891b073530bc9197629f5c69d1b76a9b85aa"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-test" version="3.0.21">
+           <artifact name="groovy-test-3.0.21.pom">
+               <sha256 value="2189b98a019505f40663f3f4dd976f122ccc3e43d4ab13ada30db8ecabf90e14"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-xml" version="3.0.21">
+           <artifact name="groovy-xml-3.0.21.pom">
+               <sha256 value="6f08a898a69bc8d1ca979b54d0e1607bc433efc4699a7f691bc8533f226e39aa"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.mojo" name="animal-sniffer-annotations" version="1.17">
+           <artifact name="animal-sniffer-annotations-1.17.jar">
+               <sha256 value="92654f493ecfec52082e76354f0ebf87648dc3d5cec2e3c3cdb947c016747a53"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="animal-sniffer-annotations-1.17.pom">
+               <sha256 value="e956ab5d2eb48fabae12300d0cd2d3294d4a2a41abc2068c23cb4d60ad76cbe5"
+                       origin="Generated by Gradle"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.mojo" name="animal-sniffer-parent" version="1.17">
+           <artifact name="animal-sniffer-parent-1.17.pom">
+               <sha256 value="18a03df16e2a184c582db7b125633c15fb7714027a84c1b532d72933dc08b81f"
+                       origin="Generated by Gradle"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.mojo" name="mojo-parent" version="40">
+           <artifact name="mojo-parent-40.pom">
+               <sha256 value="fc648dcdc404f8bf66e0583914ecf980176618201227bea114fae85043cb755e"
+                       origin="Generated by Gradle"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.plexus" name="plexus" version="4.0">
+           <artifact name="plexus-4.0.pom">
+               <sha256 value="0a1b692d7fcc90d6a45dae2e50f4660d48f7a44504f174aa60ef34fbe1327f6a"
+                       origin="Generated by Gradle"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.plexus" name="plexus-utils" version="3.0.24">
+           <artifact name="plexus-utils-3.0.24.jar">
+               <sha256 value="83ee748b12d06afb0ad4050a591132b3e8025fbb1990f1ed002e8b73293e69b4"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="plexus-utils-3.0.24.pom">
+               <sha256 value="11067f6a75fded12bcdc8daf7a66ddd942ce289c3daf88a3fe0f8b12858a2ee6"
+                       origin="Generated by Gradle"/>
+           </artifact>
+       </component>
+
+
+       <component group="aopalliance" name="aopalliance" version="1.0">
          <artifact name="aopalliance-1.0.jar">
             <sha256 value="0addec670fedcd3f113c5c8091d783280d23f75e3acb841b61a9cdb079376a08" origin="Generated by Gradle"/>
          </artifact>
@@ -3138,6 +3346,16 @@
             <sha256 value="5213af2916bb2690be871917d82a0f9c2ba1e88b796a59343fc03df8ae138716" origin="Generated by Gradle"/>
          </artifact>
       </component>
+       <component group="org.javamodularity" name="moduleplugin" version="1.8.10">
+           <artifact name="moduleplugin-1.8.10.jar">
+               <sha256 value="5253fe7e7640b8cd9dc624658a53d187e3fb5582e58e0f49f9b87aeaf531edb0"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="moduleplugin-1.8.10.pom">
+               <sha256 value="6df2fdf85b9e5a2fbfcba0a00ffac044f3485640d84f97e98008fb30a3e9c59d"
+                       origin="Generated by Gradle"/>
+           </artifact>
+       </component>
       <component group="org.javamodularity" name="moduleplugin" version="1.8.2">
          <artifact name="moduleplugin-1.8.2.jar">
             <sha256 value="f079128b30745db5392c555cf186a97b7face40471ddfce1a0930d1a0400d696" origin="Generated by Gradle"/>
@@ -4068,6 +4286,12 @@
             <sha256 value="18d9784212d04475bfe4a5f4038e0fc78146f9a721eb6b9a52955d3b4b20d3ca" origin="Generated by Gradle"/>
          </artifact>
       </component>
+       <component group="org.openjfx" name="javafx" version="21.0.6">
+           <artifact name="javafx-21.0.6.pom">
+               <sha256 value="501c873e740b5ab63da802abf5ffe9d41efa341f2372d04ee15f76b583aeb497"
+                       origin="Generated by Gradle"/>
+           </artifact>
+       </component>
       <component group="org.openjfx" name="javafx-base" version="16">
          <artifact name="javafx-base-16-linux.jar">
             <sha256 value="b825e220d685ecbd77e76f2cd52793132e6c9a10e23ee3361673cb29033413c0" origin="Generated by Gradle"/>
@@ -4084,6 +4308,32 @@
          <artifact name="javafx-base-16.pom">
             <sha256 value="09fe0f2eda8b6f3d4c55b28e32b6b7b2782847add96a686d3048753baa781901" origin="Generated by Gradle"/>
          </artifact>
+      </component>
+       <component group="org.openjfx" name="javafx-base" version="21.0.6">
+           <artifact name="javafx-base-21.0.6-linux.jar">
+               <sha256 value="6477356238dd9aa77cf3dae4481269dab97582008d2ccabd90d88b5045e7c4c0"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-base-21.0.6-mac-aarch64.jar">
+               <sha256 value="cd8b4f765343a78edaa53a05dd07fbd06b817fbaa8e8388829d81dcaa644ed2a"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-base-21.0.6-mac.jar">
+               <sha256 value="a98a29acb6c8eedd6fb9eb43bc1658dacbd57e7b1ef702d946975a045f48ad85"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-base-21.0.6-win.jar">
+               <sha256 value="618a1149089d1459cc569cc10eac05c5589a532473d09f35c1e9ea2c5b6de50e"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-base-21.0.6.jar">
+               <sha256 value="9a87f4251873a273a7c5a9e91ed9b63ff4ffbbf28b8a9f57e983208410fc3462"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-base-21.0.6.pom">
+               <sha256 value="5869e12928cd8d09da5f5646f2205fb11e324a3b3564162ce0fe2b51614af2e3"
+                       origin="Generated by Gradle"/>
+           </artifact>
       </component>
       <component group="org.openjfx" name="javafx-controls" version="16">
          <artifact name="javafx-controls-16-linux.jar">
@@ -4102,6 +4352,32 @@
             <sha256 value="1769aa2547256cfe316387d78375056587283b63f0614fa6e9b59231ef90edd0" origin="Generated by Gradle"/>
          </artifact>
       </component>
+       <component group="org.openjfx" name="javafx-controls" version="21.0.6">
+           <artifact name="javafx-controls-21.0.6-linux.jar">
+               <sha256 value="79c550676b9d6893ecbb0a017ace57f679ddf0698fa0e2cfdca1ef0005769123"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-controls-21.0.6-mac-aarch64.jar">
+               <sha256 value="00ed3f55bdbf6b1787bc39758bafccb266eea8115cdd511164566b27c2e1acc4"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-controls-21.0.6-mac.jar">
+               <sha256 value="e397023ed27837e5533e2faa6073ba60077983546431b0f8fe7419486cf343b6"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-controls-21.0.6-win.jar">
+               <sha256 value="df877b7d330abeed47f2cae466a54f338cccf9d81bf29c464f5a948ee49e4f72"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-controls-21.0.6.jar">
+               <sha256 value="3a8a5d956dedc148556d854a328ca6515ee4320bb3c1d9e626a001e7a0990a96"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-controls-21.0.6.pom">
+               <sha256 value="466fa9421fd5fe7fd255c94dda07bf9cc322663e98d8c9b64a11aa7fc3ef4127"
+                       origin="Generated by Gradle"/>
+           </artifact>
+       </component>
       <component group="org.openjfx" name="javafx-fxml" version="16">
          <artifact name="javafx-fxml-16-linux.jar">
             <sha256 value="65249a5a47357283f21c5fa85b2e91255f7e5b0b86a2ec3dd2cc220541d7ae0b" origin="Generated by Gradle"/>
@@ -4116,6 +4392,28 @@
             <sha256 value="7b3b1a717f5d3a67f1dadcc880de3677a25a5d4e8004b75c61cec8b044b013cd" origin="Generated by Gradle"/>
          </artifact>
       </component>
+       <component group="org.openjfx" name="javafx-fxml" version="21.0.6">
+           <artifact name="javafx-fxml-21.0.6-linux.jar">
+               <sha256 value="452318e55c268a54f45709d212a50f0930d0bb3828b834b775f4be87700a9261"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-fxml-21.0.6-mac-aarch64.jar">
+               <sha256 value="b31bd1b395ed1299a9308f6747cddce1ccab92057c49bc15c56713de8f7c805f"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-fxml-21.0.6-mac.jar">
+               <sha256 value="1020fdc24788138cd3da8c403e3f59d463a899cac61c98dc65c3bd14020a924b"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-fxml-21.0.6-win.jar">
+               <sha256 value="79f14f5aef320cb5afd3793703c0e079f3641f65ca3f06f4b84251a51fc356af"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-fxml-21.0.6.pom">
+               <sha256 value="58530b2a255058982ca3a10f28ce1567f50283e667ef255951be60a665ce4f62"
+                       origin="Generated by Gradle"/>
+           </artifact>
+       </component>
       <component group="org.openjfx" name="javafx-graphics" version="16">
          <artifact name="javafx-graphics-16-linux.jar">
             <sha256 value="a2f5e1ea5aeb3ae57e63a1c853a4edf1e38b6f2fe76997ab864ad8b3c54bed53" origin="Generated by Gradle"/>
@@ -4133,12 +4431,48 @@
             <sha256 value="b8fb99688eccae62be724bd72b34dfff1f8e1cddbe44649f5ef9a082e520c47e" origin="Generated by Gradle"/>
          </artifact>
       </component>
+       <component group="org.openjfx" name="javafx-graphics" version="21.0.6">
+           <artifact name="javafx-graphics-21.0.6-linux.jar">
+               <sha256 value="8961089f35014d104d20a246f534cf82cfb377d07630ac3cdb742102082215e3"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-graphics-21.0.6-mac-aarch64.jar">
+               <sha256 value="c283f3244a69a7fc6cd24bfa10837c649f0ff02c4a9fb22eafdbd3aa80a157ab"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-graphics-21.0.6-mac.jar">
+               <sha256 value="b7677cd86a347a05647b7fc557dc3dc5078faf469e9b5cf34e863c7029f98753"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-graphics-21.0.6-win.jar">
+               <sha256 value="4b0981384551f39a0ca9679672f2abbedd9d0966763205534fca230b1cf314a5"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-graphics-21.0.6.jar">
+               <sha256 value="d0562705a63b7dc7802840a3ae067cce351c62c6a57d2a678f7c67a6609d55bd"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-graphics-21.0.6.pom">
+               <sha256 value="cedd4e31609e6a362f5f8cb4bcb481f7f79fc00f3c53193875e24389ef2a7aa6"
+                       origin="Generated by Gradle"/>
+           </artifact>
+       </component>
       <component group="org.openjfx" name="javafx-plugin" version="0.0.10">
          <artifact name="javafx-plugin-0.0.10.jar">
             <sha256 value="d03e96d9e27a7461bce6c05b537d36c22dc84ecb94d5c05d5ee967577a203ed5" origin="Generated by Gradle"/>
          </artifact>
          <artifact name="javafx-plugin-0.0.10.pom">
             <sha256 value="b3d28522fe9423202d79d1cf87c4afa18ebdd44ea2e9a9dbcf5faf289d65318b" origin="Generated by Gradle"/>
+         </artifact>
+      </component>
+       <component group="org.openjfx" name="javafx-plugin" version="0.0.13">
+           <artifact name="javafx-plugin-0.0.13.jar">
+               <sha256 value="8be002a8bc723e1fcdb87b1e740d81046977ef103b698ecc963460d914744b22"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="javafx-plugin-0.0.13.pom">
+               <sha256 value="ff7e192f259235e1345d5fa656e1a038113bf837ac09cb13366d4437c908af7f"
+                       origin="Generated by Gradle"/>
          </artifact>
       </component>
       <component group="org.opentest4j" name="opentest4j" version="1.2.0">

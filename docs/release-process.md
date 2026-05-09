@@ -69,11 +69,11 @@ Use VirtualBox > 6.1 with following configuration:
 #### For every OS
 
 * Install the latest security updates
-* Install/Upgrade to the latest Java 17 SDK
-    * macOS (brew option): `brew upgrade zulu17`
-    * Ubuntu (brew option): `sudo apt-get install zulu17-jdk`
+* Install/Upgrade to the latest Java 21 SDK
+    * macOS (brew option): `brew upgrade zulu21`
+    * Ubuntu (brew option): `sudo apt-get install zulu21-jdk`
     * Windows: Download the latest version
-      from https://www.azul.com/downloads/?version=java-17-lts&os=windows&architecture=x86-64-bit&package=jdk
+      from https://www.azul.com/downloads/?version=java-21-lts&os=windows&architecture=x86-64-bit&package=jdk
 
 #### For Windows
 

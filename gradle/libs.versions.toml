@@ -39,11 +39,11 @@ junit-jupiter = { strictly = '5.7.0' }
 
 kotlin = { strictly = '1.3.41' }
 logback = { strictly = '1.1.11' }
-lombok = { strictly = '1.18.22' }
+lombok = { strictly = '1.18.34' }
 mockito = { strictly = '4.0.0' }
 natpryce-make-it-easy = { strictly = '4.0.1' }
 netlayer = { strictly = '2b459dc' }
-openjfx-javafx-plugin = { strictly = '0.0.10' }
+openjfx-javafx-plugin = { strictly = '0.0.13' }
 protobuf = { strictly = '3.19.1' }
 pushy = { strictly = '0.13.10' }
 qrgen = { strictly = '1.3' }
