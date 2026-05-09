@@ -260,6 +260,17 @@ public final class Preferences implements PersistedDataHost, BridgeAddressProvid
         cryptoCurrenciesAsObservable.addListener(this::updateTradeCurrencies);
 
         blockchainExplorerSelection = new BlockchainExplorerSelection(this, prefPayload, persistenceManager);
+
+        // Wire the static lookup at construction time, not from setupPreferences().
+        // setupPreferences() only runs from the async readPersisted callback, and
+        // BisqExecutable.onApplicationLaunched skips readAllPersisted entirely when
+        // hasDowngraded is true. In those windows the static field would otherwise
+        // stay null, and any startup Popup carrying a dontShowAgainId
+        // (security-recommendation, locked-up-funds, localhost, etc.) would NPE on
+        // Overlay.show. prefPayload is default-constructed at field-init time, so
+        // showAgain operates against an empty map (returning true, the same as for
+        // an unseen key) until the persisted payload arrives and replaces it.
+        DontShowAgainLookup.setPreferences(this);
     }
 
     @Override
@@ -334,10 +345,6 @@ public final class Preferences implements PersistedDataHost, BridgeAddressProvid
 
     private void setupPreferences() {
         persistenceManager.initialize(prefPayload, PersistenceManager.Source.PRIVATE);
-
-        // We don't want to pass Preferences to all popups where the don't show again checkbox is used, so we use
-        // that static lookup class to avoid static access to the Preferences directly.
-        DontShowAgainLookup.setPreferences(this);
 
         // set all properties
         useAnimationsProperty.set(prefPayload.isUseAnimations());
