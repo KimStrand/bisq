@@ -98,6 +98,11 @@ public abstract class ProcessTxInputsMessage extends BsqSwapTask {
             // sellersBsqPayoutAmount is not related to peers inputs but we need it in the following steps so we
             // calculate and set it here.
             Coin sellersBsqPayoutAmount = BsqSwapCalculation.getSellersBsqPayoutValue(trade, getSellersTradeFee());
+            // Guard: non-positive or sub-dust payout produces an unbroadcastable / non-standard tx.
+            // Reject up front rather than commit BSQ inputs in the publish step for a tx miners will drop.
+            checkArgument(Restrictions.isAboveDust(sellersBsqPayoutAmount),
+                    "Sellers BSQ payout is non-positive or below dust: %s. Trade-fee likely exceeds BSQ trade amount.",
+                    sellersBsqPayoutAmount.getValue());
             protocolModel.setPayout(sellersBsqPayoutAmount.getValue());
 
             Coin expectedChange = sumInputs
