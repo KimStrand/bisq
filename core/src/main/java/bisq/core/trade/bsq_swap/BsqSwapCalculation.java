@@ -24,6 +24,7 @@ import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.Restrictions;
 import bisq.core.monetary.Volume;
 import bisq.core.trade.model.bsq_swap.BsqSwapTrade;
+import bisq.core.util.Validator;
 
 import bisq.common.util.MathUtils;
 import bisq.common.util.Tuple2;
@@ -232,10 +233,19 @@ public class BsqSwapCalculation {
     }
 
     public static long getAdjustedTxFee(long txFeePerVbyte, int vBytes, long tradeFee) {
-        return Coin.valueOf(txFeePerVbyte)
+        Validator.checkIsPositive(txFeePerVbyte, "txFeePerVbyte");
+        Validator.checkIsPositive(vBytes, "vBytes");
+        Validator.checkIsPositive(tradeFee, "tradeFee");
+        Coin txFeePerVbyteAsCoin = Coin.valueOf(txFeePerVbyte);
+        Coin tradeFeeAsCoin = Coin.valueOf(tradeFee);
+        Validator.checkIsPositive(txFeePerVbyteAsCoin, "txFeePerVbyte");
+        Validator.checkIsPositive(tradeFeeAsCoin, "vBytes");
+
+        Coin adjustedTxFee = txFeePerVbyteAsCoin
                 .multiply(vBytes)
-                .subtract(Coin.valueOf(tradeFee))
-                .value;
+                .subtract(tradeFeeAsCoin);
+        Validator.checkIsPositive(adjustedTxFee, "adjustedTxFee");
+        return adjustedTxFee.value;
     }
 
     // Convert BTC trade amount to BSQ amount

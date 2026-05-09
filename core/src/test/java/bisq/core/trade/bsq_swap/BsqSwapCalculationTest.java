@@ -43,7 +43,7 @@ public class BsqSwapCalculationTest {
                 () -> BsqSwapCalculation.getSellersBtcInputValue(Long.MAX_VALUE, 1));
         assertThrows(ArithmeticException.class,
                 () -> BsqSwapCalculation.getSellersBsqPayoutValue(Long.MIN_VALUE, 1));
-        assertThrows(ArithmeticException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> BsqSwapCalculation.getAdjustedTxFee(Long.MAX_VALUE, 2, 0));
     }
 }
