@@ -133,7 +133,7 @@ public class BuyerSendsShareBuyerPaymentAccountMessage extends SendMailboxMessag
             timer.stop();
         }
         if (listener != null) {
-            processModel.getPaymentStartedMessageStateProperty().removeListener(listener);
+            processModel.getDepositTxMessageStateProperty().removeListener(listener);
         }
     }
 
