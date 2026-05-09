@@ -149,7 +149,7 @@ public class SellerSendsDepositTxAndDelayedPayoutTxMessage extends SendMailboxMe
             timer.stop();
         }
         if (listener != null) {
-            processModel.getPaymentStartedMessageStateProperty().removeListener(listener);
+            processModel.getDepositTxMessageStateProperty().removeListener(listener);
         }
     }
 
