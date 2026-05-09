@@ -62,12 +62,8 @@ A release manager can export the current BM data from a synced mainnet app with:
 --dumpBurningManData=true
 ```
 
-The file is written to the app data directory, not into the database storage directory. By default the exporter uses the
-latest bundled BM list version plus one. A specific version can be supplied with:
-
-```text
---dumpBurningManDataVersion=<version>
-```
+The file is written to the app data directory, not into the database storage directory. The exporter uses the latest
+bundled BM list version plus one.
 
 Release process:
 

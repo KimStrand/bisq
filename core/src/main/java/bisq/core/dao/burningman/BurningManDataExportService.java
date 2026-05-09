@@ -48,7 +48,6 @@ public class BurningManDataExportService implements DaoSetupService, DaoStateLis
     private final BurningManService burningManService;
     private final BurningManAddressListService burningManAddressListService;
     private final boolean dumpBurningManData;
-    private final int dumpBurningManDataVersion;
     private final JsonFileManager jsonFileManager;
 
     @Inject
@@ -56,13 +55,11 @@ public class BurningManDataExportService implements DaoSetupService, DaoStateLis
                                        BurningManService burningManService,
                                        BurningManAddressListService burningManAddressListService,
                                        @Named(Config.APP_DATA_DIR) File appDataDir,
-                                       @Named(Config.DUMP_BURNING_MAN_DATA) boolean dumpBurningManData,
-                                       @Named(Config.DUMP_BURNING_MAN_DATA_VERSION) int dumpBurningManDataVersion) {
+                                       @Named(Config.DUMP_BURNING_MAN_DATA) boolean dumpBurningManData) {
         this.daoStateService = daoStateService;
         this.burningManService = burningManService;
         this.burningManAddressListService = burningManAddressListService;
         this.dumpBurningManData = dumpBurningManData;
-        this.dumpBurningManDataVersion = dumpBurningManDataVersion;
         jsonFileManager = new JsonFileManager(appDataDir);
     }
 
@@ -94,9 +91,7 @@ public class BurningManDataExportService implements DaoSetupService, DaoStateLis
                 chainHeight,
                 DelayedPayoutTxReceiverService.SNAPSHOT_SELECTION_GRID_SIZE,
                 DelayedPayoutTxReceiverService.MIN_SNAPSHOT_HEIGHT);
-        int listVersion = dumpBurningManDataVersion > 0 ?
-                dumpBurningManDataVersion :
-                burningManAddressListService.getNextVersion();
+        int listVersion = burningManAddressListService.getNextVersion();
         List<BurningManAddressList.Entry> entries = getEntries(burningManSelectionHeight);
         BurningManAddressList burningManAddressList = new BurningManAddressList(BurningManAddressList.SCHEMA_VERSION,
                 listVersion,

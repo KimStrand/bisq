@@ -81,7 +81,6 @@ public class Config {
     public static final String USE_DEV_PRIVILEGE_KEYS = "useDevPrivilegeKeys";
     public static final String DUMP_STATISTICS = "dumpStatistics";
     public static final String DUMP_BURNING_MAN_DATA = "dumpBurningManData";
-    public static final String DUMP_BURNING_MAN_DATA_VERSION = "dumpBurningManDataVersion";
     public static final String IGNORE_DEV_MSG = "ignoreDevMsg";
     public static final String PROVIDERS = "providers";
     public static final String SEED_NODES = "seedNodes";
@@ -192,7 +191,6 @@ public class Config {
     public final boolean useDevPrivilegeKeys;
     public final boolean dumpStatistics;
     public final boolean dumpBurningManData;
-    public final int dumpBurningManDataVersion;
     public final boolean ignoreDevMsg;
     public final List<String> providers;
     public final List<String> seedNodes;
@@ -440,14 +438,6 @@ public class Config {
                         .withRequiredArg()
                         .ofType(boolean.class)
                         .defaultsTo(false);
-
-        ArgumentAcceptingOptionSpec<Integer> dumpBurningManDataVersionOpt =
-                parser.accepts(DUMP_BURNING_MAN_DATA_VERSION,
-                                "Version tag used when dumping Burning Man receiver data. " +
-                                        "If unset, latest bundled version + 1 is used.")
-                        .withRequiredArg()
-                        .ofType(int.class)
-                        .defaultsTo(0);
 
         ArgumentAcceptingOptionSpec<Boolean> ignoreDevMsgOpt =
                 parser.accepts(IGNORE_DEV_MSG, "If set to true all signed " +
@@ -868,7 +858,6 @@ public class Config {
             this.useDevPrivilegeKeys = options.valueOf(useDevPrivilegeKeysOpt);
             this.dumpStatistics = options.valueOf(dumpStatisticsOpt);
             this.dumpBurningManData = options.valueOf(dumpBurningManDataOpt);
-            this.dumpBurningManDataVersion = options.valueOf(dumpBurningManDataVersionOpt);
             this.ignoreDevMsg = options.valueOf(ignoreDevMsgOpt);
             this.providers = options.valuesOf(providersOpt);
             this.seedNodes = options.valuesOf(seedNodesOpt);

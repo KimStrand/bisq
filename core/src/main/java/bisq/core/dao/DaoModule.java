@@ -226,7 +226,6 @@ public class DaoModule extends AppModule {
         bindConstant().annotatedWith(named(Config.RPC_BLOCK_NOTIFICATION_HOST)).to(config.rpcBlockNotificationHost);
         bindConstant().annotatedWith(named(Config.DUMP_BLOCKCHAIN_DATA)).to(config.dumpBlockchainData);
         bindConstant().annotatedWith(named(Config.DUMP_BURNING_MAN_DATA)).to(config.dumpBurningManData);
-        bindConstant().annotatedWith(named(Config.DUMP_BURNING_MAN_DATA_VERSION)).to(config.dumpBurningManDataVersion);
         bindConstant().annotatedWith(named(Config.FULL_DAO_NODE)).to(config.fullDaoNode);
         bindConstant().annotatedWith(named(Config.IS_BM_FULL_NODE)).to(config.isBmFullNode);
         bindConstant().annotatedWith(named(Config.BM_ORACLE_NODE_PUB_KEY)).to(config.bmOracleNodePubKey);
