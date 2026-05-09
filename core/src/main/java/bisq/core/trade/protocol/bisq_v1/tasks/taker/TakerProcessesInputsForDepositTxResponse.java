@@ -31,6 +31,8 @@ import bisq.core.trade.validation.TransactionValidation;
 import bisq.common.crypto.PubKeyRing;
 import bisq.common.taskrunner.TaskRunner;
 
+import org.bitcoinj.core.Transaction;
+
 import java.security.PublicKey;
 
 import java.util.List;
@@ -83,6 +85,16 @@ public class TakerProcessesInputsForDepositTxResponse extends TradeTask {
 
             // We expect the prepared deposit transaction to be unsigned
             byte[] preparedDepositTx = DepositTxValidation.checkTransactionIsUnsigned(response.getPreparedDepositTx(), btcWalletService);
+            Transaction parsedPreparedDepositTx = TransactionValidation.toVerifiedTransaction(preparedDepositTx, btcWalletService);
+            DepositTxValidation.checkMakersPreparedDepositTx(parsedPreparedDepositTx,
+                    offer,
+                    checkNotNull(trade.getAmount(), "trade.getAmount() must not be null"),
+                    trade.getTradeTxFee(),
+                    makerRawTransactionInputs,
+                    checkNotNull(processModel.getRawTransactionInputs(), "takerRawTransactionInputs must not be null"),
+                    makerMultiSigPubKey,
+                    checkNotNull(processModel.getMyMultiSigPubKey(), "processModel.getMyMultiSigPubKey() must not be null"),
+                    btcWalletService.getParams());
             processModel.setPreparedDepositTx(preparedDepositTx);
 
             boolean isAltcoin = offer.getPaymentMethod().isBlockchain();

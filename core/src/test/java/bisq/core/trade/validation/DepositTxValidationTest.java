@@ -67,6 +67,8 @@ class DepositTxValidationTest {
             "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789";
     private static final String OTHER_TX_ID =
             "1111111111111111111111111111111111111111111111111111111111111111";
+    private static final ECKey BUYER_MULTI_SIG_KEY = new ECKey();
+    private static final ECKey SELLER_MULTI_SIG_KEY = new ECKey();
 
     private static final String MAKER_ROLE = "Maker";
     private static final String TAKER_ROLE = "Taker";
@@ -207,6 +209,220 @@ class DepositTxValidationTest {
         assertThrows(NullPointerException.class,
                 () -> DepositTxValidation.checkCanonicalDepositTxShape(canonicalTx(),
                         Collections.singletonList(null),
+                        PARAMS));
+    }
+
+    /* --------------------------------------------------------------------- */
+    // Maker prepared deposit tx
+    /* --------------------------------------------------------------------- */
+
+    @Test
+    void checkMakersPreparedDepositTxAcceptsBuyerAsMakerTx() {
+        Offer offer = offer(true,
+                Coin.valueOf(10_000),
+                Coin.valueOf(20_000),
+                Coin.valueOf(10_000),
+                Coin.valueOf(150_000));
+        Coin tradeAmount = Coin.valueOf(100_000);
+        Coin tradeTxFee = Coin.valueOf(5_000);
+        List<RawTransactionInput> makerInputs = Collections.singletonList(rawInput(parentTxWithP2wpkhOutput(10_000)));
+        List<RawTransactionInput> takerInputs = Collections.singletonList(rawInput(parentTxWithP2wpkhOutput(130_000)));
+        Transaction preparedDepositTx = preparedDepositTx(
+                orderedInputs(makerInputs, takerInputs, true),
+                BUYER_MULTI_SIG_KEY.getPubKey(),
+                SELLER_MULTI_SIG_KEY.getPubKey(),
+                135_000);
+
+        assertSame(preparedDepositTx,
+                DepositTxValidation.checkMakersPreparedDepositTx(preparedDepositTx,
+                        offer,
+                        tradeAmount,
+                        tradeTxFee,
+                        makerInputs,
+                        takerInputs,
+                        BUYER_MULTI_SIG_KEY.getPubKey(),
+                        SELLER_MULTI_SIG_KEY.getPubKey(),
+                        PARAMS));
+    }
+
+    @Test
+    void checkMakersPreparedDepositTxAcceptsSellerAsMakerTxWithExpectedChange() {
+        Offer offer = offer(false,
+                Coin.valueOf(10_000),
+                Coin.valueOf(20_000),
+                Coin.valueOf(10_000),
+                Coin.valueOf(150_000));
+        Coin tradeAmount = Coin.valueOf(100_000);
+        Coin tradeTxFee = Coin.valueOf(5_000);
+        List<RawTransactionInput> makerInputs = Collections.singletonList(rawInput(parentTxWithP2wpkhOutput(170_000)));
+        List<RawTransactionInput> takerInputs = Collections.singletonList(rawInput(parentTxWithP2wpkhOutput(20_000)));
+        Transaction preparedDepositTx = preparedDepositTx(
+                orderedInputs(makerInputs, takerInputs, false),
+                BUYER_MULTI_SIG_KEY.getPubKey(),
+                SELLER_MULTI_SIG_KEY.getPubKey(),
+                135_000,
+                50_000);
+
+        assertSame(preparedDepositTx,
+                DepositTxValidation.checkMakersPreparedDepositTx(preparedDepositTx,
+                        offer,
+                        tradeAmount,
+                        tradeTxFee,
+                        makerInputs,
+                        takerInputs,
+                        SELLER_MULTI_SIG_KEY.getPubKey(),
+                        BUYER_MULTI_SIG_KEY.getPubKey(),
+                        PARAMS));
+    }
+
+    @Test
+    void checkMakersPreparedDepositTxRejectsWrongInputOrder() {
+        Offer offer = offer(false,
+                Coin.valueOf(10_000),
+                Coin.valueOf(20_000),
+                Coin.valueOf(10_000),
+                Coin.valueOf(150_000));
+        Coin tradeAmount = Coin.valueOf(100_000);
+        Coin tradeTxFee = Coin.valueOf(5_000);
+        List<RawTransactionInput> makerInputs = Collections.singletonList(rawInput(parentTxWithP2wpkhOutput(170_000)));
+        List<RawTransactionInput> takerInputs = Collections.singletonList(rawInput(parentTxWithP2wpkhOutput(20_000)));
+        Transaction preparedDepositTx = preparedDepositTx(
+                orderedInputs(makerInputs, takerInputs, true),
+                BUYER_MULTI_SIG_KEY.getPubKey(),
+                SELLER_MULTI_SIG_KEY.getPubKey(),
+                135_000,
+                50_000);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> DepositTxValidation.checkMakersPreparedDepositTx(preparedDepositTx,
+                        offer,
+                        tradeAmount,
+                        tradeTxFee,
+                        makerInputs,
+                        takerInputs,
+                        SELLER_MULTI_SIG_KEY.getPubKey(),
+                        BUYER_MULTI_SIG_KEY.getPubKey(),
+                        PARAMS));
+    }
+
+    @Test
+    void checkMakersPreparedDepositTxRejectsWrongMultisigOutputAmount() {
+        Offer offer = offer(false,
+                Coin.valueOf(10_000),
+                Coin.valueOf(20_000),
+                Coin.valueOf(10_000),
+                Coin.valueOf(150_000));
+        Coin tradeAmount = Coin.valueOf(100_000);
+        Coin tradeTxFee = Coin.valueOf(5_000);
+        List<RawTransactionInput> makerInputs = Collections.singletonList(rawInput(parentTxWithP2wpkhOutput(170_000)));
+        List<RawTransactionInput> takerInputs = Collections.singletonList(rawInput(parentTxWithP2wpkhOutput(20_000)));
+        Transaction preparedDepositTx = preparedDepositTx(
+                orderedInputs(makerInputs, takerInputs, false),
+                BUYER_MULTI_SIG_KEY.getPubKey(),
+                SELLER_MULTI_SIG_KEY.getPubKey(),
+                134_999,
+                50_000);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> DepositTxValidation.checkMakersPreparedDepositTx(preparedDepositTx,
+                        offer,
+                        tradeAmount,
+                        tradeTxFee,
+                        makerInputs,
+                        takerInputs,
+                        SELLER_MULTI_SIG_KEY.getPubKey(),
+                        BUYER_MULTI_SIG_KEY.getPubKey(),
+                        PARAMS));
+    }
+
+    @Test
+    void checkMakersPreparedDepositTxRejectsWrongMultisigOutputScript() {
+        Offer offer = offer(false,
+                Coin.valueOf(10_000),
+                Coin.valueOf(20_000),
+                Coin.valueOf(10_000),
+                Coin.valueOf(150_000));
+        Coin tradeAmount = Coin.valueOf(100_000);
+        Coin tradeTxFee = Coin.valueOf(5_000);
+        List<RawTransactionInput> makerInputs = Collections.singletonList(rawInput(parentTxWithP2wpkhOutput(170_000)));
+        List<RawTransactionInput> takerInputs = Collections.singletonList(rawInput(parentTxWithP2wpkhOutput(20_000)));
+        Transaction preparedDepositTx = preparedDepositTx(
+                orderedInputs(makerInputs, takerInputs, false),
+                new ECKey().getPubKey(),
+                SELLER_MULTI_SIG_KEY.getPubKey(),
+                135_000,
+                50_000);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> DepositTxValidation.checkMakersPreparedDepositTx(preparedDepositTx,
+                        offer,
+                        tradeAmount,
+                        tradeTxFee,
+                        makerInputs,
+                        takerInputs,
+                        SELLER_MULTI_SIG_KEY.getPubKey(),
+                        BUYER_MULTI_SIG_KEY.getPubKey(),
+                        PARAMS));
+    }
+
+    @Test
+    void checkMakersPreparedDepositTxRejectsExtraSiphonOutput() {
+        Offer offer = offer(false,
+                Coin.valueOf(10_000),
+                Coin.valueOf(20_000),
+                Coin.valueOf(10_000),
+                Coin.valueOf(150_000));
+        Coin tradeAmount = Coin.valueOf(100_000);
+        Coin tradeTxFee = Coin.valueOf(5_000);
+        List<RawTransactionInput> makerInputs = Collections.singletonList(rawInput(parentTxWithP2wpkhOutput(170_000)));
+        List<RawTransactionInput> takerInputs = Collections.singletonList(rawInput(parentTxWithP2wpkhOutput(20_000)));
+        Transaction preparedDepositTx = preparedDepositTx(
+                orderedInputs(makerInputs, takerInputs, false),
+                BUYER_MULTI_SIG_KEY.getPubKey(),
+                SELLER_MULTI_SIG_KEY.getPubKey(),
+                135_000,
+                50_000,
+                1_000);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> DepositTxValidation.checkMakersPreparedDepositTx(preparedDepositTx,
+                        offer,
+                        tradeAmount,
+                        tradeTxFee,
+                        makerInputs,
+                        takerInputs,
+                        SELLER_MULTI_SIG_KEY.getPubKey(),
+                        BUYER_MULTI_SIG_KEY.getPubKey(),
+                        PARAMS));
+    }
+
+    @Test
+    void checkMakersPreparedDepositTxRejectsWrongTradeFee() {
+        Offer offer = offer(false,
+                Coin.valueOf(10_000),
+                Coin.valueOf(20_000),
+                Coin.valueOf(10_000),
+                Coin.valueOf(150_000));
+        Coin tradeAmount = Coin.valueOf(100_000);
+        Coin tradeTxFee = Coin.valueOf(5_000);
+        List<RawTransactionInput> makerInputs = Collections.singletonList(rawInput(parentTxWithP2wpkhOutput(170_000)));
+        List<RawTransactionInput> takerInputs = Collections.singletonList(rawInput(parentTxWithP2wpkhOutput(21_000)));
+        Transaction preparedDepositTx = preparedDepositTx(
+                orderedInputs(makerInputs, takerInputs, false),
+                BUYER_MULTI_SIG_KEY.getPubKey(),
+                SELLER_MULTI_SIG_KEY.getPubKey(),
+                135_000,
+                50_000);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> DepositTxValidation.checkMakersPreparedDepositTx(preparedDepositTx,
+                        offer,
+                        tradeAmount,
+                        tradeTxFee,
+                        makerInputs,
+                        takerInputs,
+                        SELLER_MULTI_SIG_KEY.getPubKey(),
+                        BUYER_MULTI_SIG_KEY.getPubKey(),
                         PARAMS));
     }
 
@@ -582,6 +798,54 @@ class DepositTxValidationTest {
             }
         });
         return btcWalletService;
+    }
+
+    private static Offer offer(boolean isBuyOffer,
+                               Coin buyerSecurityDeposit,
+                               Coin sellerSecurityDeposit,
+                               Coin offerMinAmount,
+                               Coin offerAmount) {
+        Offer offer = ValidationTestUtils.offer(isBuyOffer,
+                buyerSecurityDeposit,
+                sellerSecurityDeposit,
+                offerAmount);
+        when(offer.getMinAmount()).thenReturn(offerMinAmount);
+        return offer;
+    }
+
+    private static List<RawTransactionInput> orderedInputs(List<RawTransactionInput> makerInputs,
+                                                           List<RawTransactionInput> takerInputs,
+                                                           boolean makerFirst) {
+        if (makerFirst) {
+            return Arrays.asList(makerInputs.get(0), takerInputs.get(0));
+        }
+        return Arrays.asList(takerInputs.get(0), makerInputs.get(0));
+    }
+
+    private static Transaction preparedDepositTx(List<RawTransactionInput> orderedInputs,
+                                                 byte[] buyerPubKey,
+                                                 byte[] sellerPubKey,
+                                                 long... outputValues) {
+        Transaction tx = new Transaction(PARAMS);
+        for (RawTransactionInput input : orderedInputs) {
+            tx.addInput(new TransactionInput(PARAMS,
+                    tx,
+                    new byte[]{},
+                    WalletUtils.getConnectedOutPoint(input, PARAMS),
+                    Coin.valueOf(input.value)));
+        }
+
+        tx.addOutput(Coin.valueOf(outputValues[0]), multiSigOutputScript(buyerPubKey, sellerPubKey));
+        for (int i = 1; i < outputValues.length; i++) {
+            tx.addOutput(Coin.valueOf(outputValues[i]), SegwitAddress.fromKey(PARAMS, new ECKey()));
+        }
+        return tx;
+    }
+
+    private static Script multiSigOutputScript(byte[] buyerPubKey, byte[] sellerPubKey) {
+        return ScriptBuilder.createP2WSHOutputScript(
+                ScriptBuilder.createMultiSigOutputScript(2,
+                        Arrays.asList(ECKey.fromPublicOnly(sellerPubKey), ECKey.fromPublicOnly(buyerPubKey))));
     }
 
     private static BtcWalletService walletServiceFor(RawTransactionInput rawTransactionInput) {
