@@ -17,14 +17,10 @@
 
 package bisq.core.btc.wallet.validation;
 
+import bisq.core.trade.validation.TransactionValidation;
+
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.SignatureDecodeException;
 
-import java.math.BigInteger;
-
-import java.util.Arrays;
-
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class DelayedPayoutTxSignatureValidation {
@@ -36,27 +32,6 @@ public final class DelayedPayoutTxSignatureValidation {
         byte[] checkedSignature = checkNotNull(signature,
                 "%s delayed payout tx signature must not be null",
                 signer);
-        try {
-            ECKey.ECDSASignature decodedSignature = ECKey.ECDSASignature.decodeFromDER(checkedSignature);
-            checkArgument(Arrays.equals(checkedSignature, decodedSignature.encodeToDER()),
-                    "%s delayed payout tx signature must be strictly DER encoded",
-                    signer);
-            checkArgument(isValidSignatureValue(decodedSignature.r),
-                    "%s delayed payout tx signature r value is outside of allowed range",
-                    signer);
-            checkArgument(isValidSignatureValue(decodedSignature.s),
-                    "%s delayed payout tx signature s value is outside of allowed range",
-                    signer);
-            checkArgument(decodedSignature.isCanonical(),
-                    "%s delayed payout tx signature must be canonical (low-S)",
-                    signer);
-            return decodedSignature;
-        } catch (SignatureDecodeException e) {
-            throw new IllegalArgumentException("Invalid " + signer + " delayed payout tx signature", e);
-        }
-    }
-
-    private static boolean isValidSignatureValue(BigInteger value) {
-        return value.signum() > 0 && value.compareTo(ECKey.CURVE.getN()) < 0;
+        return TransactionValidation.toVerifiedDerEncodedEcdsaSignature(checkedSignature);
     }
 }
