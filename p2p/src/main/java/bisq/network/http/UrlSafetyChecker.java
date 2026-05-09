@@ -22,6 +22,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * Validates URLs before they are dispatched and decides whether a request can be
@@ -37,6 +38,8 @@ public final class UrlSafetyChecker {
             super(msg);
         }
     }
+
+    private static final Pattern TRAILING_DOTS = Pattern.compile("\\.+$");
 
     private UrlSafetyChecker() {
     }
@@ -152,6 +155,21 @@ public final class UrlSafetyChecker {
      */
     public static boolean isLocal(String baseUrl) {
         return isLocal(parseAndValidate(baseUrl));
+    }
+
+    /**
+     * True iff {@code uri}'s host is a Tor onion address. Onion hosts are only
+     * resolvable through a Tor circuit, so callers must never attempt direct
+     * connection nor system DNS resolution for them.
+     */
+    public static boolean isOnion(URI uri) {
+        String host = uri.getHost();
+        if (host == null) return false;
+        // Strip trailing dots (FQDN form). "host.onion." resolves to the same
+        // destination as "host.onion"; treating it as non-onion would let a
+        // clearnet attempt leak the lookup to the system DNS resolver.
+        String lower = TRAILING_DOTS.matcher(host.toLowerCase(Locale.ROOT)).replaceFirst("");
+        return lower.endsWith(".onion");
     }
 
     private static boolean isNumericIp(String host) {

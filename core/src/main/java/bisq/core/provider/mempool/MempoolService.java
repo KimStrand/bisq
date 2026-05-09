@@ -106,7 +106,7 @@ public class MempoolService {
             UserThread.runAfter(() -> resultHandler.accept(txValidator.endResult(FeeValidationStatus.ACK_CHECK_BYPASSED)), 1);
             return;
         }
-        MempoolRequest mempoolRequest = new MempoolRequest(preferences, socks5ProxyProvider, config.allowLanForHttpRequests);
+        MempoolRequest mempoolRequest = new MempoolRequest(preferences, socks5ProxyProvider, config.allowLanForHttpRequests, config.allowClearnetHttpRequests);
         validateOfferMakerTx(mempoolRequest, txValidator, resultHandler);
     }
 
@@ -120,7 +120,7 @@ public class MempoolService {
             UserThread.runAfter(() -> resultHandler.accept(txValidator.endResult(FeeValidationStatus.ACK_CHECK_BYPASSED)), 1);
             return;
         }
-        MempoolRequest mempoolRequest = new MempoolRequest(preferences, socks5ProxyProvider, config.allowLanForHttpRequests);
+        MempoolRequest mempoolRequest = new MempoolRequest(preferences, socks5ProxyProvider, config.allowLanForHttpRequests, config.allowClearnetHttpRequests);
         validateOfferTakerTx(mempoolRequest, txValidator, resultHandler);
     }
 
@@ -130,7 +130,7 @@ public class MempoolService {
             UserThread.runAfter(() -> resultHandler.accept(txValidator.endResult(FeeValidationStatus.ACK_CHECK_BYPASSED)), 1);
             return;
         }
-        MempoolRequest mempoolRequest = new MempoolRequest(preferences, socks5ProxyProvider, config.allowLanForHttpRequests);
+        MempoolRequest mempoolRequest = new MempoolRequest(preferences, socks5ProxyProvider, config.allowLanForHttpRequests, config.allowClearnetHttpRequests);
         SettableFuture<String> future = SettableFuture.create();
         Futures.addCallback(future, callbackForTxRequest(mempoolRequest, txValidator, resultHandler), MoreExecutors.directExecutor());
         mempoolRequest.getTxStatus(future, txId);
@@ -138,7 +138,7 @@ public class MempoolService {
 
     public CompletableFuture<String> requestTxAsHex(String txId) {
         outstandingRequests++;
-        return new MempoolRequest(preferences, socks5ProxyProvider, config.allowLanForHttpRequests)
+        return new MempoolRequest(preferences, socks5ProxyProvider, config.allowLanForHttpRequests, config.allowClearnetHttpRequests)
                 .requestTxAsHex(txId)
                 .whenComplete((result, throwable) -> outstandingRequests--);
     }

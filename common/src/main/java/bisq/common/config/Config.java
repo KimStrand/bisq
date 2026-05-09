@@ -92,6 +92,7 @@ public class Config {
     public static final String SOCKS_5_PROXY_HTTP_ADDRESS = "socks5ProxyHttpAddress";
     public static final String USE_TOR_FOR_BTC = "useTorForBtc";
     public static final String ALLOW_LAN_FOR_HTTP_REQUESTS = "allowLanForHttpRequests";
+    public static final String ALLOW_CLEARNET_HTTP_REQUESTS = "allowClearnetHttpRequests";
     public static final String TORRC_FILE = "torrcFile";
     public static final String TORRC_OPTIONS = "torrcOptions";
     public static final String TOR_CONTROL_HOST = "torControlHost";
@@ -216,6 +217,7 @@ public class Config {
     public final boolean useTorForBtc;
     public final boolean useTorForBtcOptionSetExplicitly;
     public final boolean allowLanForHttpRequests;
+    public final boolean allowClearnetHttpRequests;
     public final String socks5DiscoverMode;
     public final boolean useAllProvidedNodes;
     public final String userAgent;
@@ -597,6 +599,17 @@ public class Config {
                         .ofType(Boolean.class)
                         .defaultsTo(false);
 
+        ArgumentAcceptingOptionSpec<Boolean> allowClearnetHttpRequestsOpt =
+                parser.accepts(ALLOW_CLEARNET_HTTP_REQUESTS,
+                                "If true, HTTP requests to non-local destinations are sent directly " +
+                                        "over the clearnet, bypassing Tor. Intended for development and " +
+                                        "testing against a known endpoint (e.g. a self-hosted price node). " +
+                                        "WARNING: leaks your IP address to the destination server. " +
+                                        "Do not enable on mainnet with real funds.")
+                        .withRequiredArg()
+                        .ofType(Boolean.class)
+                        .defaultsTo(false);
+
         ArgumentAcceptingOptionSpec<String> socks5DiscoverModeOpt =
                 parser.accepts(SOCKS5_DISCOVER_MODE, "Specify discovery mode for Bitcoin nodes. " +
                                 "One or more of: [ADDR, DNS, ONION, ALL] (comma separated, they get OR'd together).")
@@ -886,6 +899,7 @@ public class Config {
             this.useTorForBtc = options.valueOf(useTorForBtcOpt);
             this.useTorForBtcOptionSetExplicitly = options.has(useTorForBtcOpt);
             this.allowLanForHttpRequests = options.valueOf(allowLanForHttpRequestsOpt);
+            this.allowClearnetHttpRequests = options.valueOf(allowClearnetHttpRequestsOpt);
             this.socks5DiscoverMode = options.valueOf(socks5DiscoverModeOpt);
             this.useAllProvidedNodes = options.valueOf(useAllProvidedNodesOpt);
             this.userAgent = options.valueOf(userAgentOpt);

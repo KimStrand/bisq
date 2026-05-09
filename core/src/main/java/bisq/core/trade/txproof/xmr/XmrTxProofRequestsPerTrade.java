@@ -62,6 +62,7 @@ class XmrTxProofRequestsPerTrade implements AssetTxProofRequestsPerTrade {
     private final RefundManager refundManager;
     private final Socks5ProxyProvider socks5ProxyProvider;
     private final boolean allowLanForHttpRequests;
+    private final boolean allowClearnetHttpRequests;
 
     private volatile int numRequiredSuccessResults;
     // Concurrent + AtomicBoolean termination so callbacks cannot race past the guard
@@ -84,7 +85,8 @@ class XmrTxProofRequestsPerTrade implements AssetTxProofRequestsPerTrade {
                                MediationManager mediationManager,
                                FilterManager filterManager,
                                RefundManager refundManager,
-                               boolean allowLanForHttpRequests) {
+                               boolean allowLanForHttpRequests,
+                               boolean allowClearnetHttpRequests) {
         this.socks5ProxyProvider = socks5ProxyProvider;
         this.trade = trade;
         this.autoConfirmSettings = autoConfirmSettings;
@@ -92,6 +94,7 @@ class XmrTxProofRequestsPerTrade implements AssetTxProofRequestsPerTrade {
         this.filterManager = filterManager;
         this.refundManager = refundManager;
         this.allowLanForHttpRequests = allowLanForHttpRequests;
+        this.allowClearnetHttpRequests = allowClearnetHttpRequests;
     }
 
 
@@ -169,7 +172,8 @@ class XmrTxProofRequestsPerTrade implements AssetTxProofRequestsPerTrade {
 
         for (String serviceAddress : serviceAddresses) {
             XmrTxProofModel model = new XmrTxProofModel(trade, serviceAddress, autoConfirmSettings);
-            XmrTxProofRequest request = new XmrTxProofRequest(socks5ProxyProvider, model, allowLanForHttpRequests);
+            XmrTxProofRequest request = new XmrTxProofRequest(socks5ProxyProvider, model,
+                    allowLanForHttpRequests, allowClearnetHttpRequests);
 
             log.info("{} created", request);
             requests.add(request);

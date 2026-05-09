@@ -164,12 +164,13 @@ class XmrTxProofRequest implements AssetTxProofRequest<XmrTxProofRequest.Result>
 
     XmrTxProofRequest(Socks5ProxyProvider socks5ProxyProvider,
                       XmrTxProofModel model,
-                      boolean allowLanForHttpRequests) {
+                      boolean allowLanForHttpRequests,
+                      boolean allowClearnetHttpRequests) {
         txProofParser = new XmrTxProofParser();
         rawTxParser = new XmrRawTxParser();
         this.model = model;
 
-        httpClient = new XmrTxProofHttpClient(socks5ProxyProvider, allowLanForHttpRequests);
+        httpClient = new XmrTxProofHttpClient(socks5ProxyProvider, allowLanForHttpRequests, allowClearnetHttpRequests);
 
         // The HttpClient itself decides whether to bypass Tor based on URL parsing
         // (loopback always bypasses; LAN bypasses iff allowLanForHttpRequests=true).

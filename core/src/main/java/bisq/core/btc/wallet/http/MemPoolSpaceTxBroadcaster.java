@@ -53,17 +53,20 @@ public class MemPoolSpaceTxBroadcaster {
     private static Preferences preferences;
     private static LocalBitcoinNode localBitcoinNode;
     private static boolean allowLanForHttpRequests;
+    private static boolean allowClearnetHttpRequests;
     private static final ListeningExecutorService executorService = Utilities.getListeningExecutorService(
             "MemPoolSpaceTxBroadcaster", 3, 5, 10 * 60);
 
     public static void init(Socks5ProxyProvider socks5ProxyProvider,
                             Preferences preferences,
                             LocalBitcoinNode localBitcoinNode,
-                            boolean allowLanForHttpRequests) {
+                            boolean allowLanForHttpRequests,
+                            boolean allowClearnetHttpRequests) {
         MemPoolSpaceTxBroadcaster.socks5ProxyProvider = socks5ProxyProvider;
         MemPoolSpaceTxBroadcaster.preferences = preferences;
         MemPoolSpaceTxBroadcaster.localBitcoinNode = localBitcoinNode;
         MemPoolSpaceTxBroadcaster.allowLanForHttpRequests = allowLanForHttpRequests;
+        MemPoolSpaceTxBroadcaster.allowClearnetHttpRequests = allowClearnetHttpRequests;
     }
 
     public static void broadcastTx(Transaction tx) {
@@ -108,7 +111,8 @@ public class MemPoolSpaceTxBroadcaster {
     }
 
     private static void broadcastTx(String serviceAddress, String txIdToSend, String rawTx) {
-        TxBroadcastHttpClient httpClient = new TxBroadcastHttpClient(socks5ProxyProvider, allowLanForHttpRequests);
+        TxBroadcastHttpClient httpClient = new TxBroadcastHttpClient(socks5ProxyProvider,
+                allowLanForHttpRequests, allowClearnetHttpRequests);
         httpClient.setBaseUrl(serviceAddress);
         httpClient.setIgnoreSocks5Proxy(false);
 
