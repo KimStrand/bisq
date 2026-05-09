@@ -3,5 +3,5 @@ plugins {
 }
 
 javafx {
-    version = "21.0.6"
+    version = libs.versions.javafx.get()
 }
