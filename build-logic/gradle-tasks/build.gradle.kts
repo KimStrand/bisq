@@ -7,5 +7,5 @@ repositories {
 }
 
 dependencies {
-    implementation(libs.bouncycastle.bcpg.jdk15on)
+    implementation(libs.bouncycastle.bcpg.jdk18on)
 }

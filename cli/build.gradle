@@ -12,6 +12,7 @@ application {
 dependencies {
     implementation project(':proto')
     annotationProcessor libs.lombok
+    compileOnly libs.checker.qual
     compileOnly libs.lombok
     implementation libs.logback.classic
     implementation libs.logback.core

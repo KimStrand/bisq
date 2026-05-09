@@ -79,6 +79,7 @@ dependencies {
     integrationTestImplementation libs.junit.jupiter.params
 
     integrationTestRuntimeOnly libs.junit.jupiter.engine
+    integrationTestRuntimeOnly libs.junit.platform.launcher
 }
 
 test {

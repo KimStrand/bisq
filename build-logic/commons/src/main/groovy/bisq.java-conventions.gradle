@@ -20,6 +20,9 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 dependencies {
+    compileOnly libs.google.findbugs
+
+    testCompileOnly libs.google.findbugs
     testImplementation libs.hamcrest
     testImplementation libs.junit.jupiter.api
     testImplementation libs.junit.jupiter.params
@@ -27,6 +30,7 @@ dependencies {
     testImplementation libs.mockito.junit.jupiter
 
     testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly libs.junit.platform.launcher
 }
 
 test {
