@@ -51,4 +51,24 @@ class BurningManAddressListServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> BurningManAddressListService.getValidatedSupportedVersions(List.of(2, 1)));
     }
+
+    @Test
+    void rejectsEmptyPeerVersions() {
+        assertThrows(IllegalArgumentException.class,
+                () -> BurningManAddressListService.getValidatedSupportedVersions(List.of()));
+    }
+
+    @Test
+    void rejectsDuplicatePeerVersions() {
+        assertThrows(IllegalArgumentException.class,
+                () -> BurningManAddressListService.getValidatedSupportedVersions(List.of(1, 1)));
+    }
+
+    @Test
+    void rejectsNonPositivePeerVersions() {
+        assertThrows(IllegalArgumentException.class,
+                () -> BurningManAddressListService.getValidatedSupportedVersions(List.of(0)));
+        assertThrows(IllegalArgumentException.class,
+                () -> BurningManAddressListService.getValidatedSupportedVersions(List.of(-1)));
+    }
 }
