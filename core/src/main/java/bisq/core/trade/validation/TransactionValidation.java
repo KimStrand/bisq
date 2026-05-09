@@ -42,6 +42,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class TransactionValidation {
+    private static final byte[] SECP256K1_GENERATOR_PUB_KEY = ECKey.CURVE.getG().getEncoded(true);
+
     private TransactionValidation() {
     }
 
@@ -168,9 +170,15 @@ public final class TransactionValidation {
     public static byte[] checkMultiSigPubKey(byte[] multiSigPubKey) {
         checkNonEmptyBytes(multiSigPubKey, "multiSigPubKey");
         checkArgument(multiSigPubKey.length == 33, "multiSigPubKey must be compressed");
+        checkArgument(multiSigPubKey[0] == 0x02 || multiSigPubKey[0] == 0x03,
+                "multiSigPubKey must use a valid compressed public key prefix");
+        checkArgument(!Arrays.equals(multiSigPubKey, SECP256K1_GENERATOR_PUB_KEY),
+                "multiSigPubKey must not be the secp256k1 generator point");
 
         // Check that the multisig key decompresses to a valid curve point:
-        ECKey.fromPublicOnly(multiSigPubKey);
+        ECKey key = ECKey.fromPublicOnly(multiSigPubKey);
+        checkArgument(key.isCompressed(), "multiSigPubKey must be compressed");
+        checkArgument(!key.getPubKeyPoint().isInfinity(), "multiSigPubKey must not be point at infinity");
         return multiSigPubKey;
     }
 }

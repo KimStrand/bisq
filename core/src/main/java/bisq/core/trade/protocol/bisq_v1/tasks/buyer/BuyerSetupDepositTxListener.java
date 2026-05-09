@@ -20,6 +20,7 @@ package bisq.core.trade.protocol.bisq_v1.tasks.buyer;
 import bisq.core.btc.listeners.AddressConfidenceListener;
 import bisq.core.btc.model.AddressEntry;
 import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.btc.wallet.TradeWalletService;
 import bisq.core.trade.model.bisq_v1.Trade;
 import bisq.core.trade.protocol.bisq_v1.tasks.TradeTask;
 
@@ -45,6 +46,7 @@ import javax.annotation.Nullable;
 
 import static bisq.core.trade.validation.DepositTxValidation.checkCanonicalDepositTxFields;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @Slf4j
 public class BuyerSetupDepositTxListener extends TradeTask {
@@ -121,7 +123,10 @@ public class BuyerSetupDepositTxListener extends TradeTask {
             return false;
         }
 
-        Transaction walletTx = processModel.getTradeWalletService().getWalletTx(confidence.getTransactionHash());
+        TradeWalletService tradeWalletService = processModel.getTradeWalletService();
+
+        Transaction walletTx = checkNotNull(tradeWalletService.getWalletTx(confidence.getTransactionHash()),
+                "WalletTx must not be null");
         try {
             checkCanonicalDepositTxFields(walletTx);
         } catch (IllegalArgumentException e) {
