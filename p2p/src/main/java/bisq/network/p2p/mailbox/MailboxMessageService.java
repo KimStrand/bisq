@@ -46,6 +46,7 @@ import bisq.common.crypto.KeyRing;
 import bisq.common.crypto.PubKeyRing;
 import bisq.common.crypto.SealedAndSigned;
 import bisq.common.persistence.PersistenceManager;
+import bisq.common.proto.ProtobufferException;
 import bisq.common.proto.network.NetworkEnvelope;
 import bisq.common.proto.persistable.PersistedDataHost;
 import bisq.common.util.Tuple2;
@@ -512,18 +513,21 @@ public class MailboxMessageService implements HashMapChangedListener, PersistedD
             // Expected if message was not intended for us
             // We persist those entries so at the next startup we do not need to try to decrypt it anymore
             ignoredMailboxService.ignore(uid, protectedMailboxStorageEntry.getCreationTimeStamp());
+        } catch (ProtobufferException e) {
+            log.warn("Protobuf parsing failed for mailbox entry uid={}. Ignoring entry.", uid, e);
+            ignoredMailboxService.ignore(uid, protectedMailboxStorageEntry.getCreationTimeStamp());
         } catch (Exception e) {
-            log.error("tryDecryptProtectedMailboxStorageEntry failed", e);
+            log.error("Unexpected runtime failure decrypting mailbox entry uid={}. Ignoring entry.", uid, e);
             ignoredMailboxService.ignore(uid, protectedMailboxStorageEntry.getCreationTimeStamp());
         }
         return new MailboxItem(protectedMailboxStorageEntry, null);
     }
 
     private void handleMailboxItem(MailboxItem mailboxItem) {
-        // invalidDecryptedMessage reflects payload validation failure. We only remove such entries
-        // after all services are initialized and the node is bootstrapped, when it is safe to
-        // delete them from the network and local store.
-        // The isInvalidDecryptedMessage might fail as well  as false positive in case the network was not ready.
+        // invalidDecryptedMessage reflects a deterministic local validation failure (payload type
+        // or sender address mismatch) and does not depend on network readiness. The bootstrap gate
+        // is only here because removeMailboxEntryFromNetwork publishes a remove message to peers,
+        // which is unsafe to do before the node is fully connected.
         if (mailboxItem.isInvalidDecryptedMessage() && allServicesInitialized && isBootstrapped) {
             removeMailboxEntryFromNetwork(mailboxItem.getProtectedMailboxStorageEntry());
             removeMailboxItemFromLocalStore(mailboxItem.getUid());
@@ -661,8 +665,12 @@ public class MailboxMessageService implements HashMapChangedListener, PersistedD
         log.trace("## republishMailBoxMessages mailboxItemsByUid={}", mailboxItemsByUid.keySet());
         UserThread.runAfter(() -> {
             // In addProtectedStorageEntry we break early if we have already received a remove message for that entry.
+            // We exclude items flagged as invalidDecryptedMessage so we do not rebroadcast entries that
+            // failed local payload validation (sender address / payload type / signature pubkey mismatch).
+            // Such entries can sit in mailboxItemsByUid via readPersisted, which bypasses handleMailboxItem.
             republishInChunks(mailboxItemsByUid.values().stream()
                     .filter(e -> !e.isExpired(clock))
+                    .filter(e -> !e.isInvalidDecryptedMessage())
                     .map(MailboxItem::getProtectedMailboxStorageEntry)
                     .collect(Collectors.toCollection(ArrayDeque::new)));
         }, REPUBLISH_DELAY_SEC);
@@ -693,7 +701,7 @@ public class MailboxMessageService implements HashMapChangedListener, PersistedD
     private void removeMailboxItemFromLocalStore(String uid) {
         MailboxItem mailboxItem = mailboxItemsByUid.get(uid);
         boolean removedFromMap = mailboxItemsByUid.remove(uid) != null;
-        boolean removedFromList = mailboxMessageList.remove(mailboxItem);
+        boolean removedFromList = mailboxItem != null && mailboxMessageList.remove(mailboxItem);
         if (removedFromMap || removedFromList) {
             requestPersistence();
         }
