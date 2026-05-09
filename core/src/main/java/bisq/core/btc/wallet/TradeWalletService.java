@@ -25,6 +25,8 @@ import bisq.core.btc.model.PreparedDepositTxAndMakerInputs;
 import bisq.core.btc.model.RawTransactionInput;
 import bisq.core.btc.setup.WalletConfig;
 import bisq.core.btc.setup.WalletsSetup;
+import bisq.core.btc.wallet.utils.DepositTransactionUtils;
+import bisq.core.btc.wallet.utils.PayoutTransactionUtil;
 import bisq.core.crypto.LowRSigningKey;
 import bisq.core.locale.Res;
 import bisq.core.user.Preferences;
@@ -489,7 +491,7 @@ public class TradeWalletService {
 
 
         // Add MultiSig output
-        Script hashedMultiSigOutputScript = get2of2MultiSigOutputScript(buyerPubKey, sellerPubKey);
+        Script hashedMultiSigOutputScript = DepositTransactionUtils.get2of2MultiSigOutputScript(buyerPubKey, sellerPubKey);
 
         // Tx fee for deposit tx will be paid by buyer.
         TransactionOutput hashedMultiSigOutput = new TransactionOutput(params, preparedDepositTx, msOutputAmount,
@@ -552,7 +554,7 @@ public class TradeWalletService {
         checkArgument(!sellerInputs.isEmpty());
 
         // Check if maker's MultiSig script is identical to the taker's
-        Script hashedMultiSigOutputScript = get2of2MultiSigOutputScript(buyerPubKey, sellerPubKey);
+        Script hashedMultiSigOutputScript = DepositTransactionUtils.get2of2MultiSigOutputScript(buyerPubKey, sellerPubKey);
         if (!makersDepositTx.getOutput(0).getScriptPubKey().equals(hashedMultiSigOutputScript)) {
             throw new TransactionVerificationException("Maker's hashedMultiSigOutputScript does not match taker's hashedMultiSigOutputScript");
         }
@@ -767,7 +769,7 @@ public class TradeWalletService {
                                       byte[] sellerPubKey)
             throws AddressFormatException, TransactionVerificationException {
 
-        Script redeemScript = get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
+        Script redeemScript = PayoutTransactionUtil.get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
         Sha256Hash sigHash;
         Coin delayedPayoutTxInputValue = preparedDepositTx.getOutput(0).getValue();
         sigHash = delayedPayoutTx.hashForWitnessSignature(0, redeemScript,
@@ -791,7 +793,7 @@ public class TradeWalletService {
                                                           Coin inputValue)
             throws AddressFormatException, TransactionVerificationException {
 
-        Script redeemScript = get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
+        Script redeemScript = PayoutTransactionUtil.get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
         ECKey.ECDSASignature buyerECDSASignature = checkCanonicalDelayedPayoutTxSignature(buyerSignature, "buyer");
         ECKey.ECDSASignature sellerECDSASignature = checkCanonicalDelayedPayoutTxSignature(sellerSignature, "seller");
         TransactionSignature buyerTxSig = new TransactionSignature(buyerECDSASignature, Transaction.SigHash.ALL, false);
@@ -808,7 +810,7 @@ public class TradeWalletService {
         }
         // SegWit validation in Script.correctlySpends is incomplete, as it only checks the witness of P2WPKH inputs.
         // Therefore, we must manually verify both signatures ourselves against the computed sigHash.
-        Script scriptPubKey = get2of2MultiSigOutputScript(buyerPubKey, sellerPubKey);
+        Script scriptPubKey = DepositTransactionUtils.get2of2MultiSigOutputScript(buyerPubKey, sellerPubKey);
         input.getScriptSig().correctlySpends(delayedPayoutTx, 0, witness, inputValue, scriptPubKey, Script.ALL_VERIFY_FLAGS);
         Sha256Hash sigHash = delayedPayoutTx.hashForWitnessSignature(0, redeemScript,
                 inputValue, Transaction.SigHash.ALL, false);
@@ -825,7 +827,7 @@ public class TradeWalletService {
                                                byte[] sellerPubKey,
                                                byte[] buyerSignature,
                                                byte[] sellerSignature)
-            throws AddressFormatException, TransactionVerificationException, WalletException, SignatureDecodeException {
+            throws AddressFormatException, TransactionVerificationException, WalletException {
 
         TransactionInput input = delayedPayoutTx.getInput(0);
         finalizeUnconnectedDelayedPayoutTx(delayedPayoutTx, buyerPubKey, sellerPubKey, buyerSignature, sellerSignature, input.getValue());
@@ -868,7 +870,7 @@ public class TradeWalletService {
         Transaction preparedPayoutTx = createPayoutTx(depositTx, buyerPayoutAmount, sellerPayoutAmount,
                 buyerPayoutAddressString, sellerPayoutAddressString);
         // MS redeemScript
-        Script redeemScript = get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
+        Script redeemScript = PayoutTransactionUtil.get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
         // MS output from prev. tx is index 0
         TransactionOutput hashedMultiSigOutput = depositTx.getOutput(0);
         Coin inputValue = hashedMultiSigOutput.getValue();
@@ -914,7 +916,7 @@ public class TradeWalletService {
             throws AddressFormatException, TransactionVerificationException, WalletException, SignatureDecodeException {
         Transaction payoutTx = createPayoutTx(depositTx, buyerPayoutAmount, sellerPayoutAmount, buyerPayoutAddressString, sellerPayoutAddressString);
         // MS redeemScript
-        Script redeemScript = get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
+        Script redeemScript = PayoutTransactionUtil.get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
         // MS output from prev. tx is index 0
         TransactionOutput hashedMultiSigOutput = depositTx.getOutput(0);
         Coin inputValue = hashedMultiSigOutput.getValue();
@@ -958,7 +960,7 @@ public class TradeWalletService {
             throws AddressFormatException, TransactionVerificationException {
         Transaction preparedPayoutTx = createPayoutTx(depositTx, buyerPayoutAmount, sellerPayoutAmount, buyerPayoutAddressString, sellerPayoutAddressString);
         // MS redeemScript
-        Script redeemScript = get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
+        Script redeemScript = PayoutTransactionUtil.get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
         // MS output from prev. tx is index 0
         TransactionOutput hashedMultiSigOutput = depositTx.getOutput(0);
         Coin inputValue = hashedMultiSigOutput.getValue();
@@ -987,7 +989,7 @@ public class TradeWalletService {
             throws AddressFormatException, TransactionVerificationException, WalletException, SignatureDecodeException {
         Transaction payoutTx = createPayoutTx(depositTx, buyerPayoutAmount, sellerPayoutAmount, buyerPayoutAddressString, sellerPayoutAddressString);
         // MS redeemScript
-        Script redeemScript = get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
+        Script redeemScript = PayoutTransactionUtil.get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
         // MS output from prev. tx is index 0
         checkNotNull(multiSigKeyPair, "multiSigKeyPair must not be null");
         TransactionSignature buyerTxSig = new TransactionSignature(ECKey.ECDSASignature.decodeFromDER(buyerSignature),
@@ -1024,7 +1026,7 @@ public class TradeWalletService {
                                                                          boolean hashedMultiSigOutputIsLegacy) {
         byte[] buyerPubKey = ECKey.fromPublicOnly(Utils.HEX.decode(buyerPubKeyAsHex)).getPubKey();
         byte[] sellerPubKey = ECKey.fromPublicOnly(Utils.HEX.decode(sellerPubKeyAsHex)).getPubKey();
-        Script redeemScript = get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
+        Script redeemScript = PayoutTransactionUtil.get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
         Coin msOutputValue = buyerPayoutAmount.add(sellerPayoutAmount).add(txFee);
         Transaction payoutTx = new Transaction(params);
         Sha256Hash spendTxHash = Sha256Hash.wrap(depositTxHex);
@@ -1273,14 +1275,6 @@ public class TradeWalletService {
         return WalletUtils.isP2WPKH(rawTransactionInput, params);
     }
 
-    private Script get2of2MultiSigRedeemScript(byte[] buyerPubKey, byte[] sellerPubKey) {
-        ECKey buyerKey = ECKey.fromPublicOnly(buyerPubKey);
-        ECKey sellerKey = ECKey.fromPublicOnly(sellerPubKey);
-        // Take care of sorting! Need to reverse to the order we use normally (buyer, seller)
-        List<ECKey> keys = ImmutableList.of(sellerKey, buyerKey);
-        return ScriptBuilder.createMultiSigOutputScript(2, keys);
-    }
-
     /**
      * Defence-in-depth check used by every payout-signing task. Verifies that the deposit-tx's
      * output[0] script is the agreed 2-of-2 multisig for the trade. If trade.getDepositTx() is
@@ -1296,17 +1290,12 @@ public class TradeWalletService {
             throw new TransactionVerificationException(
                     "depositTx has no outputs, txId=" + depositTx.getTxId());
         }
-        Script expected = get2of2MultiSigOutputScript(buyerPubKey, sellerPubKey);
+        Script expected = DepositTransactionUtils.get2of2MultiSigOutputScript(buyerPubKey, sellerPubKey);
         Script actual = depositTx.getOutput(0).getScriptPubKey();
         if (!actual.equals(expected)) {
             throw new TransactionVerificationException(
                     "depositTx.output[0] is not the agreed 2-of-2 multisig script, txId=" + depositTx.getTxId());
         }
-    }
-
-    private Script get2of2MultiSigOutputScript(byte[] buyerPubKey, byte[] sellerPubKey) {
-        Script redeemScript = get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
-        return ScriptBuilder.createP2WSHOutputScript(redeemScript);
     }
 
     private Transaction createPayoutTx(Transaction depositTx,

@@ -34,6 +34,7 @@ import static bisq.core.util.Validator.checkNonBlankString;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+// Shared code between PayoutTxValidation and MediatedPayoutTxValidation
 final class PayoutTxValidationUtils {
     private PayoutTxValidationUtils() {
     }
