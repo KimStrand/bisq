@@ -38,9 +38,11 @@ import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -60,10 +62,12 @@ class XmrTxProofRequestsPerTrade implements AssetTxProofRequestsPerTrade {
     private final RefundManager refundManager;
     private final Socks5ProxyProvider socks5ProxyProvider;
 
-    private int numRequiredSuccessResults;
-    private final Set<XmrTxProofRequest> requests = new HashSet<>();
-
-    private int numSuccessResults;
+    private volatile int numRequiredSuccessResults;
+    // Concurrent + AtomicBoolean termination so callbacks cannot race past the guard
+    // even if a future change moves result callbacks off the single UserThread.
+    private final Set<XmrTxProofRequest> requests = ConcurrentHashMap.newKeySet();
+    private final AtomicBoolean terminated = new AtomicBoolean(false);
+    private final AtomicInteger numSuccessResults = new AtomicInteger();
     private ChangeListener<Trade.State> tradeStateListener;
     private AutoConfirmSettings.Listener autoConfirmSettingsListener;
     private ListChangeListener<Dispute> mediationListener, refundListener;
@@ -150,6 +154,7 @@ class XmrTxProofRequestsPerTrade implements AssetTxProofRequestsPerTrade {
                     return true;
                 })
                 .collect(Collectors.toList());
+        // Trust model: N-of-N quorum of explorers; client does not verify the proof crypto independently.
         numRequiredSuccessResults = serviceAddresses.size();
 
         if (numRequiredSuccessResults == 0) {
@@ -186,10 +191,10 @@ class XmrTxProofRequestsPerTrade implements AssetTxProofRequestsPerTrade {
                                 assetTxProofResult = getAssetTxProofResultForPending(result);
                                 break;
                             case SUCCESS:
-                                numSuccessResults++;
-                                if (numSuccessResults < numRequiredSuccessResults) {
+                                int successCount = numSuccessResults.incrementAndGet();
+                                if (successCount < numRequiredSuccessResults) {
                                     // Request is success but not all have completed yet.
-                                    int remaining = numRequiredSuccessResults - numSuccessResults;
+                                    int remaining = numRequiredSuccessResults - successCount;
                                     log.info("{} succeeded. We have {} remaining request(s) open.",
                                             request, remaining);
                                     assetTxProofResult = getAssetTxProofResultForPending(result);
@@ -200,7 +205,7 @@ class XmrTxProofRequestsPerTrade implements AssetTxProofRequestsPerTrade {
                                             numRequiredSuccessResults, trade.getShortId());
                                     XmrTxProofRequest.Detail detail = result.getDetail();
                                     assetTxProofResult = AssetTxProofResult.COMPLETED
-                                            .numSuccessResults(numSuccessResults)
+                                            .numSuccessResults(successCount)
                                             .numRequiredSuccessResults(numRequiredSuccessResults)
                                             .numConfirmations(detail != null ? detail.getNumConfirmations() : 0)
                                             .numRequiredConfirmations(autoConfirmSettings.getRequiredConfirmations());
@@ -232,7 +237,7 @@ class XmrTxProofRequestsPerTrade implements AssetTxProofRequestsPerTrade {
     }
 
     private boolean wasTerminated() {
-        return requests.isEmpty();
+        return terminated.get();
     }
 
     private void addSettingsListener(Consumer<AssetTxProofResult> resultHandler) {
@@ -277,6 +282,9 @@ class XmrTxProofRequestsPerTrade implements AssetTxProofRequestsPerTrade {
 
     @Override
     public void terminate() {
+        if (!terminated.compareAndSet(false, true)) {
+            return;
+        }
         requests.forEach(XmrTxProofRequest::terminate);
         requests.clear();
 
@@ -304,6 +312,9 @@ class XmrTxProofRequestsPerTrade implements AssetTxProofRequestsPerTrade {
 
     private void callResultHandlerAndMaybeTerminate(Consumer<AssetTxProofResult> resultHandler,
                                                     AssetTxProofResult assetTxProofResult) {
+        if (wasTerminated()) {
+            return;
+        }
         resultHandler.accept(assetTxProofResult);
         if (assetTxProofResult.isTerminal()) {
             terminate();
@@ -326,7 +337,7 @@ class XmrTxProofRequestsPerTrade implements AssetTxProofRequestsPerTrade {
         }
 
         return AssetTxProofResult.PENDING
-                .numSuccessResults(numSuccessResults)
+                .numSuccessResults(numSuccessResults.get())
                 .numRequiredSuccessResults(numRequiredSuccessResults)
                 .numConfirmations(detail != null ? detail.getNumConfirmations() : 0)
                 .numRequiredConfirmations(autoConfirmSettings.getRequiredConfirmations())

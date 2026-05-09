@@ -47,6 +47,9 @@ public final class AutoConfirmSettings implements PersistablePayload {
     private String currencyCode;
     private final List<Listener> listeners = new CopyOnWriteArrayList<>();
 
+    public static final int MIN_REQUIRED_CONFIRMATIONS = 2;
+    public static final long DEFAULT_XMR_TRADE_LIMIT = Coin.COIN.value / 8; // 0.125 BTC
+
     @SuppressWarnings("SameParameterValue")
     static Optional<AutoConfirmSettings> getDefault(List<String> serviceAddresses, String currencyCode) {
         //noinspection SwitchStatementWithTooFewBranches
@@ -55,7 +58,7 @@ public final class AutoConfirmSettings implements PersistablePayload {
                 return Optional.of(new AutoConfirmSettings(
                         false,
                         5,
-                        Coin.COIN.value,
+                        DEFAULT_XMR_TRADE_LIMIT,
                         serviceAddresses,
                         "XMR"));
             default:
@@ -70,7 +73,7 @@ public final class AutoConfirmSettings implements PersistablePayload {
                                List<String> serviceAddresses,
                                String currencyCode) {
         this.enabled = enabled;
-        this.requiredConfirmations = requiredConfirmations;
+        this.requiredConfirmations = Math.max(MIN_REQUIRED_CONFIRMATIONS, requiredConfirmations);
         this.tradeLimit = tradeLimit;
         this.serviceAddresses = serviceAddresses;
         this.currencyCode = currencyCode;
@@ -121,7 +124,7 @@ public final class AutoConfirmSettings implements PersistablePayload {
     }
 
     public void setRequiredConfirmations(int requiredConfirmations) {
-        this.requiredConfirmations = requiredConfirmations;
+        this.requiredConfirmations = Math.max(MIN_REQUIRED_CONFIRMATIONS, requiredConfirmations);
         notifyListeners();
     }
 

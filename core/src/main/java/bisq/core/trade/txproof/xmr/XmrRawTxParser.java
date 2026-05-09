@@ -77,7 +77,7 @@ public class XmrRawTxParser implements AssetTxProofParser<XmrTxProofRequest.Resu
                 }
             }
             return XmrTxProofRequest.Result.SUCCESS.with(XmrTxProofRequest.Detail.SUCCESS);
-        } catch (JsonParseException | NullPointerException e) {
+        } catch (JsonParseException | NullPointerException | NumberFormatException | IllegalStateException e) {
             return XmrTxProofRequest.Result.ERROR.with(XmrTxProofRequest.Detail.API_INVALID.error(e.toString()));
         }
     }

@@ -18,6 +18,7 @@
 package bisq.core.trade.txproof.xmr;
 
 import bisq.core.trade.txproof.AssetTxProofParser;
+import bisq.core.user.AutoConfirmSettings;
 
 import bisq.asset.CryptoNoteUtils;
 
@@ -166,14 +167,16 @@ public class XmrTxProofParser implements AssetTxProofParser<XmrTxProofRequest.Re
                 return XmrTxProofRequest.Result.FAILED.with(XmrTxProofRequest.Detail.AMOUNT_NOT_MATCHING);
             }
 
-            int confirmsRequired = model.getNumRequiredConfirmations();
+            int confirmsRequired = Math.max(
+                    AutoConfirmSettings.MIN_REQUIRED_CONFIRMATIONS,
+                    model.getNumRequiredConfirmations());
             if (confirmations < confirmsRequired) {
                 return XmrTxProofRequest.Result.PENDING.with(XmrTxProofRequest.Detail.PENDING_CONFIRMATIONS.numConfirmations(confirmations));
             } else {
                 return XmrTxProofRequest.Result.SUCCESS.with(XmrTxProofRequest.Detail.SUCCESS.numConfirmations(confirmations));
             }
 
-        } catch (JsonParseException | NullPointerException e) {
+        } catch (JsonParseException | NullPointerException | NumberFormatException | IllegalStateException e) {
             return XmrTxProofRequest.Result.ERROR.with(XmrTxProofRequest.Detail.API_INVALID.error(e.toString()));
         } catch (CryptoNoteUtils.CryptoNoteException e) {
             return XmrTxProofRequest.Result.ERROR.with(XmrTxProofRequest.Detail.ADDRESS_INVALID.error(e.toString()));
