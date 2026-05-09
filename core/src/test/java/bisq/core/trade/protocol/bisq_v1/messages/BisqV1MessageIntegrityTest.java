@@ -331,7 +331,8 @@ public class BisqV1MessageIntegrityTest {
                 args.currentDate,
                 args.lockTime,
                 args.hashOfMakersPaymentAccountPayload,
-                args.makersPaymentMethodId);
+                args.makersPaymentMethodId,
+                args.supportedBurningManAddressListVersions);
     }
 
     private static InputsForDepositTxRequest newRequest(Consumer<RequestArgs> customizer) {
@@ -363,7 +364,8 @@ public class BisqV1MessageIntegrityTest {
                 args.currentDate,
                 args.hashOfTakersPaymentAccountPayload,
                 args.takersPaymentMethodId,
-                args.burningManSelectionHeight);
+                args.burningManSelectionHeight,
+                args.supportedBurningManAddressListVersions);
     }
 
     private static protobuf.RefreshTradeStateRequest refreshTradeStateRequest(String tradeId, String uid) {
@@ -424,6 +426,7 @@ public class BisqV1MessageIntegrityTest {
         private long lockTime = 1L;
         private byte[] hashOfMakersPaymentAccountPayload = bytes(20);
         private String makersPaymentMethodId = "SEPA";
+        private List<Integer> supportedBurningManAddressListVersions = List.of(1);
     }
 
     private static class RequestArgs {
@@ -454,5 +457,6 @@ public class BisqV1MessageIntegrityTest {
         private byte[] hashOfTakersPaymentAccountPayload = bytes(24);
         private String takersPaymentMethodId = "SEPA";
         private int burningManSelectionHeight = 1;
+        private List<Integer> supportedBurningManAddressListVersions = List.of(1);
     }
 }

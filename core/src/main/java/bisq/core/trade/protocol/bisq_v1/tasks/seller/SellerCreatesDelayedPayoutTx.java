@@ -18,6 +18,7 @@
 package bisq.core.trade.protocol.bisq_v1.tasks.seller;
 
 import bisq.core.btc.wallet.TradeWalletService;
+import bisq.core.dao.burningman.DelayedPayoutTxReceiverService;
 import bisq.core.trade.model.bisq_v1.Trade;
 import bisq.core.trade.protocol.bisq_v1.tasks.TradeTask;
 
@@ -46,16 +47,24 @@ public class SellerCreatesDelayedPayoutTx extends TradeTask {
             runInterceptHook();
 
             TradeWalletService tradeWalletService = processModel.getTradeWalletService();
+            DelayedPayoutTxReceiverService delayedPayoutTxReceiverService = processModel.getDelayedPayoutTxReceiverService();
             Transaction depositTx = checkNotNull(processModel.getDepositTx());
+
             Transaction preparedDelayedPayoutTx;
             long inputAmount = depositTx.getOutput(0).getValue().value;
             long tradeTxFeeAsLong = trade.getTradeTxFeeAsLong();
             int selectionHeight = processModel.getBurningManSelectionHeight();
-            List<Tuple2<Long, String>> delayedPayoutTxReceivers = processModel.getDelayedPayoutTxReceiverService().getReceivers(
+            int burningManAddressListVersion = processModel.getBurningManAddressListVersion();
+            List<Tuple2<Long, String>> delayedPayoutTxReceivers = delayedPayoutTxReceiverService.getReceivers(
                     selectionHeight,
                     inputAmount,
-                    tradeTxFeeAsLong);
-            log.info("Create delayedPayoutTx using selectionHeight {} and receivers {}", selectionHeight, delayedPayoutTxReceivers);
+                    tradeTxFeeAsLong,
+                    burningManAddressListVersion);
+            delayedPayoutTxReceiverService.validateDelayedPayoutTxReceivers(
+                    delayedPayoutTxReceivers,
+                    burningManAddressListVersion);
+            log.info("Create delayedPayoutTx using selectionHeight {}, BM address list version {} and receivers {}",
+                    selectionHeight, burningManAddressListVersion, delayedPayoutTxReceivers);
             long lockTime = trade.getLockTime();
             preparedDelayedPayoutTx = tradeWalletService.createDelayedUnsignedPayoutTx(
                     depositTx,

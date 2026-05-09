@@ -102,6 +102,8 @@ public final class Contract implements NetworkPayload {
     @Nullable
     private final String takerPaymentMethodId;
 
+    private final int burningManAddressListVersion;
+
     public Contract(OfferPayload offerPayload,
                     long tradeAmount,
                     long tradePrice,
@@ -125,7 +127,8 @@ public final class Contract implements NetworkPayload {
                     @Nullable byte[] hashOfMakersPaymentAccountPayload,
                     @Nullable byte[] hashOfTakersPaymentAccountPayload,
                     @Nullable String makerPaymentMethodId,
-                    @Nullable String takerPaymentMethodId) {
+                    @Nullable String takerPaymentMethodId,
+                    int burningManAddressListVersion) {
         this.offerPayload = offerPayload;
         this.tradeAmount = tradeAmount;
         this.tradePrice = tradePrice;
@@ -150,6 +153,7 @@ public final class Contract implements NetworkPayload {
         this.hashOfTakersPaymentAccountPayload = hashOfTakersPaymentAccountPayload;
         this.makerPaymentMethodId = makerPaymentMethodId;
         this.takerPaymentMethodId = takerPaymentMethodId;
+        this.burningManAddressListVersion = burningManAddressListVersion;
 
         // Either makerPaymentMethodId is set, or obtained from offerPayload.
         if (makerPaymentMethodId == null) {
@@ -203,7 +207,8 @@ public final class Contract implements NetworkPayload {
                 ProtoUtil.byteArrayOrNullFromProto(proto.getHashOfMakersPaymentAccountPayload()),
                 ProtoUtil.byteArrayOrNullFromProto(proto.getHashOfTakersPaymentAccountPayload()),
                 ProtoUtil.stringOrNullFromProto(proto.getMakerPaymentMethodId()),
-                ProtoUtil.stringOrNullFromProto(proto.getTakerPaymentMethodId())
+                ProtoUtil.stringOrNullFromProto(proto.getTakerPaymentMethodId()),
+                proto.getBurningManAddressListVersion()
         );
     }
 
@@ -240,6 +245,9 @@ public final class Contract implements NetworkPayload {
                 .ifPresent(e -> builder.setTakerPaymentAccountPayload((protobuf.PaymentAccountPayload) takerPaymentAccountPayload.toProtoMessage()));
         Optional.ofNullable(makerPaymentMethodId).ifPresent(e -> builder.setMakerPaymentMethodId(makerPaymentMethodId));
         Optional.ofNullable(takerPaymentMethodId).ifPresent(e -> builder.setTakerPaymentMethodId(takerPaymentMethodId));
+        if (burningManAddressListVersion > 0) {
+            builder.setBurningManAddressListVersion(burningManAddressListVersion);
+        }
         return builder.build();
     }
 

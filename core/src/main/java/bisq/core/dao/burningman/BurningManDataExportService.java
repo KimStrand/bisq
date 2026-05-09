@@ -42,23 +42,28 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Singleton
 public class BurningManDataExportService implements DaoSetupService, DaoStateListener {
-    private static final String FILE_NAME = "burning_man_data";
-    private static final int SCHEMA_VERSION = 1;
+    private static final String FILE_NAME_FORMAT = BurningManAddressListService.FILE_NAME_PREFIX + "%04d";
 
     private final DaoStateService daoStateService;
     private final BurningManService burningManService;
+    private final BurningManAddressListService burningManAddressListService;
     private final boolean dumpBurningManData;
+    private final int dumpBurningManDataVersion;
     private final JsonFileManager jsonFileManager;
 
     @Inject
     public BurningManDataExportService(DaoStateService daoStateService,
                                        BurningManService burningManService,
-                                       @Named(Config.STORAGE_DIR) File storageDir,
-                                       @Named(Config.DUMP_BURNING_MAN_DATA) boolean dumpBurningManData) {
+                                       BurningManAddressListService burningManAddressListService,
+                                       @Named(Config.APP_DATA_DIR) File appDataDir,
+                                       @Named(Config.DUMP_BURNING_MAN_DATA) boolean dumpBurningManData,
+                                       @Named(Config.DUMP_BURNING_MAN_DATA_VERSION) int dumpBurningManDataVersion) {
         this.daoStateService = daoStateService;
         this.burningManService = burningManService;
+        this.burningManAddressListService = burningManAddressListService;
         this.dumpBurningManData = dumpBurningManData;
-        jsonFileManager = new JsonFileManager(storageDir);
+        this.dumpBurningManDataVersion = dumpBurningManDataVersion;
+        jsonFileManager = new JsonFileManager(appDataDir);
     }
 
     @Override
@@ -89,19 +94,24 @@ public class BurningManDataExportService implements DaoSetupService, DaoStateLis
                 chainHeight,
                 DelayedPayoutTxReceiverService.SNAPSHOT_SELECTION_GRID_SIZE,
                 DelayedPayoutTxReceiverService.MIN_SNAPSHOT_HEIGHT);
-        List<BurningManDataEntry> entries = getEntries(burningManSelectionHeight);
-        BurningManData burningManData = new BurningManData(SCHEMA_VERSION,
+        int listVersion = dumpBurningManDataVersion > 0 ?
+                dumpBurningManDataVersion :
+                burningManAddressListService.getNextVersion();
+        List<BurningManAddressList.Entry> entries = getEntries(burningManSelectionHeight);
+        BurningManAddressList burningManAddressList = new BurningManAddressList(BurningManAddressList.SCHEMA_VERSION,
+                listVersion,
                 Config.baseCurrencyNetwork().name(),
                 chainHeight,
                 burningManSelectionHeight,
                 burningManService.getLegacyBurningManAddress(burningManSelectionHeight),
                 entries);
 
-        jsonFileManager.writeToDisc(JsonUtil.objectToJson(burningManData), FILE_NAME);
-        log.info("Exported {} Burning Man receiver entries to {}.json", entries.size(), FILE_NAME);
+        String fileName = String.format(FILE_NAME_FORMAT, listVersion);
+        jsonFileManager.writeToDisc(JsonUtil.objectToJson(burningManAddressList), fileName);
+        log.info("Exported {} Burning Man receiver entries to {}.json", entries.size(), fileName);
     }
 
-    private List<BurningManDataEntry> getEntries(int chainHeight) {
+    private List<BurningManAddressList.Entry> getEntries(int chainHeight) {
         Map<String, Double> shareByAddress = new TreeMap<>();
         burningManService.getActiveBurningManCandidates(chainHeight).stream()
                 .filter(candidate -> candidate.getReceiverAddress().isPresent())
@@ -111,40 +121,7 @@ public class BurningManDataExportService implements DaoSetupService, DaoStateLis
                 });
 
         return shareByAddress.entrySet().stream()
-                .map(entry -> new BurningManDataEntry(entry.getKey(), entry.getValue()))
+                .map(entry -> new BurningManAddressList.Entry(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
-    }
-
-    private static class BurningManData {
-        private final int schemaVersion;
-        private final String baseCurrencyNetwork;
-        private final int chainHeight;
-        private final int burningManSelectionHeight;
-        private final String legacyBurningManAddress;
-        private final List<BurningManDataEntry> entries;
-
-        private BurningManData(int schemaVersion,
-                               String baseCurrencyNetwork,
-                               int chainHeight,
-                               int burningManSelectionHeight,
-                               String legacyBurningManAddress,
-                               List<BurningManDataEntry> entries) {
-            this.schemaVersion = schemaVersion;
-            this.baseCurrencyNetwork = baseCurrencyNetwork;
-            this.chainHeight = chainHeight;
-            this.burningManSelectionHeight = burningManSelectionHeight;
-            this.legacyBurningManAddress = legacyBurningManAddress;
-            this.entries = entries;
-        }
-    }
-
-    private static class BurningManDataEntry {
-        private final String receiverAddress;
-        private final double cappedBurnAmountShare;
-
-        private BurningManDataEntry(String receiverAddress, double cappedBurnAmountShare) {
-            this.receiverAddress = receiverAddress;
-            this.cappedBurnAmountShare = cappedBurnAmountShare;
-        }
     }
 }

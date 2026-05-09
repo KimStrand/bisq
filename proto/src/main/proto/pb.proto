@@ -265,6 +265,7 @@ message InputsForDepositTxRequest {
     bytes hash_of_takers_payment_account_payload = 26;
     string takers_payout_method_id = 27;
     int32 burning_man_selection_height = 28;  // Added in v 1.9.7
+    repeated int32 supported_burning_man_address_list_versions = 29;
 }
 
 message InputsForDepositTxResponse {
@@ -284,6 +285,7 @@ message InputsForDepositTxResponse {
     int64 lock_time = 14;
     bytes hash_of_makers_payment_account_payload = 15;
     string makers_payout_method_id = 16;
+    repeated int32 supported_burning_man_address_list_versions = 17;
 }
 
 message DelayedPayoutTxSignatureRequest {
@@ -1032,6 +1034,7 @@ message Contract {
     bytes hash_of_takers_payment_account_payload = 23;
     string maker_payment_method_id = 24;
     string taker_payment_method_id = 25;
+    int32 burning_man_address_list_version = 26;
 }
 
 message RawTransactionInput {
@@ -1838,6 +1841,7 @@ message ProcessModel {
     int64 seller_payout_amount_from_mediation = 20;
     PaymentAccount payment_account = 21;
     int32 burning_man_selection_height = 22;  // Added in v 1.9.7
+    int32 burning_man_address_list_version = 23;
 }
 
 message TradingPeer {
@@ -1857,6 +1861,7 @@ message TradingPeer {
     int64 current_date = 14;
     bytes mediated_payout_tx_signature = 15;
     bytes hash_of_payment_account_payload = 16;
+    repeated int32 supported_burning_man_address_list_versions = 17;
 }
 
 message BsqSwapProtocolModel {

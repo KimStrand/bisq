@@ -98,7 +98,8 @@ public class MakerCreateAndSignContract extends TradeTask {
                     hashOfMakersPaymentAccountPayload,
                     hashOfTakersPaymentAccountPayload,
                     makersPaymentMethodId,
-                    takersPaymentMethodId
+                    takersPaymentMethodId,
+                    processModel.getBurningManAddressListVersion()
             );
             String contractAsJson = JsonUtil.objectToJson(contract);
             String signature = Sig.sign(processModel.getKeyRing().getSignatureKeyPair().getPrivate(), contractAsJson);

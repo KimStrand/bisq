@@ -18,6 +18,7 @@
 package bisq.core.trade.protocol.bisq_v1.messages;
 
 import bisq.core.btc.model.RawTransactionInput;
+import bisq.core.dao.burningman.BurningManAddressListService;
 import bisq.core.proto.CoreProtoResolver;
 import bisq.core.trade.protocol.TradeMessage;
 
@@ -62,6 +63,7 @@ public final class InputsForDepositTxResponse extends TradeMessage implements Di
     // Added at 1.7.0
     private final byte[] hashOfMakersPaymentAccountPayload;
     private final String makersPaymentMethodId;
+    private final List<Integer> supportedBurningManAddressListVersions;
 
     public InputsForDepositTxResponse(String tradeId,
                                       String makerAccountId,
@@ -77,7 +79,8 @@ public final class InputsForDepositTxResponse extends TradeMessage implements Di
                                       long currentDate,
                                       long lockTime,
                                       byte[] hashOfMakersPaymentAccountPayload,
-                                      String makersPaymentMethodId) {
+                                      String makersPaymentMethodId,
+                                      List<Integer> supportedBurningManAddressListVersions) {
         this(tradeId,
                 makerAccountId,
                 makerMultiSigPubKey,
@@ -93,7 +96,8 @@ public final class InputsForDepositTxResponse extends TradeMessage implements Di
                 currentDate,
                 lockTime,
                 hashOfMakersPaymentAccountPayload,
-                makersPaymentMethodId);
+                makersPaymentMethodId,
+                supportedBurningManAddressListVersions);
     }
 
 
@@ -117,7 +121,8 @@ public final class InputsForDepositTxResponse extends TradeMessage implements Di
                                        long currentDate,
                                        long lockTime,
                                        byte[] hashOfMakersPaymentAccountPayload,
-                                       String makersPaymentMethodId) {
+                                       String makersPaymentMethodId,
+                                       List<Integer> supportedBurningManAddressListVersions) {
         super(messageVersion, tradeId, uid);
         this.makerAccountId = makerAccountId;
         this.makerMultiSigPubKey = makerMultiSigPubKey;
@@ -132,6 +137,7 @@ public final class InputsForDepositTxResponse extends TradeMessage implements Di
         this.lockTime = lockTime;
         this.hashOfMakersPaymentAccountPayload = hashOfMakersPaymentAccountPayload;
         this.makersPaymentMethodId = makersPaymentMethodId;
+        this.supportedBurningManAddressListVersions = supportedBurningManAddressListVersions;
 
         validate();
     }
@@ -151,6 +157,7 @@ public final class InputsForDepositTxResponse extends TradeMessage implements Di
         checkArgument(lockTime > 0, "lockTime must be positive");
         checkNonEmptyBytes(hashOfMakersPaymentAccountPayload, "hashOfMakersPaymentAccountPayload");
         checkNonBlankString(makersPaymentMethodId, "makersPaymentMethodId");
+        BurningManAddressListService.getValidatedSupportedVersions(supportedBurningManAddressListVersions);
     }
 
     @Override
@@ -170,6 +177,7 @@ public final class InputsForDepositTxResponse extends TradeMessage implements Di
                 .setAccountAgeWitnessSignatureOfPreparedDepositTx(ByteString.copyFrom(accountAgeWitnessSignatureOfPreparedDepositTx))
                 .setHashOfMakersPaymentAccountPayload(ByteString.copyFrom(hashOfMakersPaymentAccountPayload))
                 .setMakersPayoutMethodId(makersPaymentMethodId)
+                .addAllSupportedBurningManAddressListVersions(supportedBurningManAddressListVersions)
                 .setCurrentDate(currentDate);
 
         return getNetworkEnvelopeBuilder()
@@ -199,7 +207,8 @@ public final class InputsForDepositTxResponse extends TradeMessage implements Di
                 proto.getCurrentDate(),
                 proto.getLockTime(),
                 proto.getHashOfMakersPaymentAccountPayload().toByteArray(),
-                proto.getMakersPayoutMethodId());
+                proto.getMakersPayoutMethodId(),
+                proto.getSupportedBurningManAddressListVersionsList());
     }
 
     @Override
@@ -219,6 +228,7 @@ public final class InputsForDepositTxResponse extends TradeMessage implements Di
                 ",\n     lockTime=" + lockTime +
                 ",\n     hashOfMakersPaymentAccountPayload=" + Utilities.bytesAsHexString(hashOfMakersPaymentAccountPayload) +
                 ",\n     makersPaymentMethodId=" + makersPaymentMethodId +
+                ",\n     supportedBurningManAddressListVersions=" + supportedBurningManAddressListVersions +
                 "\n} " + super.toString();
     }
 }

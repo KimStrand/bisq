@@ -112,7 +112,8 @@ public class TakerVerifyAndSignContract extends TradeTask {
                     hashOfMakersPaymentAccountPayload,
                     hashOfTakersPaymentAccountPayload,
                     makersPaymentMethodId,
-                    takersPaymentMethodId
+                    takersPaymentMethodId,
+                    processModel.getBurningManAddressListVersion()
             );
             String contractAsJson = JsonUtil.objectToJson(contract);
 

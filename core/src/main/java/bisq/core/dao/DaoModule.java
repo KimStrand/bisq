@@ -17,6 +17,7 @@
 
 package bisq.core.dao;
 
+import bisq.core.dao.burningman.BurningManAddressListService;
 import bisq.core.dao.burningman.BurningManDataExportService;
 import bisq.core.dao.governance.asset.AssetService;
 import bisq.core.dao.governance.ballot.BallotListPresentation;
@@ -129,6 +130,7 @@ public class DaoModule extends AppModule {
         bind(UnconfirmedBsqChangeOutputListService.class).in(Singleton.class);
 
         bind(ExportJsonFilesService.class).in(Singleton.class);
+        bind(BurningManAddressListService.class).in(Singleton.class);
         bind(BurningManDataExportService.class).in(Singleton.class);
 
         // Period
@@ -224,6 +226,7 @@ public class DaoModule extends AppModule {
         bindConstant().annotatedWith(named(Config.RPC_BLOCK_NOTIFICATION_HOST)).to(config.rpcBlockNotificationHost);
         bindConstant().annotatedWith(named(Config.DUMP_BLOCKCHAIN_DATA)).to(config.dumpBlockchainData);
         bindConstant().annotatedWith(named(Config.DUMP_BURNING_MAN_DATA)).to(config.dumpBurningManData);
+        bindConstant().annotatedWith(named(Config.DUMP_BURNING_MAN_DATA_VERSION)).to(config.dumpBurningManDataVersion);
         bindConstant().annotatedWith(named(Config.FULL_DAO_NODE)).to(config.fullDaoNode);
         bindConstant().annotatedWith(named(Config.IS_BM_FULL_NODE)).to(config.isBmFullNode);
         bindConstant().annotatedWith(named(Config.BM_ORACLE_NODE_PUB_KEY)).to(config.bmOracleNodePubKey);

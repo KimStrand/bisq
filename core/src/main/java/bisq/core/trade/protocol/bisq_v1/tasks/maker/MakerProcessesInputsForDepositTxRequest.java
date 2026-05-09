@@ -112,6 +112,11 @@ public class MakerProcessesInputsForDepositTxRequest extends TradeTask {
 
             int takersBurningManSelectionHeight = DelayedPayoutTxValidation.checkBurningManSelectionHeight(request.getBurningManSelectionHeight(), delayedPayoutTxReceiverService);
             processModel.setBurningManSelectionHeight(takersBurningManSelectionHeight);
+            List<Integer> supportedBurningManAddressListVersions = request.getSupportedBurningManAddressListVersions();
+            tradingPeer.setSupportedBurningManAddressListVersions(supportedBurningManAddressListVersions);
+            int burningManAddressListVersion = delayedPayoutTxReceiverService.selectBurningManAddressListVersion(
+                    supportedBurningManAddressListVersions);
+            processModel.setBurningManAddressListVersion(burningManAddressListVersion);
 
             // We set the taker fee only in the processModel yet not in the trade as the tx was only created but not
             // published yet. Once it was published we move it to trade. The takerFeeTx should be sent in a later

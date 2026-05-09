@@ -140,6 +140,7 @@ class ValidationTestUtils {
     static DelayedPayoutTxReceiverService delayedPayoutTxReceiverService(int burningManSelectionHeight) {
         DelayedPayoutTxReceiverService delayedPayoutTxReceiverService = mock(DelayedPayoutTxReceiverService.class);
         when(delayedPayoutTxReceiverService.getBurningManSelectionHeight()).thenReturn(burningManSelectionHeight);
+        when(delayedPayoutTxReceiverService.selectBurningManAddressListVersion(List.of(1))).thenReturn(1);
         return delayedPayoutTxReceiverService;
     }
 
@@ -294,7 +295,8 @@ class ValidationTestUtils {
                 System.currentTimeMillis(),
                 new byte[]{2},
                 "SEPA",
-                130);
+                130,
+                List.of(1));
         User user = userWithAcceptedMediator(mediatorNodeAddress,
                 mediator(mediatorNodeAddress, pubKeyRing(Sig.generateKeyPair())));
 

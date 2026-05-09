@@ -18,6 +18,7 @@
 package bisq.core.trade.protocol.bisq_v1.messages;
 
 import bisq.core.btc.model.RawTransactionInput;
+import bisq.core.dao.burningman.BurningManAddressListService;
 import bisq.core.trade.protocol.TradeMessage;
 
 import bisq.network.p2p.DirectMessage;
@@ -85,6 +86,7 @@ public final class InputsForDepositTxRequest extends TradeMessage
 
     // Added in v 1.9.7
     private final int burningManSelectionHeight;
+    private final List<Integer> supportedBurningManAddressListVersions;
 
     public InputsForDepositTxRequest(String tradeId,
                                      NodeAddress senderNodeAddress,
@@ -111,7 +113,8 @@ public final class InputsForDepositTxRequest extends TradeMessage
                                      long currentDate,
                                      byte[] hashOfTakersPaymentAccountPayload,
                                      String takersPaymentMethodId,
-                                     int burningManSelectionHeight) {
+                                     int burningManSelectionHeight,
+                                     List<Integer> supportedBurningManAddressListVersions) {
         super(messageVersion, tradeId, uid);
         this.senderNodeAddress = senderNodeAddress;
         this.tradeAmount = tradeAmount;
@@ -136,6 +139,7 @@ public final class InputsForDepositTxRequest extends TradeMessage
         this.hashOfTakersPaymentAccountPayload = hashOfTakersPaymentAccountPayload;
         this.takersPaymentMethodId = takersPaymentMethodId;
         this.burningManSelectionHeight = burningManSelectionHeight;
+        this.supportedBurningManAddressListVersions = supportedBurningManAddressListVersions;
 
         validate();
     }
@@ -163,6 +167,7 @@ public final class InputsForDepositTxRequest extends TradeMessage
         checkNonEmptyBytes(hashOfTakersPaymentAccountPayload, "hashOfTakersPaymentAccountPayload");
         checkNonBlankString(takersPaymentMethodId, "takersPaymentMethodId");
         checkArgument(burningManSelectionHeight > 0, "burningManSelectionHeight must be positive");
+        BurningManAddressListService.getValidatedSupportedVersions(supportedBurningManAddressListVersions);
     }
 
     @Override
@@ -205,6 +210,7 @@ public final class InputsForDepositTxRequest extends TradeMessage
                 .setAccountAgeWitnessSignatureOfOfferId(ByteString.copyFrom(accountAgeWitnessSignatureOfOfferId))
                 .setCurrentDate(currentDate)
                 .setBurningManSelectionHeight(burningManSelectionHeight)
+                .addAllSupportedBurningManAddressListVersions(supportedBurningManAddressListVersions)
                 .setHashOfTakersPaymentAccountPayload(ByteString.copyFrom(hashOfTakersPaymentAccountPayload))
                 .setTakersPayoutMethodId(takersPaymentMethodId);
 
@@ -250,7 +256,8 @@ public final class InputsForDepositTxRequest extends TradeMessage
                 proto.getCurrentDate(),
                 proto.getHashOfTakersPaymentAccountPayload().toByteArray(),
                 proto.getTakersPayoutMethodId(),
-                proto.getBurningManSelectionHeight());
+                proto.getBurningManSelectionHeight(),
+                proto.getSupportedBurningManAddressListVersionsList());
     }
 
     @Override
@@ -279,6 +286,7 @@ public final class InputsForDepositTxRequest extends TradeMessage
                 ",\n     hashOfTakersPaymentAccountPayload=" + Utilities.bytesAsHexString(hashOfTakersPaymentAccountPayload) +
                 ",\n     takersPaymentMethodId=" + takersPaymentMethodId +
                 ",\n     burningManSelectionHeight=" + burningManSelectionHeight +
+                ",\n     supportedBurningManAddressListVersions=" + supportedBurningManAddressListVersions +
                 "\n} " + super.toString();
     }
 

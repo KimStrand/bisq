@@ -79,6 +79,8 @@ public abstract class MakerSendsInputsForDepositTxResponse extends TradeTask {
             byte[] hashOfMakersPaymentAccountPayload = makersPaymentAccountPayload.getHashForContract();
 
             String makersPaymentMethodId = makersPaymentAccountPayload.getPaymentMethodId();
+            var supportedBurningManAddressListVersions =
+                    processModel.getDelayedPayoutTxReceiverService().getSupportedBurningManAddressListVersions();
             InputsForDepositTxResponse message = new InputsForDepositTxResponse(
                     processModel.getOfferId(),
                     processModel.getAccountId(),
@@ -94,7 +96,8 @@ public abstract class MakerSendsInputsForDepositTxResponse extends TradeTask {
                     new Date().getTime(),
                     trade.getLockTime(),
                     hashOfMakersPaymentAccountPayload,
-                    makersPaymentMethodId);
+                    makersPaymentMethodId,
+                    supportedBurningManAddressListVersions);
 
             trade.setState(Trade.State.MAKER_SENT_PUBLISH_DEPOSIT_TX_REQUEST);
             processModel.getTradeManager().requestPersistence();
