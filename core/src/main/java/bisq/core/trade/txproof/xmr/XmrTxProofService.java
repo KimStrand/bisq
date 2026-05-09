@@ -40,6 +40,9 @@ import bisq.network.p2p.BootstrapListener;
 import bisq.network.p2p.P2PService;
 
 import bisq.common.app.DevEnv;
+import bisq.common.config.Config;
+
+import javax.inject.Named;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -80,6 +83,7 @@ public class XmrTxProofService implements AssetTxProofService {
     private final P2PService p2PService;
     private final WalletsSetup walletsSetup;
     private final Socks5ProxyProvider socks5ProxyProvider;
+    private final boolean allowLanForHttpRequests;
     private final Map<String, XmrTxProofRequestsPerTrade> servicesByTradeId = new HashMap<>();
     private AutoConfirmSettings autoConfirmSettings;
     private final Map<String, ChangeListener<Trade.State>> tradeStateListenerMap = new HashMap<>();
@@ -104,7 +108,8 @@ public class XmrTxProofService implements AssetTxProofService {
                              RefundManager refundManager,
                              P2PService p2PService,
                              WalletsSetup walletsSetup,
-                             Socks5ProxyProvider socks5ProxyProvider) {
+                             Socks5ProxyProvider socks5ProxyProvider,
+                             @Named(Config.ALLOW_LAN_FOR_HTTP_REQUESTS) boolean allowLanForHttpRequests) {
         this.filterManager = filterManager;
         this.preferences = preferences;
         this.tradeManager = tradeManager;
@@ -115,6 +120,7 @@ public class XmrTxProofService implements AssetTxProofService {
         this.p2PService = p2PService;
         this.walletsSetup = walletsSetup;
         this.socks5ProxyProvider = socks5ProxyProvider;
+        this.allowLanForHttpRequests = allowLanForHttpRequests;
     }
 
 
@@ -266,7 +272,8 @@ public class XmrTxProofService implements AssetTxProofService {
                 autoConfirmSettings,
                 mediationManager,
                 filterManager,
-                refundManager);
+                refundManager,
+                allowLanForHttpRequests);
         servicesByTradeId.put(trade.getId(), service);
         service.requestFromAllServices(
                 assetTxProofResult -> {

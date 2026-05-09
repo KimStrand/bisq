@@ -27,7 +27,12 @@ import java.net.UnknownHostException;
 class FakeDnsResolver implements DnsResolver {
     @Override
     public InetAddress[] resolve(String host) throws UnknownHostException {
-        // Return some fake DNS record for every request, we won't be using it
-        return new InetAddress[]{InetAddress.getByAddress(new byte[]{1, 1, 1, 1})};
+        // The custom socket factories never use this resolver — DNS is handled by
+        // the SOCKS proxy. We still must return a non-null value because Apache's
+        // connection manager requires it. Return the unspecified address (0.0.0.0)
+        // so that any accidental connect attempt fails locally rather than reaching
+        // a real host (the previous 1.1.1.1 placeholder was a public Cloudflare IP
+        // and could mask leaks during testing).
+        return new InetAddress[]{InetAddress.getByAddress(new byte[]{0, 0, 0, 0})};
     }
 }

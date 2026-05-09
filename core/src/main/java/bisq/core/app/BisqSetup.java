@@ -266,7 +266,7 @@ public class BisqSetup {
         this.refundManager = refundManager;
         this.arbitrationManager = arbitrationManager;
 
-        MemPoolSpaceTxBroadcaster.init(socks5ProxyProvider, preferences, localBitcoinNode);
+        MemPoolSpaceTxBroadcaster.init(socks5ProxyProvider, preferences, localBitcoinNode, config.allowLanForHttpRequests);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
