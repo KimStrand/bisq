@@ -23,25 +23,19 @@ import bisq.core.provider.price.PriceFeedService;
 import bisq.core.user.Preferences;
 import bisq.core.util.PriceUtil;
 
+import java.util.Optional;
+
 import lombok.extern.slf4j.Slf4j;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @Slf4j
 public class OfferValidation {
-    public static boolean isPriceInBounds(PriceFeedService priceFeedService, Offer offer,
-                                          double tolerance) {
-        try {
-            verifyPriceInBounds(priceFeedService, offer, tolerance);
-            return true;
-        } catch (IllegalArgumentException e) {
-            log.debug("Offer isPriceInBounds check failed: {}", e.getMessage());
-            return false;
-        } catch (Exception e) {
-            log.warn("Unexpected failure during isPriceInBounds check", e);
+    public static boolean isPriceInBounds(PriceFeedService priceFeedService, Offer offer, double tolerance) {
+        if (priceFeedService == null || offer == null) {
             return false;
         }
+        return findPriceBoundsViolation(priceFeedService, offer, tolerance) == null;
     }
 
     public static void verifyPriceInBounds(PriceFeedService priceFeedService,
@@ -49,40 +43,48 @@ public class OfferValidation {
                                            double tolerance) throws IllegalArgumentException {
         checkNotNull(priceFeedService, "priceFeedService must not be null");
         checkNotNull(offer, "offer must not be null");
+        String error = findPriceBoundsViolation(priceFeedService, offer, tolerance);
+        if (error != null) {
+            throw new IllegalArgumentException(error);
+        }
+    }
 
+    // Returns null if the offer's price is in bounds, or the check is skipped because no recent
+    // market price is available. Returns a human-readable reason if the price is out of bounds.
+    // Skip semantics intentionally mirror PriceUtil.hasMarketPrice (recent external price required).
+    private static String findPriceBoundsViolation(PriceFeedService priceFeedService,
+                                                   Offer offer,
+                                                   double tolerance) {
         if (offer.isUseMarketBasedPrice()) {
-            double percentagePrice = offer.getMarketPriceMargin();
-            verifyPriceDeviation(tolerance, percentagePrice);
-            return;
-        }
-
-        // If we do not have a market price we do not apply the validation
-        if (!PriceUtil.hasMarketPrice(priceFeedService, offer)) {
-            log.debug("Market price not available for {}", offer.getCurrencyCode());
-            return;
-        }
-
-        String currencyCode = offer.getCurrencyCode();
-        MarketPrice marketPrice = priceFeedService.getMarketPrice(currencyCode);
-        if (marketPrice == null) {
-            // If we do not have a market price we do not apply the validation
-            log.debug("Market price not available for {}", offer.getCurrencyCode());
-            return;
+            return findDeviationViolation(tolerance, offer.getMarketPriceMargin());
         }
 
         Price offerPrice = offer.getPrice();
-        double marketPriceAsDouble = marketPrice.getPrice();
-        double percentagePrice = PriceUtil.calculatePercentage(currencyCode, offerPrice, marketPriceAsDouble, offer.getDirection())
-                .orElseThrow(() -> new IllegalArgumentException("Offer price percentage could not be calculated"));
+        if (offerPrice == null) {
+            return null;
+        }
+        String currencyCode = offer.getCurrencyCode();
+        MarketPrice marketPrice = priceFeedService.getMarketPrice(currencyCode);
+        if (marketPrice == null || !marketPrice.isRecentExternalPriceAvailable()) {
+            log.debug("Recent market price not available for {}", currencyCode);
+            return null;
+        }
 
-        verifyPriceDeviation(tolerance, percentagePrice);
+        Optional<Double> percentage = PriceUtil.calculatePercentage(currencyCode,
+                offerPrice, marketPrice.getPrice(), offer.getDirection());
+        if (!percentage.isPresent()) {
+            return "Offer price percentage could not be calculated";
+        }
+        return findDeviationViolation(tolerance, percentage.get());
     }
 
-    private static void verifyPriceDeviation(double tolerance, double percentagePrice) {
+    private static String findDeviationViolation(double tolerance, double percentagePrice) {
         double maxAllowedDeviation = Preferences.MAX_PRICE_DISTANCE * tolerance;
-        checkArgument(Math.abs(percentagePrice) <= maxAllowedDeviation,
-                String.format("Offer price is outside of tolerated max percentage price: " +
-                                "observed deviation=%s, max allowed deviation=%s, applied tolerance=%s",
-                        percentagePrice, maxAllowedDeviation, tolerance));
+        if (Math.abs(percentagePrice) <= maxAllowedDeviation) {
+            return null;
+        }
+        return String.format("Offer price is outside of tolerated max percentage price: " +
+                        "observed deviation=%s, max allowed deviation=%s, applied tolerance=%s",
+                percentagePrice, maxAllowedDeviation, tolerance);
     }
 }

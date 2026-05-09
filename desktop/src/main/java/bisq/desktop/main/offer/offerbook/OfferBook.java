@@ -30,7 +30,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -72,15 +71,16 @@ public class OfferBook {
         this.offerBookService = offerBookService;
         this.filterManager = filterManager;
 
-        priceFeedServiceUpdateListener = new InvalidationListener() {
-            @Override
-            public void invalidated(Observable observable) {
-                List<OfferBookListItem> toRemove = offerBookListItems.stream()
-                        .filter(item -> !filterManager.isPriceInBounds(item.getOffer()))
-                        .collect(Collectors.toList());
+        // Re-evaluate on every price feed update (not just the first one).
+        // Otherwise offers in currencies whose market price arrived after the first tick
+        // would never be pruned, and stale state could survive feed recovery.
+        priceFeedServiceUpdateListener = observable -> {
+            List<OfferBookListItem> toRemove = offerBookListItems.stream()
+                    .filter(item -> !filterManager.isPriceInBounds(item.getOffer()))
+                    .collect(Collectors.toList());
+            if (!toRemove.isEmpty()) {
                 toRemove.forEach(offerBookListItems::remove);
-                log.info("We got a price feed service ready and run the isPriceValid check and remove invalid offers. toRemove {}", toRemove);
-                priceFeedService.updateCounterProperty().removeListener(priceFeedServiceUpdateListener);
+                log.info("Price feed update: removed {} offer(s) outside the allowed price bounds.", toRemove.size());
             }
         };
 

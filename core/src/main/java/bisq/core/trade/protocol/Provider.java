@@ -28,6 +28,7 @@ import bisq.core.dao.burningman.DelayedPayoutTxReceiverService;
 import bisq.core.filter.FilterManager;
 import bisq.core.offer.OpenOfferManager;
 import bisq.core.provider.fee.FeeService;
+import bisq.core.provider.price.PriceFeedService;
 import bisq.core.support.dispute.arbitration.arbitrator.ArbitratorManager;
 import bisq.core.support.dispute.mediation.mediator.MediatorManager;
 import bisq.core.support.dispute.refund.refundagent.RefundAgentManager;
@@ -64,6 +65,7 @@ public class Provider {
     private final FeeService feeService;
     private final BtcFeeReceiverService btcFeeReceiverService;
     private final DelayedPayoutTxReceiverService delayedPayoutTxReceiverService;
+    private final PriceFeedService priceFeedService;
 
     @Inject
     public Provider(OpenOfferManager openOfferManager,
@@ -84,7 +86,8 @@ public class Provider {
                     KeyRing keyRing,
                     FeeService feeService,
                     BtcFeeReceiverService btcFeeReceiverService,
-                    DelayedPayoutTxReceiverService delayedPayoutTxReceiverService) {
+                    DelayedPayoutTxReceiverService delayedPayoutTxReceiverService,
+                    PriceFeedService priceFeedService) {
 
         this.openOfferManager = openOfferManager;
         this.p2PService = p2PService;
@@ -105,5 +108,6 @@ public class Provider {
         this.feeService = feeService;
         this.btcFeeReceiverService = btcFeeReceiverService;
         this.delayedPayoutTxReceiverService = delayedPayoutTxReceiverService;
+        this.priceFeedService = priceFeedService;
     }
 }

@@ -40,6 +40,7 @@ import bisq.core.offer.bisq_v1.OfferPayload;
 import bisq.core.offer.placeoffer.bisq_v1.PlaceOfferModel;
 import bisq.core.offer.placeoffer.bisq_v1.PlaceOfferProtocol;
 import bisq.core.provider.mempool.FeeValidationStatus;
+import bisq.core.provider.price.MarketPrice;
 import bisq.core.provider.price.PriceFeedService;
 import bisq.core.support.dispute.arbitration.arbitrator.ArbitratorManager;
 import bisq.core.support.dispute.mediation.mediator.MediatorManager;
@@ -82,6 +83,8 @@ import bisq.common.util.Tuple2;
 import org.bitcoinj.core.Coin;
 
 import javax.inject.Inject;
+
+import javafx.beans.InvalidationListener;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -141,13 +144,14 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
     private final TradableList<OpenOffer> openOffers = new TradableList<>();
     private boolean stopped;
     private Timer periodicRepublishOffersTimer, periodicRefreshOffersTimer, retryRepublishOffersTimer,
-            handleOffersWithInvalidPriceTime;
+            handleOffersWithInvalidPriceTimer;
     @Setter
     private Consumer<String> chainNotSyncedHandler;
     @Getter
     private final ObservableList<Tuple2<OpenOffer, String>> invalidOffers = FXCollections.observableArrayList();
     @Getter
     private final ObservableList<OpenOffer> offersWithInvalidPrice = FXCollections.observableArrayList();
+    private final InvalidationListener invalidPriceFeedListener = observable -> checkOffersForInvalidPrice();
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -260,17 +264,44 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
                         OfferUtil.getInvalidMakerFeeTxErrorMessage(openOffer.getOffer(), btcWalletService)
                                 .ifPresent(errorMsg -> invalidOffers.add(new Tuple2<>(openOffer, errorMsg))));
 
+        startInvalidPriceCheck();
+    }
+
+    // Initial run after a short delay (covers the no-internet case where the feed never ticks)
+    // plus a long-lived listener so newly arrived market prices for offers in currencies that
+    // were not yet tocked still get validated. The listener auto-deregisters once every open
+    // offer has been resolved against a recent market price (or already flagged).
+    private void startInvalidPriceCheck() {
         int delayInSec = DevEnv.isDevMode() ? 5 : 30;
-        stopHandleOffersWithInvalidPriceTime();
-        handleOffersWithInvalidPriceTime = UserThread.runAfter(() -> {
-            // We use 0% tolerance to the max allowed price percentage to motivate users to edit the offer
-            openOffers.stream()
-                    .filter(openOffer -> !OfferValidation.isPriceInBounds(priceFeedService, openOffer.getOffer(), 1))
-                    .forEach(openOffer -> {
-                        log.warn("Invalid offer found: {}", openOffer);
-                        offersWithInvalidPrice.add(openOffer);
-                    });
-        }, delayInSec);
+        stopHandleOffersWithInvalidPriceTimer();
+        handleOffersWithInvalidPriceTimer = UserThread.runAfter(this::checkOffersForInvalidPrice, delayInSec);
+        priceFeedService.updateCounterProperty().addListener(invalidPriceFeedListener);
+    }
+
+    private void checkOffersForInvalidPrice() {
+        // We use 0% tolerance to the max allowed price percentage to motivate users to edit the offer
+        openOffers.stream()
+                .filter(openOffer -> !offersWithInvalidPrice.contains(openOffer))
+                .filter(openOffer -> !OfferValidation.isPriceInBounds(priceFeedService, openOffer.getOffer(), 1))
+                .forEach(openOffer -> {
+                    log.warn("Invalid offer found: id={}", openOffer.getId());
+                    offersWithInvalidPrice.add(openOffer);
+                });
+
+        // Once every open offer has been either flagged or evaluated against a recent market price
+        // (or uses market-based pricing, which does not depend on the feed) we can stop listening.
+        // Recency check mirrors OfferValidation's skip semantics so we do not deregister while
+        // OfferValidation is still skipping due to stale prices.
+        boolean allEvaluated = openOffers.stream().allMatch(openOffer -> {
+            if (offersWithInvalidPrice.contains(openOffer) || openOffer.getOffer().isUseMarketBasedPrice()) {
+                return true;
+            }
+            MarketPrice marketPrice = priceFeedService.getMarketPrice(openOffer.getOffer().getCurrencyCode());
+            return marketPrice != null && marketPrice.isRecentExternalPriceAvailable();
+        });
+        if (allEvaluated) {
+            priceFeedService.updateCounterProperty().removeListener(invalidPriceFeedListener);
+        }
     }
 
     private void cleanUpAddressEntries() {
@@ -297,7 +328,7 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
         stopPeriodicRefreshOffersTimer();
         stopPeriodicRepublishOffersTimer();
         stopRetryRepublishOffersTimer();
-        stopHandleOffersWithInvalidPriceTime();
+        stopHandleOffersWithInvalidPriceTimer();
 
         // we remove own offers from offerbook when we go offline
         // Normally we use a delay for broadcasting to the peers, but at shut down we want to get it fast out
@@ -852,6 +883,8 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
                                 log.warn(e.getMessage());
                                 availabilityResult = AvailabilityResult.MARKET_PRICE_NOT_AVAILABLE;
                             } catch (Exception e) {
+                                // Intentionally narrower than Throwable: JVM Errors (OOM, StackOverflow, ...)
+                                // must propagate instead of being downgraded to a price-check failure.
                                 log.warn("Trade price check failed. " + e.getMessage());
                                 availabilityResult = AvailabilityResult.PRICE_CHECK_FAILED;
                             }
@@ -1251,11 +1284,12 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
         }
     }
 
-    private void stopHandleOffersWithInvalidPriceTime() {
-        if (handleOffersWithInvalidPriceTime != null) {
-            handleOffersWithInvalidPriceTime.stop();
-            handleOffersWithInvalidPriceTime = null;
+    private void stopHandleOffersWithInvalidPriceTimer() {
+        if (handleOffersWithInvalidPriceTimer != null) {
+            handleOffersWithInvalidPriceTimer.stop();
+            handleOffersWithInvalidPriceTimer = null;
         }
+        priceFeedService.updateCounterProperty().removeListener(invalidPriceFeedListener);
     }
 
     private void addOpenOfferToList(OpenOffer openOffer) {

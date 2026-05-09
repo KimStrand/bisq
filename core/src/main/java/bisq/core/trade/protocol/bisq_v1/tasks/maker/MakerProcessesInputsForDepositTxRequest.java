@@ -76,7 +76,7 @@ public class MakerProcessesInputsForDepositTxRequest extends TradeTask {
             BtcWalletService btcWalletService = processModel.getBtcWalletService();
             DelayedPayoutTxReceiverService delayedPayoutTxReceiverService = processModel.getDelayedPayoutTxReceiverService();
             User user = checkNotNull(processModel.getUser(), "User must not be null");
-            PriceFeedService priceFeedService = processModel.getTradeManager().getPriceFeedService();
+            PriceFeedService priceFeedService = processModel.getPriceFeedService();
             FeeService feeService = processModel.getFeeService();
 
             tradingPeer.setHashOfPaymentAccountPayload(request.getHashOfTakersPaymentAccountPayload());

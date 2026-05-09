@@ -27,6 +27,8 @@ import static bisq.core.util.Validator.checkIsPositive;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class TradePriceValidation {
+    // Tolerance multiplier applied to Preferences.MAX_PRICE_DISTANCE.
+    // Effective absolute deviation = MAX_PRICE_DISTANCE * MAX_TRADE_PRICE_DEVIATION = 0.25 * 1.5 = 0.375 (37.5%).
     public static final double MAX_TRADE_PRICE_DEVIATION = 1.5;
 
     private TradePriceValidation() {
