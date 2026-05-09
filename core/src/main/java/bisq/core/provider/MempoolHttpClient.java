@@ -21,8 +21,10 @@ import bisq.network.Socks5ProxyProvider;
 import bisq.network.http.HttpClientImpl;
 
 import bisq.common.app.Version;
+import bisq.common.config.Config;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import java.io.IOException;
@@ -34,8 +36,9 @@ import javax.annotation.Nullable;
 @Singleton
 public class MempoolHttpClient extends HttpClientImpl {
     @Inject
-    public MempoolHttpClient(@Nullable Socks5ProxyProvider socks5ProxyProvider) {
-        super(socks5ProxyProvider);
+    public MempoolHttpClient(@Nullable Socks5ProxyProvider socks5ProxyProvider,
+                             @Named(Config.ALLOW_LAN_FOR_HTTP_REQUESTS) boolean allowLanForHttpRequests) {
+        super(socks5ProxyProvider, allowLanForHttpRequests);
     }
 
     // returns JSON of the transaction details

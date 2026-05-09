@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 class TxBroadcastHttpClient extends HttpClientImpl implements AssetTxProofHttpClient {
-    TxBroadcastHttpClient(Socks5ProxyProvider socks5ProxyProvider) {
-        super(socks5ProxyProvider);
+    TxBroadcastHttpClient(Socks5ProxyProvider socks5ProxyProvider, boolean allowLanForHttpRequests) {
+        super(socks5ProxyProvider, allowLanForHttpRequests);
     }
 }

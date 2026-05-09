@@ -20,7 +20,10 @@ package bisq.core.provider;
 import bisq.network.Socks5ProxyProvider;
 import bisq.network.http.HttpClientImpl;
 
+import bisq.common.config.Config;
+
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import javax.annotation.Nullable;
@@ -28,7 +31,8 @@ import javax.annotation.Nullable;
 @Singleton
 public class PriceHttpClient extends HttpClientImpl {
     @Inject
-    public PriceHttpClient(@Nullable Socks5ProxyProvider socks5ProxyProvider) {
-        super(socks5ProxyProvider);
+    public PriceHttpClient(@Nullable Socks5ProxyProvider socks5ProxyProvider,
+                           @Named(Config.ALLOW_LAN_FOR_HTTP_REQUESTS) boolean allowLanForHttpRequests) {
+        super(socks5ProxyProvider, allowLanForHttpRequests);
     }
 }

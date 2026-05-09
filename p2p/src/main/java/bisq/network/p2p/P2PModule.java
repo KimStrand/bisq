@@ -74,6 +74,7 @@ public class P2PModule extends AppModule {
         requestStaticInjection(Connection.class);
 
         bindConstant().annotatedWith(named(USE_LOCALHOST_FOR_P2P)).to(config.useLocalhostForP2P);
+        bindConstant().annotatedWith(named(ALLOW_LAN_FOR_HTTP_REQUESTS)).to(config.allowLanForHttpRequests);
 
         bind(File.class).annotatedWith(named(TOR_DIR)).toInstance(config.torDir);
 

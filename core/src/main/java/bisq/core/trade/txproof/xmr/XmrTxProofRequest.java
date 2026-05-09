@@ -163,25 +163,24 @@ class XmrTxProofRequest implements AssetTxProofRequest<XmrTxProofRequest.Result>
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     XmrTxProofRequest(Socks5ProxyProvider socks5ProxyProvider,
-                      XmrTxProofModel model) {
+                      XmrTxProofModel model,
+                      boolean allowLanForHttpRequests) {
         txProofParser = new XmrTxProofParser();
         rawTxParser = new XmrRawTxParser();
         this.model = model;
 
-        httpClient = new XmrTxProofHttpClient(socks5ProxyProvider);
+        httpClient = new XmrTxProofHttpClient(socks5ProxyProvider, allowLanForHttpRequests);
 
-        // localhost, LAN address, or *.local FQDN starts with http://, don't use Tor
-        if (model.getServiceAddress().regionMatches(0, "http:", 0, 5)) {
-            httpClient.setBaseUrl(model.getServiceAddress());
-            httpClient.setIgnoreSocks5Proxy(true);
-            // any non-onion FQDN starts with https://, use Tor
-        } else if (model.getServiceAddress().regionMatches(0, "https:", 0, 6)) {
-            httpClient.setBaseUrl(model.getServiceAddress());
-            httpClient.setIgnoreSocks5Proxy(false);
-            // it's a raw onion so add http:// and use Tor proxy
+        // The HttpClient itself decides whether to bypass Tor based on URL parsing
+        // (loopback always bypasses; LAN bypasses iff allowLanForHttpRequests=true).
+        // We only normalise the URL: a raw onion address has no scheme prefix.
+        String address = model.getServiceAddress();
+        if (address.regionMatches(true, 0, "http:", 0, 5)
+                || address.regionMatches(true, 0, "https:", 0, 6)) {
+            httpClient.setBaseUrl(address);
         } else {
-            httpClient.setBaseUrl("http://" + model.getServiceAddress());
-            httpClient.setIgnoreSocks5Proxy(false);
+            // bare onion → assume http
+            httpClient.setBaseUrl("http://" + address);
         }
 
         terminated = false;

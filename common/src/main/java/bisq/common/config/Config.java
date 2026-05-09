@@ -90,6 +90,7 @@ public class Config {
     public static final String SOCKS_5_PROXY_BTC_ADDRESS = "socks5ProxyBtcAddress";
     public static final String SOCKS_5_PROXY_HTTP_ADDRESS = "socks5ProxyHttpAddress";
     public static final String USE_TOR_FOR_BTC = "useTorForBtc";
+    public static final String ALLOW_LAN_FOR_HTTP_REQUESTS = "allowLanForHttpRequests";
     public static final String TORRC_FILE = "torrcFile";
     public static final String TORRC_OPTIONS = "torrcOptions";
     public static final String TOR_CONTROL_HOST = "torControlHost";
@@ -212,6 +213,7 @@ public class Config {
     public final List<String> btcNodes;
     public final boolean useTorForBtc;
     public final boolean useTorForBtcOptionSetExplicitly;
+    public final boolean allowLanForHttpRequests;
     public final String socks5DiscoverMode;
     public final boolean useAllProvidedNodes;
     public final String userAgent;
@@ -576,6 +578,16 @@ public class Config {
                         .ofType(Boolean.class)
                         .defaultsTo(false);
 
+        ArgumentAcceptingOptionSpec<Boolean> allowLanForHttpRequestsOpt =
+                parser.accepts(ALLOW_LAN_FOR_HTTP_REQUESTS,
+                                "If true, HTTP requests to RFC1918 private IP ranges (10/8, 172.16/12, " +
+                                        "192.168/16), IPv4 link-local (169.254/16) and IPv6 unique-local/link-local " +
+                                        "addresses bypass Tor. Default false: only loopback bypasses Tor. " +
+                                        "Enable only if you run Bitcoin/XMR/explorer services on a trusted LAN.")
+                        .withRequiredArg()
+                        .ofType(Boolean.class)
+                        .defaultsTo(false);
+
         ArgumentAcceptingOptionSpec<String> socks5DiscoverModeOpt =
                 parser.accepts(SOCKS5_DISCOVER_MODE, "Specify discovery mode for Bitcoin nodes. " +
                                 "One or more of: [ADDR, DNS, ONION, ALL] (comma separated, they get OR'd together).")
@@ -863,6 +875,7 @@ public class Config {
             this.btcNodes = options.valuesOf(btcNodesOpt);
             this.useTorForBtc = options.valueOf(useTorForBtcOpt);
             this.useTorForBtcOptionSetExplicitly = options.has(useTorForBtcOpt);
+            this.allowLanForHttpRequests = options.valueOf(allowLanForHttpRequestsOpt);
             this.socks5DiscoverMode = options.valueOf(socks5DiscoverModeOpt);
             this.useAllProvidedNodes = options.valueOf(useAllProvidedNodesOpt);
             this.userAgent = options.valueOf(userAgentOpt);

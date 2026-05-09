@@ -20,13 +20,17 @@ package bisq.network.http;
 import bisq.network.Socks5ProxyProvider;
 
 import bisq.common.app.Version;
+import bisq.common.config.Config;
 import bisq.common.util.Utilities;
+
+import javax.inject.Named;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -43,6 +47,7 @@ import javax.inject.Inject;
 
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.net.URL;
 
 import java.nio.charset.StandardCharsets;
@@ -55,9 +60,9 @@ import java.io.UnsupportedEncodingException;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
@@ -65,45 +70,103 @@ import javax.annotation.Nullable;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-// TODO close connection if failing
+/**
+ * HTTP client used for any external query (price feed, fee estimation, BSQ
+ * explorer, mempool broadcast, XMR proof, …).
+ *
+ * Hardening invariants enforced here:
+ *   - URL must parse as a valid http/https URI with a non-empty host (no file://,
+ *     no userinfo, no schemes outside http/https).
+ *   - Requests addressed to a non-local destination MUST go through the SOCKS5
+ *     (Tor) proxy. If the proxy is missing the request is rejected — we
+ *     fail-closed rather than leaking traffic to the clearnet.
+ *   - "Local" means a loopback IP literal or the literal hostname "localhost"
+ *     (or IPv6 equivalents). Hostnames that would require a DNS lookup are not
+ *     treated as local because answering would leak the lookup.
+ *   - The {@link #setIgnoreSocks5Proxy(boolean)} escape hatch is honoured only
+ *     when the URL is local. Setting the flag for a non-local URL is a bug and
+ *     is refused at request time.
+ *   - Conservative timeouts (80 s connect / 60 s read) and a 512 KiB response
+ *     body cap bound the damage of a malicious or misbehaving server.
+ *   - Bodies are decoded as UTF-8; size accounting is byte-exact.
+ */
 @Slf4j
 public class HttpClientImpl implements HttpClient {
+    // Connect=80s covers Tor circuit setup + onion-service rendezvous on a cold
+    // start; read=60s is per-byte inactivity, generous for any healthy server
+    // once the circuit is up.
+    static final int CONNECT_TIMEOUT_SEC = 80;
+    static final int READ_TIMEOUT_SEC = 60;
+    // 512 KiB is well above any legitimate response from price feeds, fee
+    // estimators, mempool/explorer JSON, or XMR proof endpoints. A larger cap
+    // just widens the memory-exhaustion window without enabling any real use.
+    static final long MAX_RESPONSE_BYTES = 512L * 1024;
+
     @Nullable
-    private Socks5ProxyProvider socks5ProxyProvider;
+    private final Socks5ProxyProvider socks5ProxyProvider;
+    private final boolean allowLanForHttpRequests;
     @Nullable
-    private HttpURLConnection connection;
+    private volatile HttpURLConnection connection;
     @Nullable
-    private CloseableHttpClient closeableHttpClient;
+    private volatile CloseableHttpClient closeableHttpClient;
 
     @Getter
-    @Setter
-    private String baseUrl;
-    @Setter
-    private boolean ignoreSocks5Proxy;
+    private volatile String baseUrl;
+    private volatile boolean ignoreSocks5Proxy;
     @Getter
     private final String uid;
-    private boolean hasPendingRequest;
+    private final AtomicBoolean hasPendingRequest = new AtomicBoolean(false);
 
     @Inject
-    public HttpClientImpl(@Nullable Socks5ProxyProvider socks5ProxyProvider) {
+    public HttpClientImpl(@Nullable Socks5ProxyProvider socks5ProxyProvider,
+                          @Named(Config.ALLOW_LAN_FOR_HTTP_REQUESTS) boolean allowLanForHttpRequests) {
         this.socks5ProxyProvider = socks5ProxyProvider;
+        this.allowLanForHttpRequests = allowLanForHttpRequests;
         uid = UUID.randomUUID().toString();
     }
 
+    public HttpClientImpl(@Nullable Socks5ProxyProvider socks5ProxyProvider) {
+        // Test/legacy entry point. Defaults to strict loopback-only.
+        this(socks5ProxyProvider, false);
+    }
+
     public HttpClientImpl(String baseUrl) {
-        this.baseUrl = baseUrl;
+        this.socks5ProxyProvider = null;
+        this.allowLanForHttpRequests = false;
+        setBaseUrl(baseUrl);
         uid = UUID.randomUUID().toString();
+    }
+
+    @Override
+    public void setBaseUrl(String baseUrl) {
+        // Validate up-front so misconfiguration surfaces at injection time, not at
+        // first request time.
+        UrlSafetyChecker.parseAndValidate(baseUrl);
+        this.baseUrl = baseUrl;
+    }
+
+    @Override
+    public void setIgnoreSocks5Proxy(boolean ignoreSocks5Proxy) {
+        this.ignoreSocks5Proxy = ignoreSocks5Proxy;
     }
 
     @Override
     public void shutDown() {
         try {
-            if (connection != null) {
-                connection.getInputStream().close();
-                connection.disconnect();
+            HttpURLConnection c = connection;
+            if (c != null) {
+                try {
+                    InputStream is = c.getInputStream();
+                    if (is != null) is.close();
+                } catch (IOException ignore) {
+                }
+                c.disconnect();
+                connection = null;
             }
-            if (closeableHttpClient != null) {
-                closeableHttpClient.close();
+            CloseableHttpClient client = closeableHttpClient;
+            if (client != null) {
+                client.close();
+                closeableHttpClient = null;
             }
         } catch (IOException ignore) {
         }
@@ -111,7 +174,7 @@ public class HttpClientImpl implements HttpClient {
 
     @Override
     public boolean hasPendingRequest() {
-        return hasPendingRequest;
+        return hasPendingRequest.get();
     }
 
     @Override
@@ -133,14 +196,52 @@ public class HttpClientImpl implements HttpClient {
                              @Nullable String headerKey,
                              @Nullable String headerValue) throws IOException {
         checkNotNull(baseUrl, "baseUrl must be set before calling doRequest");
-        checkArgument(!hasPendingRequest, "We got called on the same HttpClient again while a request is still open.");
+        checkArgument(hasPendingRequest.compareAndSet(false, true),
+                "We got called on the same HttpClient again while a request is still open.");
+        try {
+            // Validate the *effective* URL the network stack will see. For GET we
+            // append param to baseUrl, so a baseUrl with no trailing slash plus a
+            // param starting with '@', '?', or '#' could shift the effective host
+            // (e.g. baseUrl="http://localhost" + param="@evil.com" → host=evil.com).
+            // Re-parsing the concatenation closes that bypass: parseAndValidate
+            // rejects userinfo, and the host we hand to isLocal is the real target.
+            String effectiveSpec = httpMethod == HttpMethod.GET ? baseUrl + param : baseUrl;
+            URI uri;
+            try {
+                uri = UrlSafetyChecker.parseAndValidate(effectiveSpec);
+            } catch (UrlSafetyChecker.InvalidUrlException e) {
+                // Surface URL-validation failures as IOException so callers (which
+                // declare `throws IOException`) handle them like any other request
+                // failure rather than via runtime-exception propagation.
+                throw new IOException(e.getMessage());
+            }
+            boolean local = UrlSafetyChecker.isLocal(uri, allowLanForHttpRequests);
+            Socks5Proxy socks5Proxy = getSocks5Proxy(socks5ProxyProvider);
 
-        hasPendingRequest = true;
-        Socks5Proxy socks5Proxy = getSocks5Proxy(socks5ProxyProvider);
-        if (ignoreSocks5Proxy || socks5Proxy == null || baseUrl.contains("localhost")) {
-            return requestWithoutProxy(baseUrl, param, httpMethod, headerKey, headerValue);
-        } else {
+            if (local) {
+                // localhost/loopback only — direct connection is correct.
+                return requestWithoutProxy(baseUrl, param, httpMethod, headerKey, headerValue);
+            }
+
+            if (ignoreSocks5Proxy) {
+                // Caller explicitly opted out of Tor for a non-local URL. Refuse —
+                // this would leak the request and historically has been a source of
+                // bugs (e.g. a misconfigured XMR proof service URL).
+                throw new IOException("ignoreSocks5Proxy is only allowed for local URLs, " +
+                        "refusing to send " + httpMethod + " to non-local " + baseUrl);
+            }
+
+            if (socks5Proxy == null) {
+                // Fail closed: rather than fall back to clearnet (the previous
+                // behaviour), refuse to send the request. The caller decides
+                // whether to retry once Tor is up.
+                throw new IOException("No SOCKS5 proxy available, refusing to send "
+                        + httpMethod + " to non-local " + baseUrl);
+            }
+
             return doRequestWithProxy(baseUrl, param, httpMethod, socks5Proxy, headerKey, headerValue);
+        } finally {
+            hasPendingRequest.set(false);
         }
     }
 
@@ -153,35 +254,39 @@ public class HttpClientImpl implements HttpClient {
         log.debug("requestWithoutProxy: URL={}, param={}, httpMethod={}", baseUrl, param, httpMethod);
         try {
             String spec = httpMethod == HttpMethod.GET ? baseUrl + param : baseUrl;
-            URL url = new URL(spec);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod(httpMethod.name());
-            connection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(120));
-            connection.setReadTimeout((int) TimeUnit.SECONDS.toMillis(120));
-            connection.setRequestProperty("User-Agent", "bisq/" + Version.VERSION);
+            // URI.toURL forces well-formed URLs and rejects characters that the
+            // legacy URL constructor accepts silently.
+            URL url = new URI(spec).toURL();
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            connection = conn;
+            conn.setInstanceFollowRedirects(false);
+            conn.setRequestMethod(httpMethod.name());
+            conn.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(CONNECT_TIMEOUT_SEC));
+            conn.setReadTimeout((int) TimeUnit.SECONDS.toMillis(READ_TIMEOUT_SEC));
+            conn.setRequestProperty("User-Agent", "bisq/" + Version.VERSION);
             if (headerKey != null && headerValue != null) {
-                connection.setRequestProperty(headerKey, headerValue);
+                conn.setRequestProperty(headerKey, headerValue);
             }
 
             if (httpMethod == HttpMethod.POST) {
-                connection.setDoOutput(true);
-                connection.getOutputStream().write(param.getBytes(StandardCharsets.UTF_8));
+                conn.setDoOutput(true);
+                conn.getOutputStream().write(param.getBytes(StandardCharsets.UTF_8));
             }
 
-            int responseCode = connection.getResponseCode();
-            if (responseCode == 200) {
-                String response = convertInputStreamToString(connection.getInputStream());
+            int responseCode = conn.getResponseCode();
+            if (isSuccess(responseCode)) {
+                String response = readBoundedUtf8(conn.getInputStream());
                 log.debug("Response from {} with param {} took {} ms. Data size:{}, response: {}",
                         baseUrl,
                         param,
                         System.currentTimeMillis() - ts,
-                        Utilities.readableFileSize(response.getBytes().length),
+                        Utilities.readableFileSize(response.getBytes(StandardCharsets.UTF_8).length),
                         Utilities.toTruncatedString(response));
                 return response;
             } else {
-                InputStream errorStream = connection.getErrorStream();
+                InputStream errorStream = conn.getErrorStream();
                 if (errorStream != null) {
-                    String error = convertInputStreamToString(errorStream);
+                    String error = readBoundedUtf8(errorStream);
                     errorStream.close();
                     log.info("Received errorMsg '{}' with responseCode {} from {}. Response took: {} ms. param: {}",
                             error,
@@ -199,20 +304,23 @@ public class HttpClientImpl implements HttpClient {
                     throw new HttpException("Request failed", responseCode);
                 }
             }
-        } catch (Throwable t) {
-            String message = "Error at requestWithoutProxy with url " + baseUrl + " and param " + param +
-                    ". Throwable=" + t.getMessage();
-            throw new IOException(message, t);
+        } catch (Exception e) {
+            // HttpException ends up here too; callers retrieve it via getCause().
+            throw new IOException("Direct request to " + baseUrl + " failed: " + rootCauseMessage(e), e);
         } finally {
-            try {
-                if (connection != null) {
-                    connection.getInputStream().close();
-                    connection.disconnect();
-                    connection = null;
+            HttpURLConnection c = connection;
+            if (c != null) {
+                try {
+                    InputStream is = c.getInputStream();
+                    if (is != null) is.close();
+                } catch (Throwable ignore) {
                 }
-            } catch (Throwable ignore) {
+                try {
+                    c.disconnect();
+                } catch (Throwable ignore) {
+                }
+                connection = null;
             }
-            hasPendingRequest = false;
         }
     }
 
@@ -224,22 +332,40 @@ public class HttpClientImpl implements HttpClient {
                                       @Nullable String headerValue) throws IOException {
         long ts = System.currentTimeMillis();
         log.debug("doRequestWithProxy: baseUrl={}, param={}, httpMethod={}", baseUrl, param, httpMethod);
-        // This code is adapted from:
-        //  http://stackoverflow.com/a/25203021/5616248
 
-        // Register our own SocketFactories to override createSocket() and connectSocket().
-        // connectSocket does NOT resolve hostname before passing it to proxy.
+        // Register socket factories that pass the unresolved hostname through to
+        // the SOCKS proxy so DNS resolution happens on the Tor exit, never on the
+        // client. See SocksConnectionSocketFactory / SocksSSLConnectionSocketFactory.
         Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register("http", new SocksConnectionSocketFactory())
                 .register("https", new SocksSSLConnectionSocketFactory(SSLContexts.createSystemDefault())).build();
 
-        // Use FakeDNSResolver if not resolving DNS locally.
-        // This prevents a local DNS lookup (which would be ignored anyway)
+        // Belt-and-braces: even though the registered SocketFactories never
+        // consult DnsResolver, force any accidental call to fail rather than
+        // silently leak a lookup. Apache requires a non-null result; we return
+        // an unspecified address that cannot route.
         PoolingHttpClientConnectionManager cm = socks5Proxy.resolveAddrLocally() ?
                 new PoolingHttpClientConnectionManager(reg) :
                 new PoolingHttpClientConnectionManager(reg, new FakeDnsResolver());
         try {
-            closeableHttpClient = checkNotNull(HttpClients.custom().setConnectionManager(cm).build());
+            // Mirror the timeouts and redirect policy of the direct path:
+            //   - Apache defaults to following 3xx for GET/HEAD, which would let a
+            //     validated host redirect to an unvalidated target and bypass
+            //     UrlSafetyChecker. Disable redirect handling.
+            //   - Apache defaults to no socket / connect timeout. Without this a
+            //     stalled circuit pins the request until the JVM gives up.
+            RequestConfig requestConfig = RequestConfig.custom()
+                    .setRedirectsEnabled(false)
+                    .setConnectTimeout((int) TimeUnit.SECONDS.toMillis(CONNECT_TIMEOUT_SEC))
+                    .setConnectionRequestTimeout((int) TimeUnit.SECONDS.toMillis(CONNECT_TIMEOUT_SEC))
+                    .setSocketTimeout((int) TimeUnit.SECONDS.toMillis(READ_TIMEOUT_SEC))
+                    .build();
+            CloseableHttpClient client = checkNotNull(HttpClients.custom()
+                    .setConnectionManager(cm)
+                    .setDefaultRequestConfig(requestConfig)
+                    .disableRedirectHandling()
+                    .build());
+            closeableHttpClient = client;
             InetSocketAddress socksAddress = new InetSocketAddress(socks5Proxy.getInetAddress(), socks5Proxy.getPort());
 
             // remove me: Use this to test with system-wide Tor proxy, or change port for another proxy.
@@ -253,14 +379,17 @@ public class HttpClientImpl implements HttpClient {
                 request.setHeader(headerKey, headerValue);
             }
 
-            try (CloseableHttpResponse httpResponse = closeableHttpClient.execute(request, context)) {
-                String response = convertInputStreamToString(httpResponse.getEntity().getContent());
+            try (CloseableHttpResponse httpResponse = client.execute(request, context)) {
                 int statusCode = httpResponse.getStatusLine().getStatusCode();
-                if (statusCode == 200) {
+                // Per HttpResponse contract, getEntity() may return null for bodyless
+                // responses (204 No Content, 304 Not Modified, HEAD, …).
+                HttpEntity entity = httpResponse.getEntity();
+                String response = entity != null ? readBoundedUtf8(entity.getContent()) : "";
+                if (isSuccess(statusCode)) {
                     log.debug("Response from {} took {} ms. Data size:{}, response: {}, param: {}",
                             baseUrl,
                             System.currentTimeMillis() - ts,
-                            Utilities.readableFileSize(response.getBytes().length),
+                            Utilities.readableFileSize(response.getBytes(StandardCharsets.UTF_8).length),
                             Utilities.toTruncatedString(response),
                             param);
                     return response;
@@ -274,16 +403,18 @@ public class HttpClientImpl implements HttpClient {
                     throw new HttpException(response, statusCode);
                 }
             }
-        } catch (Throwable t) {
-            String message = "Error at doRequestWithProxy with url " + baseUrl + " and param " + param +
-                    ". Throwable=" + t.getMessage();
-            throw new IOException(message, t);
+        } catch (Exception e) {
+            // HttpException ends up here too; callers retrieve it via getCause().
+            throw new IOException("Request via SOCKS proxy to " + baseUrl + " failed: " + rootCauseMessage(e), e);
         } finally {
-            if (closeableHttpClient != null) {
-                closeableHttpClient.close();
+            CloseableHttpClient client = closeableHttpClient;
+            if (client != null) {
+                try {
+                    client.close();
+                } catch (Throwable ignore) {
+                }
                 closeableHttpClient = null;
             }
-            hasPendingRequest = false;
         }
     }
 
@@ -304,7 +435,7 @@ public class HttpClientImpl implements HttpClient {
     }
 
     @Nullable
-    private Socks5Proxy getSocks5Proxy(Socks5ProxyProvider socks5ProxyProvider) {
+    private Socks5Proxy getSocks5Proxy(@Nullable Socks5ProxyProvider socks5ProxyProvider) {
         if (socks5ProxyProvider == null) {
             return null;
         }
@@ -320,14 +451,71 @@ public class HttpClientImpl implements HttpClient {
         return socks5ProxyProvider.getSocks5Proxy();
     }
 
-    private String convertInputStreamToString(InputStream inputStream) throws IOException {
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-        StringBuilder stringBuilder = new StringBuilder();
-        String line;
-        while ((line = bufferedReader.readLine()) != null) {
-            stringBuilder.append(line);
+    static boolean isSuccess(int statusCode) {
+        return statusCode >= 200 && statusCode < 300;
+    }
+
+    private static String rootCauseMessage(Throwable t) {
+        Throwable cur = t;
+        while (cur.getCause() != null && cur.getCause() != cur) {
+            cur = cur.getCause();
         }
-        return stringBuilder.toString();
+        String msg = cur.getMessage();
+        return msg != null ? msg : cur.getClass().getSimpleName();
+    }
+
+    /**
+     * Reads {@code inputStream} as UTF-8, refusing more than {@link #MAX_RESPONSE_BYTES}
+     * bytes. The cap defends against memory-exhaustion via an unbounded server response.
+     */
+    static String readBoundedUtf8(InputStream inputStream) throws IOException {
+        BoundedInputStream bounded = new BoundedInputStream(inputStream, MAX_RESPONSE_BYTES);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(bounded, StandardCharsets.UTF_8))) {
+            StringBuilder sb = new StringBuilder();
+            char[] buf = new char[4096];
+            int n;
+            while ((n = reader.read(buf)) >= 0) {
+                sb.append(buf, 0, n);
+            }
+            return sb.toString();
+        }
+    }
+
+    private static final class BoundedInputStream extends InputStream {
+        private final InputStream delegate;
+        private final long max;
+        private long count;
+
+        BoundedInputStream(InputStream delegate, long max) {
+            this.delegate = delegate;
+            this.max = max;
+        }
+
+        @Override
+        public int read() throws IOException {
+            int b = delegate.read();
+            if (b == -1) return -1;
+            if (++count > max) {
+                throw new IOException("Response exceeded " + max + " bytes");
+            }
+            return b;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            int n = delegate.read(b, off, len);
+            if (n == -1) return -1;
+            count += n;
+            if (count > max) {
+                throw new IOException("Response exceeded " + max + " bytes");
+            }
+            return n;
+        }
+
+        @Override
+        public void close() throws IOException {
+            delegate.close();
+        }
     }
 
     @Override
