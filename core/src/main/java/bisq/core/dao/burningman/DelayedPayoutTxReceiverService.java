@@ -34,6 +34,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -72,6 +73,8 @@ public class DelayedPayoutTxReceiverService implements DaoStateListener {
     // We prefer a rather high fee rate to not risk that the DPT gets stuck if required fee rate would
     // spike when opening arbitration.
     private static final long DPT_MIN_TX_FEE_RATE = 10;
+    @VisibleForTesting
+    static final double BM_ADDRESS_LIST_SHARE_RANGE_TOLERANCE = 0.5;
 
     private final DaoStateService daoStateService;
     private final BurningManService burningManService;
@@ -251,6 +254,7 @@ public class DelayedPayoutTxReceiverService implements DaoStateListener {
 
         BurningManAddressList addressList = optionalAddressList.get();
         Set<String> allowedAddresses = addressList.getAllowedAddresses();
+        Map<String, Double> cappedBurnAmountShareByAddress = addressList.getCappedBurnAmountShareByAddress();
         return candidates.stream()
                 .filter(candidate -> candidate.getReceiverAddress().isPresent())
                 .filter(candidate -> {
@@ -263,7 +267,41 @@ public class DelayedPayoutTxReceiverService implements DaoStateListener {
                     }
                     return allowed;
                 })
+                .filter(candidate -> isCappedBurnAmountShareInRange(candidate, addressList, cappedBurnAmountShareByAddress))
                 .collect(Collectors.toList());
+    }
+
+    private boolean isCappedBurnAmountShareInRange(BurningManCandidate candidate,
+                                                   BurningManAddressList addressList,
+                                                   Map<String, Double> cappedBurnAmountShareByAddress) {
+        String receiverAddress = candidate.getReceiverAddress().orElseThrow();
+        Double referenceShare = cappedBurnAmountShareByAddress.get(receiverAddress);
+        if (referenceShare == null && receiverAddress.equals(addressList.getLegacyBurningManAddress())) {
+            return true;
+        }
+
+        if (referenceShare == null) {
+            log.warn("Skipping Burning Man receiver {} because no cappedBurnAmountShare exists in address list version {}",
+                    receiverAddress,
+                    addressList.getListVersion());
+            return false;
+        }
+
+        double cappedBurnAmountShare = candidate.getCappedBurnAmountShare();
+        double lowerBound = Math.max(0, referenceShare * (1 - BM_ADDRESS_LIST_SHARE_RANGE_TOLERANCE));
+        double upperBound = referenceShare * (1 + BM_ADDRESS_LIST_SHARE_RANGE_TOLERANCE);
+        boolean inRange = cappedBurnAmountShare >= lowerBound && cappedBurnAmountShare <= upperBound;
+        if (!inRange) {
+            log.warn("Skipping Burning Man receiver {} because cappedBurnAmountShare {} is outside address list " +
+                            "version {} range [{}, {}] with reference share {}",
+                    receiverAddress,
+                    cappedBurnAmountShare,
+                    addressList.getListVersion(),
+                    lowerBound,
+                    upperBound,
+                    referenceShare);
+        }
+        return inRange;
     }
 
     private static long getSpendableAmount(int numOutputs, long inputAmount, long txFeePerVbyte) {

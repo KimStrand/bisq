@@ -21,7 +21,9 @@ import bisq.common.config.Config;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -77,6 +79,14 @@ public final class BurningManAddressList {
         Set<String> allowedAddresses = getReceiverAddresses();
         allowedAddresses.add(legacyBurningManAddress);
         return allowedAddresses;
+    }
+
+    public Map<String, Double> getCappedBurnAmountShareByAddress() {
+        return entries.stream()
+                .collect(Collectors.toMap(Entry::getReceiverAddress,
+                        Entry::getCappedBurnAmountShare,
+                        (first, second) -> first,
+                        TreeMap::new));
     }
 
     @Getter
