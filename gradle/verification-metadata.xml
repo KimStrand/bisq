@@ -8,215 +8,7 @@
          <trust file=".*-sources[.]jar" regex="true"/>
       </trusted-artifacts>
    </configuration>
-
    <components>
-
-       <component group="org.codehaus.groovy" name="groovy" version="3.0.13">
-           <artifact name="groovy-3.0.13.jar">
-               <sha256 value="044569c20b1438263470585627da1b2c9722f1fb8d89f94e78c0ff219abd0146"
-                       origin="Manually computed by Alva"/>
-           </artifact>
-           <artifact name="groovy-3.0.13.pom">
-               <sha256 value="9a1cb18a8a01fe42da530f4059cedfd0948d6e8cf3100dae1ee2977c1ea55acc"
-                       origin="Manually computed by Alva"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-ant" version="3.0.13">
-           <artifact name="groovy-ant-3.0.13.pom">
-               <sha256 value="6f07c9dbf501d45c43e40d0b9b09d6e92c4681d9d61f1867636a401febbc9092"
-                       origin="Manually computed by Alva"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-astbuilder" version="3.0.13">
-           <artifact name="groovy-astbuilder-3.0.13.pom">
-               <sha256 value="208aa8d42692a4d19eca96f87c5c62a2c97a284389a5803a33e530bbd6064f09"
-                       origin="Manually computed by Alva"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-console" version="3.0.13">
-           <artifact name="groovy-console-3.0.13.pom">
-               <sha256 value="00e84cdda323531d4212f8c58ade3924ddb1d9b1f3360973a8a240b8032044c3"
-                       origin="Manually computed by Alva"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-datetime" version="3.0.13">
-           <artifact name="groovy-datetime-3.0.13.pom">
-               <sha256 value="89c4216d180d7e928e633c8b415a857f17e28153c7384dbc392fca48044286d3"
-                       origin="Manually computed by Alva"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-dateutil" version="3.0.13">
-           <artifact name="groovy-dateutil-3.0.13.pom">
-               <sha256 value="d7358a271f3eb1aad7c7df80a57362358261932a8db59b7df49d655dd495db7e"
-                       origin="Manually computed by Alva"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-groovydoc" version="3.0.13">
-           <artifact name="groovy-groovydoc-3.0.13.pom">
-               <sha256 value="034846307b8283ac60d33678731992e5eff4508955fd570c6d6fc6e7d4006cee"
-                       origin="Manually computed by Alva"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-json" version="3.0.13">
-           <artifact name="groovy-json-3.0.13.pom">
-               <sha256 value="0ee3f90ab537028eb9bcc1d9e6eb01515bbbb5c03cb16cc72fbda85f5da63952"
-                       origin="Manually computed by Alva"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-nio" version="3.0.13">
-           <artifact name="groovy-nio-3.0.13.pom">
-               <sha256 value="fcef4d828c5d5dd9094492ab21c9b80dfec69062615cdcfca889d730322b62c5"
-                       origin="Manually computed by Alva"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-sql" version="3.0.13">
-           <artifact name="groovy-sql-3.0.13.pom">
-               <sha256 value="3e1f2a2a8c79d2af4c8eb67bff4479894492fab7a5bfd39132c72f4c80657a4b"
-                       origin="Manually computed by Alva"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-templates" version="3.0.13">
-           <artifact name="groovy-templates-3.0.13.pom">
-               <sha256 value="ee7ca0364ca13cddade1a624ab7989dffeedc9d19b4e13e99ec172c78fdec174"
-                       origin="Manually computed by Alva"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-test" version="3.0.13">
-           <artifact name="groovy-test-3.0.13.pom">
-               <sha256 value="55c0eafdb4d09619e2456a940f29d88ff585a4034bfd565912d6109285e04b9d"
-                       origin="Manually computed by Alva"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-xml" version="3.0.13">
-           <artifact name="groovy-xml-3.0.13.pom">
-               <sha256 value="945e632416fa6931d6533042b6b9584f59d827cec1533eab147ddee334a7687e"
-                       origin="Manually computed by Alva"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy" version="3.0.21">
-           <artifact name="groovy-3.0.21.pom">
-               <sha256 value="b8e9e8a5e2462d2fcc146ce41da96079b8931e70db3eab9d59d689863d096b17"
-                       origin="Manually computed by Codex"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-ant" version="3.0.21">
-           <artifact name="groovy-ant-3.0.21.pom">
-               <sha256 value="844286c0848f8ccce3b80c431be5afa0b5fd3686e5d244311f38c097a3d940df"
-                       origin="Manually computed by Codex"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-astbuilder" version="3.0.21">
-           <artifact name="groovy-astbuilder-3.0.21.pom">
-               <sha256 value="3109aa1d12318373d46bbb894aa111f04e6fd5846189fbbee6f0691618cc0e29"
-                       origin="Manually computed by Codex"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-bom" version="3.0.21">
-           <artifact name="groovy-bom-3.0.21.pom">
-               <sha256 value="92cc36affd20f568b5092c0b94ecf585ddeb0a281b6c8ba7256570bb185d6534"
-                       origin="Manually computed by Codex"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-console" version="3.0.21">
-           <artifact name="groovy-console-3.0.21.pom">
-               <sha256 value="a993859a427dff053e89bc83df4cdc4b9ec47fcf6b1ecf45cbff09fb756af6e6"
-                       origin="Manually computed by Codex"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-datetime" version="3.0.21">
-           <artifact name="groovy-datetime-3.0.21.pom">
-               <sha256 value="00ecc961fa2a786bd7c89f7aac146ec832a461f57a3c8d8dea811ef8127be69e"
-                       origin="Manually computed by Codex"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-dateutil" version="3.0.21">
-           <artifact name="groovy-dateutil-3.0.21.pom">
-               <sha256 value="86ad6e1d812c36a46a4322ec166018c7354037a539a472b1826b770efd98bde8"
-                       origin="Manually computed by Codex"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-groovydoc" version="3.0.21">
-           <artifact name="groovy-groovydoc-3.0.21.pom">
-               <sha256 value="f45d3a42e749b19f3cb81a2f9643828919f0267f9c2535c704e3fac7ea9ae664"
-                       origin="Manually computed by Codex"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-json" version="3.0.21">
-           <artifact name="groovy-json-3.0.21.pom">
-               <sha256 value="b2717dcbd04f6ccbcd5781e3119280e76ff27166085746c06043dc6243c47b87"
-                       origin="Manually computed by Codex"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-nio" version="3.0.21">
-           <artifact name="groovy-nio-3.0.21.pom">
-               <sha256 value="089ef3bd205e33b8bbe1c94647f65d8bf6dbb5053184360c27c4af6b915b2968"
-                       origin="Manually computed by Codex"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-sql" version="3.0.21">
-           <artifact name="groovy-sql-3.0.21.pom">
-               <sha256 value="4d5b1e1911f330d1bbf9a7856a938705e3bd6aaaafe862d5cf9a2a9a15138a32"
-                       origin="Manually computed by Codex"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-templates" version="3.0.21">
-           <artifact name="groovy-templates-3.0.21.pom">
-               <sha256 value="577bb8cf05867ab121b8bf9bb382891b073530bc9197629f5c69d1b76a9b85aa"
-                       origin="Manually computed by Codex"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-test" version="3.0.21">
-           <artifact name="groovy-test-3.0.21.pom">
-               <sha256 value="2189b98a019505f40663f3f4dd976f122ccc3e43d4ab13ada30db8ecabf90e14"
-                       origin="Manually computed by Codex"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.groovy" name="groovy-xml" version="3.0.21">
-           <artifact name="groovy-xml-3.0.21.pom">
-               <sha256 value="6f08a898a69bc8d1ca979b54d0e1607bc433efc4699a7f691bc8533f226e39aa"
-                       origin="Manually computed by Codex"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.mojo" name="animal-sniffer-annotations" version="1.17">
-           <artifact name="animal-sniffer-annotations-1.17.jar">
-               <sha256 value="92654f493ecfec52082e76354f0ebf87648dc3d5cec2e3c3cdb947c016747a53"
-                       origin="Generated by Gradle"/>
-           </artifact>
-           <artifact name="animal-sniffer-annotations-1.17.pom">
-               <sha256 value="e956ab5d2eb48fabae12300d0cd2d3294d4a2a41abc2068c23cb4d60ad76cbe5"
-                       origin="Generated by Gradle"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.mojo" name="animal-sniffer-parent" version="1.17">
-           <artifact name="animal-sniffer-parent-1.17.pom">
-               <sha256 value="18a03df16e2a184c582db7b125633c15fb7714027a84c1b532d72933dc08b81f"
-                       origin="Generated by Gradle"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.mojo" name="mojo-parent" version="40">
-           <artifact name="mojo-parent-40.pom">
-               <sha256 value="fc648dcdc404f8bf66e0583914ecf980176618201227bea114fae85043cb755e"
-                       origin="Generated by Gradle"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.plexus" name="plexus" version="4.0">
-           <artifact name="plexus-4.0.pom">
-               <sha256 value="0a1b692d7fcc90d6a45dae2e50f4660d48f7a44504f174aa60ef34fbe1327f6a"
-                       origin="Generated by Gradle"/>
-           </artifact>
-       </component>
-       <component group="org.codehaus.plexus" name="plexus-utils" version="3.0.24">
-           <artifact name="plexus-utils-3.0.24.jar">
-               <sha256 value="83ee748b12d06afb0ad4050a591132b3e8025fbb1990f1ed002e8b73293e69b4"
-                       origin="Generated by Gradle"/>
-           </artifact>
-           <artifact name="plexus-utils-3.0.24.pom">
-               <sha256 value="11067f6a75fded12bcdc8daf7a66ddd942ce289c3daf88a3fe0f8b12858a2ee6"
-                       origin="Generated by Gradle"/>
-           </artifact>
-       </component>
-
-
        <component group="aopalliance" name="aopalliance" version="1.0">
          <artifact name="aopalliance-1.0.jar">
             <sha256 value="0addec670fedcd3f113c5c8091d783280d23f75e3acb841b61a9cdb079376a08" origin="Generated by Gradle"/>
@@ -1441,6 +1233,12 @@
             <sha256 value="76b4a485a8c4c4f35d6d1c6af89c15cd8c3ad4f65671bd191ab822fefeba4147" origin="Generated by Gradle"/>
          </artifact>
       </component>
+       <component group="gradle" name="gradle" version="8.9">
+           <artifact name="gradle-8.9-src.zip">
+               <sha256 value="cfeccc3375aa0ea1b7838361ec9acdb291bd36dd10c46ea0777c8508a40684ae"
+                       origin="Computed by alvasw"/>
+         </artifact>
+      </component>
       <component group="io.github.classgraph" name="classgraph" version="4.8.138">
          <artifact name="classgraph-4.8.138.jar">
             <sha256 value="272ffa06f76c8ed227d36ddbba1e5bbd1c7754c6541197b948a3a5c59d724bad" origin="Generated by Gradle"/>
@@ -1825,6 +1623,16 @@
             <sha256 value="435fb8664aa9b7e120c8dd6c707d4eafa642fa262dff6d5e3f71dc25c69e89eb" origin="Generated by Gradle"/>
          </artifact>
       </component>
+       <component group="net.bytebuddy" name="byte-buddy" version="1.14.15">
+           <artifact name="byte-buddy-1.14.15.jar">
+               <sha256 value="7472e3961992c12a9fd4f6d67c21de4280abe18f292704dd49d7338289f8acf5"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="byte-buddy-1.14.15.pom">
+               <sha256 value="d5639f8fe27cead33e6a4c789fad8e65f328f62bb79dad2bdd7ae6cc93b9454c"
+                       origin="Generated by Gradle"/>
+           </artifact>
+       </component>
       <component group="net.bytebuddy" name="byte-buddy-agent" version="1.11.19">
          <artifact name="byte-buddy-agent-1.11.19.jar">
             <sha256 value="871ba7021f8c335a14b47012f1bfe2cf8caa7c0b5a57dd1e00ee2b9e1f143fc0" origin="Generated by Gradle"/>
@@ -1841,6 +1649,16 @@
             <sha256 value="b5a2cff643681de1687fc40acd251feefdfca23e673e049fb3c3692b53526d4b" origin="Generated by Gradle"/>
          </artifact>
       </component>
+       <component group="net.bytebuddy" name="byte-buddy-agent" version="1.14.15">
+           <artifact name="byte-buddy-agent-1.14.15.jar">
+               <sha256 value="3ef6ec7175801361170067cc6902969f966d37c72bf9353d9cd282263b184064"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="byte-buddy-agent-1.14.15.pom">
+               <sha256 value="6d29dda5f7eb50ca3ba3b0a12aef518cc56d8234a33442a5fa982b4b4480265e"
+                       origin="Generated by Gradle"/>
+         </artifact>
+      </component>
       <component group="net.bytebuddy" name="byte-buddy-parent" version="1.11.19">
          <artifact name="byte-buddy-parent-1.11.19.pom">
             <sha256 value="1bdb848e7ec01925df8f51c19f8320edd46e72d3dffd30e03af80ea01e1cfc02" origin="Generated by Gradle"/>
@@ -1849,6 +1667,12 @@
       <component group="net.bytebuddy" name="byte-buddy-parent" version="1.12.19">
          <artifact name="byte-buddy-parent-1.12.19.pom">
             <sha256 value="72ab6fef409e812921f4728b3c4b6ef4fa53bc25fabb0488fc2cae367368b54d" origin="Generated by Gradle"/>
+         </artifact>
+      </component>
+       <component group="net.bytebuddy" name="byte-buddy-parent" version="1.14.15">
+           <artifact name="byte-buddy-parent-1.14.15.pom">
+               <sha256 value="26eaef08651ffa58ba290092ce3281782e29c0628a1b79fa5a3784f908b418ac"
+                       origin="Generated by Gradle"/>
          </artifact>
       </component>
       <component group="net.glxn" name="qrgen" version="1.3">
@@ -2798,14 +2622,38 @@
             <sha256 value="9a1cb18a8a01fe42da530f4059cedfd0948d6e8cf3100dae1ee2977c1ea55acc" origin="Manually computed by Alva"/>
          </artifact>
       </component>
+       <component group="org.codehaus.groovy" name="groovy" version="3.0.21">
+           <artifact name="groovy-3.0.21.pom">
+               <sha256 value="b8e9e8a5e2462d2fcc146ce41da96079b8931e70db3eab9d59d689863d096b17"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
       <component group="org.codehaus.groovy" name="groovy-ant" version="3.0.13">
          <artifact name="groovy-ant-3.0.13.pom">
             <sha256 value="6f07c9dbf501d45c43e40d0b9b09d6e92c4681d9d61f1867636a401febbc9092" origin="Manually computed by Alva"/>
          </artifact>
       </component>
+       <component group="org.codehaus.groovy" name="groovy-ant" version="3.0.21">
+           <artifact name="groovy-ant-3.0.21.pom">
+               <sha256 value="844286c0848f8ccce3b80c431be5afa0b5fd3686e5d244311f38c097a3d940df"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
       <component group="org.codehaus.groovy" name="groovy-astbuilder" version="3.0.13">
          <artifact name="groovy-astbuilder-3.0.13.pom">
             <sha256 value="208aa8d42692a4d19eca96f87c5c62a2c97a284389a5803a33e530bbd6064f09" origin="Manually computed by Alva"/>
+         </artifact>
+      </component>
+       <component group="org.codehaus.groovy" name="groovy-astbuilder" version="3.0.21">
+           <artifact name="groovy-astbuilder-3.0.21.pom">
+               <sha256 value="3109aa1d12318373d46bbb894aa111f04e6fd5846189fbbee6f0691618cc0e29"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
+       <component group="org.codehaus.groovy" name="groovy-bom" version="3.0.21">
+           <artifact name="groovy-bom-3.0.21.pom">
+               <sha256 value="92cc36affd20f568b5092c0b94ecf585ddeb0a281b6c8ba7256570bb185d6534"
+                       origin="Manually computed by Codex"/>
          </artifact>
       </component>
       <component group="org.codehaus.groovy" name="groovy-console" version="3.0.13">
@@ -2813,9 +2661,21 @@
             <sha256 value="00e84cdda323531d4212f8c58ade3924ddb1d9b1f3360973a8a240b8032044c3" origin="Manually computed by Alva"/>
          </artifact>
       </component>
+       <component group="org.codehaus.groovy" name="groovy-console" version="3.0.21">
+           <artifact name="groovy-console-3.0.21.pom">
+               <sha256 value="a993859a427dff053e89bc83df4cdc4b9ec47fcf6b1ecf45cbff09fb756af6e6"
+                       origin="Manually computed by Codex"/>
+         </artifact>
+      </component>
       <component group="org.codehaus.groovy" name="groovy-datetime" version="3.0.13">
          <artifact name="groovy-datetime-3.0.13.pom">
             <sha256 value="89c4216d180d7e928e633c8b415a857f17e28153c7384dbc392fca48044286d3" origin="Manually computed by Alva"/>
+         </artifact>
+      </component>
+       <component group="org.codehaus.groovy" name="groovy-datetime" version="3.0.21">
+           <artifact name="groovy-datetime-3.0.21.pom">
+               <sha256 value="00ecc961fa2a786bd7c89f7aac146ec832a461f57a3c8d8dea811ef8127be69e"
+                       origin="Manually computed by Codex"/>
          </artifact>
       </component>
       <component group="org.codehaus.groovy" name="groovy-dateutil" version="3.0.13">
@@ -2823,24 +2683,54 @@
             <sha256 value="d7358a271f3eb1aad7c7df80a57362358261932a8db59b7df49d655dd495db7e" origin="Manually computed by Alva"/>
          </artifact>
       </component>
+       <component group="org.codehaus.groovy" name="groovy-dateutil" version="3.0.21">
+           <artifact name="groovy-dateutil-3.0.21.pom">
+               <sha256 value="86ad6e1d812c36a46a4322ec166018c7354037a539a472b1826b770efd98bde8"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
       <component group="org.codehaus.groovy" name="groovy-groovydoc" version="3.0.13">
          <artifact name="groovy-groovydoc-3.0.13.pom">
             <sha256 value="034846307b8283ac60d33678731992e5eff4508955fd570c6d6fc6e7d4006cee" origin="Manually computed by Alva"/>
          </artifact>
       </component>
+       <component group="org.codehaus.groovy" name="groovy-groovydoc" version="3.0.21">
+           <artifact name="groovy-groovydoc-3.0.21.pom">
+               <sha256 value="f45d3a42e749b19f3cb81a2f9643828919f0267f9c2535c704e3fac7ea9ae664"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
       <component group="org.codehaus.groovy" name="groovy-json" version="3.0.13">
          <artifact name="groovy-json-3.0.13.pom">
             <sha256 value="0ee3f90ab537028eb9bcc1d9e6eb01515bbbb5c03cb16cc72fbda85f5da63952" origin="Manually computed by Alva"/>
          </artifact>
       </component>
+       <component group="org.codehaus.groovy" name="groovy-json" version="3.0.21">
+           <artifact name="groovy-json-3.0.21.pom">
+               <sha256 value="b2717dcbd04f6ccbcd5781e3119280e76ff27166085746c06043dc6243c47b87"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
       <component group="org.codehaus.groovy" name="groovy-nio" version="3.0.13">
          <artifact name="groovy-nio-3.0.13.pom">
             <sha256 value="fcef4d828c5d5dd9094492ab21c9b80dfec69062615cdcfca889d730322b62c5" origin="Manually computed by Alva"/>
          </artifact>
       </component>
+       <component group="org.codehaus.groovy" name="groovy-nio" version="3.0.21">
+           <artifact name="groovy-nio-3.0.21.pom">
+               <sha256 value="089ef3bd205e33b8bbe1c94647f65d8bf6dbb5053184360c27c4af6b915b2968"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
       <component group="org.codehaus.groovy" name="groovy-sql" version="3.0.13">
          <artifact name="groovy-sql-3.0.13.pom">
             <sha256 value="3e1f2a2a8c79d2af4c8eb67bff4479894492fab7a5bfd39132c72f4c80657a4b" origin="Manually computed by Alva"/>
+         </artifact>
+      </component>
+       <component group="org.codehaus.groovy" name="groovy-sql" version="3.0.21">
+           <artifact name="groovy-sql-3.0.21.pom">
+               <sha256 value="4d5b1e1911f330d1bbf9a7856a938705e3bd6aaaafe862d5cf9a2a9a15138a32"
+                       origin="Manually computed by Codex"/>
          </artifact>
       </component>
       <component group="org.codehaus.groovy" name="groovy-templates" version="3.0.13">
@@ -2848,9 +2738,21 @@
             <sha256 value="ee7ca0364ca13cddade1a624ab7989dffeedc9d19b4e13e99ec172c78fdec174" origin="Manually computed by Alva"/>
          </artifact>
       </component>
+       <component group="org.codehaus.groovy" name="groovy-templates" version="3.0.21">
+           <artifact name="groovy-templates-3.0.21.pom">
+               <sha256 value="577bb8cf05867ab121b8bf9bb382891b073530bc9197629f5c69d1b76a9b85aa"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
       <component group="org.codehaus.groovy" name="groovy-test" version="3.0.13">
          <artifact name="groovy-test-3.0.13.pom">
             <sha256 value="55c0eafdb4d09619e2456a940f29d88ff585a4034bfd565912d6109285e04b9d" origin="Manually computed by Alva"/>
+         </artifact>
+      </component>
+       <component group="org.codehaus.groovy" name="groovy-test" version="3.0.21">
+           <artifact name="groovy-test-3.0.21.pom">
+               <sha256 value="2189b98a019505f40663f3f4dd976f122ccc3e43d4ab13ada30db8ecabf90e14"
+                       origin="Manually computed by Codex"/>
          </artifact>
       </component>
       <component group="org.codehaus.groovy" name="groovy-xml" version="3.0.13">
@@ -2858,6 +2760,12 @@
             <sha256 value="945e632416fa6931d6533042b6b9584f59d827cec1533eab147ddee334a7687e" origin="Manually computed by Alva"/>
          </artifact>
       </component>
+       <component group="org.codehaus.groovy" name="groovy-xml" version="3.0.21">
+           <artifact name="groovy-xml-3.0.21.pom">
+               <sha256 value="6f08a898a69bc8d1ca979b54d0e1607bc433efc4699a7f691bc8533f226e39aa"
+                       origin="Manually computed by Codex"/>
+           </artifact>
+       </component>
       <component group="org.codehaus.mojo" name="animal-sniffer-annotations" version="1.17">
          <artifact name="animal-sniffer-annotations-1.17.jar">
             <sha256 value="92654f493ecfec52082e76354f0ebf87648dc3d5cec2e3c3cdb947c016747a53" origin="Generated by Gradle"/>
@@ -4223,6 +4131,16 @@
             <sha256 value="1de85141af9f58153e24575069a1375fbbedd7af5d844cbe3287965349cba1f7" origin="Generated by Gradle"/>
          </artifact>
       </component>
+       <component group="org.junit.platform" name="junit-platform-launcher" version="1.8.2">
+           <artifact name="junit-platform-launcher-1.8.2.jar">
+               <sha256 value="822156409fd83e682e4c5199b3460054299b538a058c2c6d0f5c9b6a5bdb7594"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="junit-platform-launcher-1.8.2.module">
+               <sha256 value="e17400ec7be7608c1f888d721b43001e9736c150d40f98c8a0bcda9563d8caeb"
+                       origin="Generated by Gradle"/>
+           </artifact>
+       </component>
       <component group="org.mockito" name="mockito-core" version="4.0.0">
          <artifact name="mockito-core-4.0.0.jar">
             <sha256 value="904634ccb32c1d912e528e964a5066dd5992163b064b0e7207bc35d3734d108d" origin="Generated by Gradle"/>
@@ -4239,6 +4157,16 @@
             <sha256 value="2bc2e3c8c8b313fdac231f23822225b07831dc899d067072f49d5f8ae37e739a" origin="Generated by Gradle"/>
          </artifact>
       </component>
+       <component group="org.mockito" name="mockito-core" version="5.12.0">
+           <artifact name="mockito-core-5.12.0.jar">
+               <sha256 value="4a2eb29237050da749e90a46f948bce7e26ec22b671e41f59b1ac6f4b6408229"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="mockito-core-5.12.0.pom">
+               <sha256 value="6dc72fc0a7b534775555f833074862a9c53013a673383e21312b581ca23b7612"
+                       origin="Generated by Gradle"/>
+           </artifact>
+       </component>
       <component group="org.mockito" name="mockito-inline" version="4.0.0">
          <artifact name="mockito-inline-4.0.0.jar">
             <sha256 value="ee52e1c299a632184fba274a9370993e09140429f5e516e6c5570fd6574b297f" origin="Generated by Gradle"/>
@@ -4255,6 +4183,16 @@
             <sha256 value="c134b460992fba8e93d1114fb4a8cb90a5657e11f22f5dbbbf15cf3a9b6b2f63" origin="Generated by Gradle"/>
          </artifact>
       </component>
+       <component group="org.mockito" name="mockito-junit-jupiter" version="5.12.0">
+           <artifact name="mockito-junit-jupiter-5.12.0.jar">
+               <sha256 value="2663b47e5b36bebef3a1a21610dc4cea504f0124545d45fa5f3332837971d66d"
+                       origin="Generated by Gradle"/>
+           </artifact>
+           <artifact name="mockito-junit-jupiter-5.12.0.pom">
+               <sha256 value="def3690a6e2b22a07e401e2135576777f449dcf8eabb82510b5b5190cb6f86e3"
+                       origin="Generated by Gradle"/>
+           </artifact>
+       </component>
       <component group="org.objenesis" name="objenesis" version="3.2">
          <artifact name="objenesis-3.2.jar">
             <sha256 value="03d960bd5aef03c653eb000413ada15eb77cdd2b8e4448886edf5692805e35f3" origin="Generated by Gradle"/>
@@ -4703,11 +4641,6 @@
          <artifact name="jeromq-0.5.2.pom">
             <sha256 value="4367abba02c31f1dce129b455652966b1703b554a9bc9ddbf33e96ca00cfe15c" origin="Generated by Gradle"/>
          </artifact>
-      </component>
-      <component group="gradle" name="gradle" version="8.9">
-          <artifact name="gradle-8.9-src.zip">
-              <sha256 value="cfeccc3375aa0ea1b7838361ec9acdb291bd36dd10c46ea0777c8508a40684ae" origin="Computed by alvasw"/>
-          </artifact>
       </component>
    </components>
 </verification-metadata>
