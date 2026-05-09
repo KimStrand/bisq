@@ -46,6 +46,8 @@ public final class DepositTransactionUtils {
      */
     public static byte[] toSerializedTransactionWithoutWitnessAndScriptSig(Transaction transaction,
                                                                            NetworkParameters params) {
+        checkNotNull(transaction, "transaction can't be null");
+        checkNotNull(params, "params can't be null");
         Transaction strippedTransaction = new Transaction(params, transaction.bitcoinSerialize());
         strippedTransaction.getInputs().forEach(DepositTransactionUtils::removeWitnessAndScriptSigFromInput);
         return strippedTransaction.bitcoinSerialize(false);
@@ -58,6 +60,8 @@ public final class DepositTransactionUtils {
 
     public static List<RawTransactionInput> combinedInputs(List<RawTransactionInput> makerInputs,
                                                            List<RawTransactionInput> takerInputs) {
+        checkNotNull(makerInputs, "makerInputs can't be null");
+        checkNotNull(takerInputs, "takerInputs can't be null");
         List<RawTransactionInput> inputs = new ArrayList<>(makerInputs.size() + takerInputs.size());
         inputs.addAll(makerInputs);
         inputs.addAll(takerInputs);
@@ -65,6 +69,7 @@ public final class DepositTransactionUtils {
     }
 
     public static Coin sumInputValues(List<RawTransactionInput> inputs) {
+        checkNotNull(inputs, "inputs can't be null");
         Coin sum = Coin.ZERO;
         for (int i = 0; i < inputs.size(); i++) {
             RawTransactionInput input = checkNotNull(inputs.get(i),
@@ -79,6 +84,8 @@ public final class DepositTransactionUtils {
     }
 
     public static Script get2of2MultiSigOutputScript(byte[] buyerPubKey, byte[] sellerPubKey) {
+        checkNotNull(buyerPubKey, "buyerPubKey can't be null");
+        checkNotNull(sellerPubKey, "sellerPubKey can't be null");
         Script redeemScript = PayoutTransactionUtil.get2of2MultiSigRedeemScript(buyerPubKey, sellerPubKey);
         return ScriptBuilder.createP2WSHOutputScript(redeemScript);
     }
