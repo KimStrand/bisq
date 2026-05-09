@@ -29,6 +29,8 @@ import org.bitcoinj.core.Transaction;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static bisq.core.trade.validation.DepositTxValidation.checkCanonicalDepositTxFields;
+
 @Slf4j
 public class SellerPublishesDepositTx extends TradeTask {
     public SellerPublishesDepositTx(TaskRunner<Trade> taskHandler, Trade trade) {
@@ -40,7 +42,7 @@ public class SellerPublishesDepositTx extends TradeTask {
         try {
             runInterceptHook();
 
-            final Transaction depositTx = processModel.getDepositTx();
+            Transaction depositTx = checkCanonicalDepositTxFields(processModel.getDepositTx());
             processModel.getTradeWalletService().broadcastTx(depositTx,
                     new TxBroadcaster.Callback() {
                         @Override

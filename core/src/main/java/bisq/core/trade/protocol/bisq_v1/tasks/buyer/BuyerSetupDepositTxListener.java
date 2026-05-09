@@ -43,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 
+import static bisq.core.trade.validation.DepositTxValidation.checkCanonicalDepositTxFields;
 import static com.google.common.base.Preconditions.checkArgument;
 
 @Slf4j
@@ -121,6 +122,14 @@ public class BuyerSetupDepositTxListener extends TradeTask {
         }
 
         Transaction walletTx = processModel.getTradeWalletService().getWalletTx(confidence.getTransactionHash());
+        try {
+            checkCanonicalDepositTxFields(walletTx);
+        } catch (IllegalArgumentException e) {
+            log.warn("We got a transactionConfidenceTx with non-canonical deposit tx fields. " +
+                    "transactionConfidenceTx={}", walletTx, e);
+            return false;
+        }
+
         long numInputMatches = walletTx.getInputs().stream()
                 .map(TransactionInput::getOutpoint)
                 .filter(Objects::nonNull)

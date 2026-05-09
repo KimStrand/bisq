@@ -305,6 +305,45 @@ class DepositTxValidationTest {
                         PARAMS));
     }
 
+
+    /* --------------------------------------------------------------------- */
+    // Canonical final deposit tx fields
+    /* --------------------------------------------------------------------- */
+
+    @Test
+    void checkCanonicalDepositTxFieldsAcceptsCanonicalTx() {
+        Transaction tx = canonicalTx();
+
+        assertSame(tx, DepositTxValidation.checkCanonicalDepositTxFields(tx));
+    }
+
+    @Test
+    void checkCanonicalDepositTxFieldsRejectsNonV1Tx() {
+        Transaction tx = canonicalTx();
+        tx.setVersion(2);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> DepositTxValidation.checkCanonicalDepositTxFields(tx));
+    }
+
+    @Test
+    void checkCanonicalDepositTxFieldsRejectsNonZeroLockTime() {
+        Transaction tx = canonicalTx();
+        tx.setLockTime(1);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> DepositTxValidation.checkCanonicalDepositTxFields(tx));
+    }
+
+    @Test
+    void checkCanonicalDepositTxFieldsRejectsRbfEnabledSequence() {
+        Transaction tx = canonicalTx();
+        tx.getInput(0).setSequenceNumber(0);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> DepositTxValidation.checkCanonicalDepositTxFields(tx));
+    }
+
     @Test
     void checkMakersPreparedDepositTxRejectsWrongMultisigOutputAmount() {
         Offer offer = offer(false,

@@ -144,10 +144,19 @@ public final class DepositTxValidation {
     public static Transaction checkCanonicalDepositTxShape(Transaction transaction,
                                                            List<RawTransactionInput> peerInputs,
                                                            NetworkParameters params) {
-        Transaction checkedTransaction = checkVersionIsOne(transaction);
-        checkLockTimeIsZero(checkedTransaction);
-        checkInputSequencesDisableRbf(checkedTransaction);
+        Transaction checkedTransaction = checkCanonicalDepositTxFields(transaction);
         checkAllInputsAreP2WPKH(peerInputs, params);
+        return checkedTransaction;
+    }
+
+    /**
+     * Checks canonical transaction-level fields that must remain true for the
+     * final signed deposit tx as well as the prepared tx.
+     */
+    public static Transaction checkCanonicalDepositTxFields(Transaction transaction) {
+        Transaction checkedTransaction = checkVersionIsOne(transaction);
+        checkedTransaction = checkLockTimeIsZero(checkedTransaction);
+        checkedTransaction = checkInputSequencesDisableRbf(checkedTransaction);
         return checkedTransaction;
     }
 
