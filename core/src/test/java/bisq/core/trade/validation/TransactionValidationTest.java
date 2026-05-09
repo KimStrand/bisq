@@ -286,6 +286,28 @@ class TransactionValidationTest {
     }
 
     @Test
+    void checkMultiSigPubKeyRejectsInvalidCompressedPublicKeyPrefix() {
+        byte[] publicKeyWithInvalidPrefix = Arrays.copyOf(new ECKey().getPubKey(), 33);
+        publicKeyWithInvalidPrefix[0] = 0x04;
+
+        assertThrows(IllegalArgumentException.class, () -> TransactionValidation.checkMultiSigPubKey(publicKeyWithInvalidPrefix));
+    }
+
+    @Test
+    void checkMultiSigPubKeyRejectsStandardPointAtInfinityEncoding() {
+        byte[] pointAtInfinityEncoding = new byte[]{0x00};
+
+        assertThrows(IllegalArgumentException.class, () -> TransactionValidation.checkMultiSigPubKey(pointAtInfinityEncoding));
+    }
+
+    @Test
+    void checkMultiSigPubKeyRejectsGeneratorPoint() {
+        byte[] generatorPoint = ECKey.CURVE.getG().getEncoded(true);
+
+        assertThrows(IllegalArgumentException.class, () -> TransactionValidation.checkMultiSigPubKey(generatorPoint));
+    }
+
+    @Test
     void checkMultiSigPubKeyRejectsMalformedCompressedPublicKey() {
         byte[] malformedCompressedPubKey = new byte[33];
         Arrays.fill(malformedCompressedPubKey, (byte) 0xff);
