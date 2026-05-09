@@ -19,6 +19,7 @@ package bisq.core.trade.validation;
 
 import bisq.core.btc.model.AddressEntry;
 import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.btc.wallet.utils.PayoutTransactionUtil;
 import bisq.core.offer.Offer;
 import bisq.core.trade.model.bisq_v1.Trade;
 
@@ -110,7 +111,7 @@ public final class PayoutTxValidation {
 
         checkTransaction(checkedPayoutTx);
 
-        Script redeemScript = get2of2MultiSigRedeemScript(checkedBuyerMultiSigPubKey, checkedSellerMultiSigPubKey);
+        Script redeemScript = PayoutTransactionUtil.get2of2MultiSigRedeemScript(checkedBuyerMultiSigPubKey, checkedSellerMultiSigPubKey);
         PayoutTxValidationUtils.checkPayoutTxOutputSumNotGreaterThanDepositOutputValue(checkedDepositTx,
                 checkedBuyerPayoutAmount,
                 checkedSellerPayoutAmount,
@@ -250,7 +251,7 @@ public final class PayoutTxValidation {
                 "At least one payout amount must be positive");
 
         TransactionOutput depositOutput = PayoutTxValidationUtils.getDepositOutputZero(checkedDepositTx);
-        Script redeemScript = get2of2MultiSigRedeemScript(checkedBuyerMultiSigPubKey, checkedSellerMultiSigPubKey);
+        Script redeemScript = PayoutTransactionUtil.get2of2MultiSigRedeemScript(checkedBuyerMultiSigPubKey, checkedSellerMultiSigPubKey);
         boolean isExpectedP2wshOutput = Arrays.equals(depositOutput.getScriptPubKey().getProgram(),
                 ScriptBuilder.createP2WSHOutputScript(redeemScript).getProgram());
         checkArgument(isExpectedP2wshOutput,
@@ -350,17 +351,6 @@ public final class PayoutTxValidation {
                             : "payoutTx witness signatures are invalid: " + message,
                     e);
         }
-    }
-
-
-    /* --------------------------------------------------------------------- */
-    // Multisig redeem script
-    /* --------------------------------------------------------------------- */
-
-    private static Script get2of2MultiSigRedeemScript(byte[] buyerPubKey, byte[] sellerPubKey) {
-        ECKey buyerKey = ECKey.fromPublicOnly(buyerPubKey);
-        ECKey sellerKey = ECKey.fromPublicOnly(sellerPubKey);
-        return ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(sellerKey, buyerKey));
     }
 
     private static Transaction createUnsignedPayoutTx(Transaction depositTx,

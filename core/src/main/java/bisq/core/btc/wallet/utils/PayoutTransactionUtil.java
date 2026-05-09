@@ -25,7 +25,10 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
-public class PayoutTransactionUtil {
+public final class PayoutTransactionUtil {
+    private PayoutTransactionUtil() {
+    }
+
     public static Script get2of2MultiSigRedeemScript(byte[] buyerPubKey, byte[] sellerPubKey) {
         ECKey buyerKey = ECKey.fromPublicOnly(buyerPubKey);
         ECKey sellerKey = ECKey.fromPublicOnly(sellerPubKey);

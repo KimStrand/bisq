@@ -33,7 +33,17 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class DepositTransactionUtils {
+public final class DepositTransactionUtils {
+    private DepositTransactionUtils() {
+    }
+
+    /**
+     * Creates a serialized transaction without witness and scriptSig for the given transaction.
+     *
+     * @param transaction the transaction to serialize
+     * @param params      the network parameters
+     * @return the newly constructed serialized transaction without witness and scriptSig
+     */
     public static byte[] toSerializedTransactionWithoutWitnessAndScriptSig(Transaction transaction,
                                                                            NetworkParameters params) {
         Transaction strippedTransaction = new Transaction(params, transaction.bitcoinSerialize());
@@ -41,7 +51,7 @@ public class DepositTransactionUtils {
         return strippedTransaction.bitcoinSerialize(false);
     }
 
-    public static void removeWitnessAndScriptSigFromInput(TransactionInput input) {
+    private static void removeWitnessAndScriptSigFromInput(TransactionInput input) {
         input.setScriptSig(ScriptBuilder.createEmpty());
         input.setWitness(TransactionWitness.EMPTY);
     }

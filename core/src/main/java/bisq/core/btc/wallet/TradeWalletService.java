@@ -827,7 +827,7 @@ public class TradeWalletService {
                                                byte[] sellerPubKey,
                                                byte[] buyerSignature,
                                                byte[] sellerSignature)
-            throws AddressFormatException, TransactionVerificationException, WalletException, SignatureDecodeException {
+            throws AddressFormatException, TransactionVerificationException, WalletException {
 
         TransactionInput input = delayedPayoutTx.getInput(0);
         finalizeUnconnectedDelayedPayoutTx(delayedPayoutTx, buyerPubKey, sellerPubKey, buyerSignature, sellerSignature, input.getValue());
