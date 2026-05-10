@@ -435,7 +435,7 @@ public class TakeOfferView extends ActivatableViewAndModel<AnchorPane, TakeOffer
             return;
         }
 
-        if (DevEnv.isDevMode()) {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
             balanceSubscription.unsubscribe();
             model.onTakeOffer(() -> {
             });
@@ -730,7 +730,7 @@ public class TakeOfferView extends ActivatableViewAndModel<AnchorPane, TakeOffer
         });
 
         showTransactionPublishedScreenSubscription = EasyBind.subscribe(model.showTransactionPublishedScreen, newValue -> {
-            if (newValue && DevEnv.isDevMode()) {
+            if (newValue && DevEnv.isIgnorePopupsInDevMode()) {
                 close();
             } else if (newValue && model.getTrade() != null && !model.getTrade().hasFailed()) {
                 String key = "takeOfferSuccessInfo";
@@ -1346,4 +1346,3 @@ public class TakeOfferView extends ActivatableViewAndModel<AnchorPane, TakeOffer
     }
 
 }
-

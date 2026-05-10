@@ -370,7 +370,7 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
         if (model.getDataModel().canPlaceOffer()) {
             if (model.getDataModel().isMakerFeeValid()) {
                 Offer offer = model.createAndGetOffer();
-                if (!DevEnv.isDevMode()) {
+                if (!DevEnv.isIgnorePopupsInDevMode()) {
                     offerDetailsWindow.onPlaceOffer(() ->
                                     model.onPlaceOffer(offer, offerDetailsWindow::hide))
                             .show(offer);
@@ -794,7 +794,7 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
         };
 
         placeOfferCompletedListener = (o, oldValue, newValue) -> {
-            if (DevEnv.isDevMode()) {
+            if (DevEnv.isIgnorePopupsInDevMode()) {
                 close();
             } else if (newValue) {
                 // We need a bit of delay to avoid issues with fade out/fade in of 2 popups

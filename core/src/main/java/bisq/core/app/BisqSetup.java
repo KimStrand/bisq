@@ -368,7 +368,7 @@ public class BisqSetup {
     }
 
     private void maybeShowTac(Runnable nextStep) {
-        if (!preferences.isTacAcceptedV120() && !DevEnv.isDevMode()) {
+        if (!preferences.isTacAcceptedV120() && !DevEnv.isIgnorePopupsInDevMode()) {
             if (displayTacHandler != null)
                 displayTacHandler.accept(() -> {
                     preferences.setTacAcceptedV120(true);

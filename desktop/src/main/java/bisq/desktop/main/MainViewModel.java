@@ -461,7 +461,7 @@ public class MainViewModel implements ViewModel, BisqSetup.BisqSetupListener {
                         .dontShowAgainId(key)
                         .show());
         bisqSetup.setDisplayLocalhostHandler(key -> {
-            if (!DevEnv.isDevMode()) {
+            if (!DevEnv.isIgnorePopupsInDevMode()) {
                 Popup popup = new Popup().backgroundInfo(Res.get("popup.bitcoinLocalhostNode.msg"))
                         .dontShowAgainId(key);
                 popup.setDisplayOrderPriority(5);

@@ -219,7 +219,7 @@ public class GUIUtil {
 
     public static void showFeeInfoBeforeExecute(Runnable runnable) {
         String key = "miningFeeInfo";
-        if (!DevEnv.isDevMode() && DontShowAgainLookup.showAgain(key)) {
+        if (!DevEnv.isIgnorePopupsInDevMode() && DontShowAgainLookup.showAgain(key)) {
             new Popup().attention(Res.get("guiUtil.miningFeeInfo", String.valueOf(GUIUtil.feeService.getTxFeePerVbyte().value)))
                     .onClose(runnable)
                     .useIUnderstandButton()

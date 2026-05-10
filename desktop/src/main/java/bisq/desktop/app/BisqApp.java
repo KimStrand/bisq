@@ -26,10 +26,10 @@ import bisq.desktop.main.overlays.popups.Popup;
 import bisq.desktop.main.overlays.windows.BsqEmptyWalletWindow;
 import bisq.desktop.main.overlays.windows.BtcEmptyWalletWindow;
 import bisq.desktop.main.overlays.windows.FilterWindow;
-import bisq.desktop.main.overlays.windows.supporttool.SupportToolWindow;
 import bisq.desktop.main.overlays.windows.SendAlertMessageWindow;
 import bisq.desktop.main.overlays.windows.ShowWalletDataWindow;
 import bisq.desktop.main.overlays.windows.WalletPasswordWindow;
+import bisq.desktop.main.overlays.windows.supporttool.SupportToolWindow;
 import bisq.desktop.util.CssTheme;
 import bisq.desktop.util.DisplayUtils;
 import bisq.desktop.util.ImageUtil;
@@ -76,8 +76,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 
-import javafx.geometry.Rectangle2D;
 import javafx.geometry.BoundingBox;
+import javafx.geometry.Rectangle2D;
 
 import java.time.Instant;
 
@@ -417,7 +417,7 @@ public class BisqApp extends Application implements UncaughtExceptionHandler {
         if (issueInfo.length() > 0) {
             // We maybe show a popup to inform user that some issues are pending
             String key = encodeToHex(getSha256Hash(issueInfo));
-            if (injector.getInstance(Preferences.class).showAgain(key) && !DevEnv.isDevMode()) {
+            if (injector.getInstance(Preferences.class).showAgain(key) && !DevEnv.isIgnorePopupsInDevMode()) {
                 new Popup().warning(issueInfo)
                         .actionButtonText(Res.get("shared.okWait"))
                         .onAction(() -> asyncStatus.complete(false))
@@ -431,7 +431,7 @@ public class BisqApp extends Application implements UncaughtExceptionHandler {
         }
         // if no warning popup has been shown yet, prompt user if they really intend to shut down
         String key = "popup.info.shutDownQuery";
-        if (injector.getInstance(Preferences.class).showAgain(key) && !DevEnv.isDevMode()) {
+        if (injector.getInstance(Preferences.class).showAgain(key) && !DevEnv.isIgnorePopupsInDevMode()) {
             new Popup().headLine(Res.get("popup.info.shutDownQuery"))
                     .actionButtonText(Res.get("shared.yes"))
                     .onAction(() -> asyncStatus.complete(true))

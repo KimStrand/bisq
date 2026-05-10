@@ -260,7 +260,7 @@ public class BsqSwapTakeOfferView extends BsqSwapOfferView<BsqSwapTakeOfferViewM
             return;
         }
 
-        if (DevEnv.isDevMode()) {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
             model.onTakeOffer(() -> {
                     }, warningMessage -> {
                         log.warn(warningMessage);
@@ -607,4 +607,3 @@ public class BsqSwapTakeOfferView extends BsqSwapOfferView<BsqSwapTakeOfferViewM
         }
     }
 }
-

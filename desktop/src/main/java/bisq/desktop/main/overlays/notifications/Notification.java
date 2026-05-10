@@ -92,7 +92,7 @@ public class Notification extends Overlay<Notification> {
 
     @Override
     public void show() {
-        if (DevEnv.isDevMode()) {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
             return;
         }
         super.show();

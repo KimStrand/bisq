@@ -345,7 +345,7 @@ public class MakeProposalView extends ActivatableView<GridPane, Void> implements
                                                  Coin miningFee,
                                                  int txVsize,
                                                  Coin fee) {
-        if (!DevEnv.isDevMode()) {
+        if (!DevEnv.isIgnorePopupsInDevMode()) {
             Coin btcForIssuance = null;
 
             if (proposal instanceof IssuanceProposal) btcForIssuance = ((IssuanceProposal) proposal).getRequestedBsq();
@@ -367,7 +367,7 @@ public class MakeProposalView extends ActivatableView<GridPane, Void> implements
         daoFacade.publishMyProposal(proposal,
                 transaction,
                 () -> {
-                    if (!DevEnv.isDevMode())
+                    if (!DevEnv.isIgnorePopupsInDevMode())
                         new Popup().feedback(Res.get("dao.tx.published.success")).show();
 
                     if (proposalDisplay != null)

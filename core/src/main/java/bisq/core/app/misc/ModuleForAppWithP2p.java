@@ -90,6 +90,7 @@ public class ModuleForAppWithP2p extends AppModule {
         bindConstant().annotatedWith(named(USE_DEV_PRIVILEGE_KEYS)).to(config.useDevPrivilegeKeys);
         bindConstant().annotatedWith(named(USE_DEV_MODE)).to(config.useDevMode);
         bindConstant().annotatedWith(named(USE_DEV_MODE_HEADER)).to(config.useDevModeHeader);
+        bindConstant().annotatedWith(named(IGNORE_POPUPS_IN_DEV_MODE)).to(config.ignorePopupsInDevMode);
         bindConstant().annotatedWith(named(REFERRAL_ID)).to(config.referralId);
         bindConstant().annotatedWith(named(PREVENT_PERIODIC_SHUTDOWN_AT_SEED_NODE)).to(config.preventPeriodicShutdownAtSeedNode);
         bindConstant().annotatedWith(named(SEED_NODE_REPORTING_SERVER_URL)).to(config.seedNodeReportingServerUrl);

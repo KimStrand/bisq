@@ -76,7 +76,7 @@ public class AccountPresentation {
     }
 
     public void showOneTimeAccountSigningPopup(String key, String message, String optionalParam) {
-        if (!DevEnv.isDevMode()) {
+        if (!DevEnv.isIgnorePopupsInDevMode()) {
 
             DontShowAgainLookup.dontShowAgain(ACCOUNT_NEWS, false);
             showNotification.set(true);

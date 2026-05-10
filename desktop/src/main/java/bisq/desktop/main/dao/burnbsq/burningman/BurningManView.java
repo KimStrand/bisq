@@ -917,7 +917,7 @@ public class BurningManView extends ActivatableView<ScrollPane, Void> implements
                 Coin miningFee = transaction.getFee();
                 int txVsize = transaction.getVsize();
 
-                if (!DevEnv.isDevMode()) {
+                if (!DevEnv.isIgnorePopupsInDevMode()) {
                     GUIUtil.showBsqFeeInfoPopup(amount, miningFee, txVsize, bsqFormatter, btcFormatter,
                             Res.get("dao.proofOfBurn.header"), () -> doPublishFeeTx(transaction, name));
                 } else {
@@ -937,7 +937,7 @@ public class BurningManView extends ActivatableView<ScrollPane, Void> implements
     private void doPublishFeeTx(Transaction transaction, String preImageAsString) {
         proofOfBurnService.publishTransaction(transaction, preImageAsString,
                 () -> {
-                    if (!DevEnv.isDevMode())
+                    if (!DevEnv.isIgnorePopupsInDevMode())
                         new Popup().confirmation(Res.get("dao.tx.published.success")).show();
                 },
                 errorMessage -> new Popup().warning(errorMessage).show());

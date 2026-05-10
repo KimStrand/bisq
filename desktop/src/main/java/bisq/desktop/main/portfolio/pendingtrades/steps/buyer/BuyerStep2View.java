@@ -544,7 +544,7 @@ public class BuyerStep2View extends TradeStepView {
         Trade trade = checkNotNull(model.dataModel.getTrade(), "trade must not be null");
         if (sellersPaymentAccountPayload instanceof CashDepositAccountPayload) {
             String key = "confirmPaperReceiptSent";
-            if (!DevEnv.isDevMode() && DontShowAgainLookup.showAgain(key)) {
+            if (!DevEnv.isIgnorePopupsInDevMode() && DontShowAgainLookup.showAgain(key)) {
                 Popup popup = new Popup();
                 popup.headLine(Res.get("portfolio.pending.step2_buyer.paperReceipt.headline"))
                         .feedback(Res.get("portfolio.pending.step2_buyer.paperReceipt.msg"))
@@ -558,7 +558,7 @@ public class BuyerStep2View extends TradeStepView {
             }
         } else if (sellersPaymentAccountPayload instanceof WesternUnionAccountPayload) {
             String key = "westernUnionMTCNSent";
-            if (!DevEnv.isDevMode() && DontShowAgainLookup.showAgain(key)) {
+            if (!DevEnv.isIgnorePopupsInDevMode() && DontShowAgainLookup.showAgain(key)) {
                 String email = ((WesternUnionAccountPayload) sellersPaymentAccountPayload).getEmail();
                 Popup popup = new Popup();
                 popup.headLine(Res.get("portfolio.pending.step2_buyer.westernUnionMTCNInfo.headline"))
@@ -574,7 +574,7 @@ public class BuyerStep2View extends TradeStepView {
             }
         } else if (sellersPaymentAccountPayload instanceof MoneyGramAccountPayload) {
             String key = "moneyGramMTCNSent";
-            if (!DevEnv.isDevMode() && DontShowAgainLookup.showAgain(key)) {
+            if (!DevEnv.isIgnorePopupsInDevMode() && DontShowAgainLookup.showAgain(key)) {
                 String email = ((MoneyGramAccountPayload) sellersPaymentAccountPayload).getEmail();
                 Popup popup = new Popup();
                 popup.headLine(Res.get("portfolio.pending.step2_buyer.moneyGramMTCNInfo.headline"))
@@ -590,7 +590,7 @@ public class BuyerStep2View extends TradeStepView {
             }
         } else if (sellersPaymentAccountPayload instanceof HalCashAccountPayload) {
             String key = "halCashCodeInfo";
-            if (!DevEnv.isDevMode() && DontShowAgainLookup.showAgain(key)) {
+            if (!DevEnv.isIgnorePopupsInDevMode() && DontShowAgainLookup.showAgain(key)) {
                 String mobileNr = ((HalCashAccountPayload) sellersPaymentAccountPayload).getMobileNr();
                 Popup popup = new Popup();
                 popup.headLine(Res.get("portfolio.pending.step2_buyer.halCashInfo.headline"))
@@ -645,7 +645,7 @@ public class BuyerStep2View extends TradeStepView {
 
     private void showConfirmPaymentStartedPopup() {
         String key = "confirmPaymentStarted";
-        if (!DevEnv.isDevMode() && DontShowAgainLookup.showAgain(key)) {
+        if (!DevEnv.isIgnorePopupsInDevMode() && DontShowAgainLookup.showAgain(key)) {
             Popup popup = new Popup();
             popup.headLine(Res.get("portfolio.pending.step2_buyer.confirmStart.headline"))
                     .confirmation(Res.get("portfolio.pending.step2_buyer.confirmStart.msg", getCurrencyName(trade)))
@@ -734,7 +734,7 @@ public class BuyerStep2View extends TradeStepView {
             }
 
             String key = "startPayment" + trade.getId();
-            if (!DevEnv.isDevMode() && DontShowAgainLookup.showAgain(key)) {
+            if (!DevEnv.isIgnorePopupsInDevMode() && DontShowAgainLookup.showAgain(key)) {
                 DontShowAgainLookup.dontShowAgain(key, true);
                 new Popup().headLine(Res.get("popup.attention.forTradeWithId", id))
                         .attention(message)

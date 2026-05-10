@@ -44,18 +44,29 @@ public class DevEnv {
 
     public static void setup(Config config) {
         DevEnv.setDevMode(config.useDevMode);
+        DevEnv.setIgnorePopupsInDevMode(config.ignorePopupsInDevMode);
     }
 
-    // If set to true we ignore several UI behavior like confirmation popups as well dummy accounts are created and
-    // offers are filled with default values. Intended to make dev testing faster.
+    // If set to true dummy accounts are created and offers are filled with default values.
+    // Intended to make dev testing faster.
     private static boolean devMode = false;
+    // Effective only when devMode is true. Lets developers keep other dev-mode conveniences while testing popup flows.
+    private static boolean ignorePopupsInDevMode = true;
 
     public static boolean isDevMode() {
         return devMode;
     }
 
+    public static boolean isIgnorePopupsInDevMode() {
+        return devMode && ignorePopupsInDevMode;
+    }
+
     public static void setDevMode(boolean devMode) {
         DevEnv.devMode = devMode;
+    }
+
+    public static void setIgnorePopupsInDevMode(boolean ignorePopupsInDevMode) {
+        DevEnv.ignorePopupsInDevMode = ignorePopupsInDevMode;
     }
 
     public static void logErrorAndThrowIfDevMode(String msg) {
