@@ -49,6 +49,7 @@ import bisq.asset.AltCoinAccountDisclaimer;
 import bisq.asset.Asset;
 import bisq.asset.coins.Monero;
 
+import bisq.common.app.DevEnv;
 import bisq.common.util.Tuple2;
 import bisq.common.util.Tuple3;
 import bisq.common.util.Tuple4;
@@ -141,24 +142,28 @@ public class AltCoinAccountsView extends PaymentAccountsView<GridPane, AltCoinAc
         if (selectedTradeCurrency != null) {
             if (selectedTradeCurrency instanceof CryptoCurrency && ((CryptoCurrency) selectedTradeCurrency).isAsset()) {
                 String name = selectedTradeCurrency.getName();
-                new Popup().information(Res.get("account.altcoin.popup.wallet.msg",
-                                selectedTradeCurrency.getCodeAndName(),
-                                name,
-                                name))
-                        .closeButtonText(Res.get("account.altcoin.popup.wallet.confirm"))
-                        .show();
+                if (!DevEnv.isIgnorePopupsInDevMode()) {
+                    new Popup().information(Res.get("account.altcoin.popup.wallet.msg",
+                                    selectedTradeCurrency.getCodeAndName(),
+                                    name,
+                                    name))
+                            .closeButtonText(Res.get("account.altcoin.popup.wallet.confirm"))
+                            .show();
+                }
             }
 
             final Optional<Asset> asset = CurrencyUtil.findAsset(selectedTradeCurrency.getCode());
             if (asset.isPresent()) {
                 final AltCoinAccountDisclaimer disclaimerAnnotation = asset.get().getClass().getAnnotation(AltCoinAccountDisclaimer.class);
                 if (disclaimerAnnotation != null) {
-                    new Popup()
-                            .width(asset.get() instanceof Monero ? 1000 : 669)
-                            .maxMessageLength(2500)
-                            .information(Res.get(disclaimerAnnotation.value()))
-                            .useIUnderstandButton()
-                            .show();
+                    if (!DevEnv.isIgnorePopupsInDevMode()) {
+                        new Popup()
+                                .width(asset.get() instanceof Monero ? 1000 : 669)
+                                .maxMessageLength(2500)
+                                .information(Res.get(disclaimerAnnotation.value()))
+                                .useIUnderstandButton()
+                                .show();
+                    }
                 }
             }
 

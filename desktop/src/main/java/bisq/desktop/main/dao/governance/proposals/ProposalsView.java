@@ -466,9 +466,13 @@ public class ProposalsView extends ActivatableView<GridPane, Void> implements Bs
 
     private void showHowToSetStakeForVotingPopup() {
         String id = "explainHowToSetStakeForVoting";
-        if (preferences.showAgain(id))
+        if (preferences.showAgain(id)) {
+            if (DevEnv.isIgnorePopupsInDevMode()) {
+                return;
+            }
             new Popup().information(Res.get("dao.proposal.myVote.setStake.description"))
                     .dontShowAgainId(id).show();
+        }
     }
 
     private void onVote() {

@@ -190,6 +190,7 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor, lifecycle
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public MutableOfferView(M model,
@@ -292,6 +293,7 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void onTabSelected(boolean isSelected) {
@@ -312,13 +314,18 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
         boolean result = model.initWithData(direction, tradeCurrency);
 
         if (!result) {
-            new Popup().headLine(Res.get("popup.warning.noTradingAccountSetup.headline"))
-                    .instruction(Res.get("popup.warning.noTradingAccountSetup.msg"))
-                    .actionButtonTextWithGoTo("navigation.account")
-                    .onAction(() -> {
-                        navigation.setReturnPath(navigation.getCurrentPath());
-                        navigation.navigateTo(MainView.class, AccountView.class, FiatAccountsView.class);
-                    }).show();
+            if (DevEnv.isIgnorePopupsInDevMode()) {
+                navigation.setReturnPath(navigation.getCurrentPath());
+                navigation.navigateTo(MainView.class, AccountView.class, FiatAccountsView.class);
+            } else {
+                new Popup().headLine(Res.get("popup.warning.noTradingAccountSetup.headline"))
+                        .instruction(Res.get("popup.warning.noTradingAccountSetup.msg"))
+                        .actionButtonTextWithGoTo("navigation.account")
+                        .onAction(() -> {
+                            navigation.setReturnPath(navigation.getCurrentPath());
+                            navigation.navigateTo(MainView.class, AccountView.class, FiatAccountsView.class);
+                        }).show();
+            }
         }
 
         String placeOfferButtonLabel;
@@ -364,6 +371,7 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // UI actions
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void onPlaceOffer() {
@@ -447,10 +455,12 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
                         model.getTradeFee(),
                         model.getTxFee()
                 );
-                new Popup().headLine(Res.get("createOffer.createOfferFundWalletInfo.headline"))
-                        .instruction(message)
-                        .dontShowAgainId(key)
-                        .show();
+                if (!DevEnv.isIgnorePopupsInDevMode()) {
+                    new Popup().headLine(Res.get("createOffer.createOfferFundWalletInfo.headline"))
+                            .instruction(message)
+                            .dontShowAgainId(key)
+                            .show();
+                }
             }
         });
 
@@ -469,7 +479,7 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
 
         balanceTextField.setTargetAmount(model.getDataModel().totalToPayAsCoinProperty().get());
 
-        if (!preferences.isUseBisqWalletFunding()) {
+        if (!preferences.isUseBisqWalletFunding() && !DevEnv.isIgnorePopupsInDevMode()) {
             String key = "securityDepositInfo";
             new Popup().backgroundInfo(Res.get("popup.info.securityDepositInfo"))
                     .actionButtonText(Res.get("shared.faq"))
@@ -599,6 +609,7 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Navigation
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     protected void close() {
@@ -608,6 +619,7 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Bindings, Listeners
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void addBindings() {
@@ -794,7 +806,7 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
         };
 
         placeOfferCompletedListener = (o, oldValue, newValue) -> {
-            if (DevEnv.isIgnorePopupsInDevMode()) {
+            if (newValue && DevEnv.isIgnorePopupsInDevMode()) {
                 close();
             } else if (newValue) {
                 // We need a bit of delay to avoid issues with fade out/fade in of 2 popups
@@ -1035,6 +1047,7 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Build UI elements
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void addScrollPane() {
@@ -1562,6 +1575,7 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // PayInfo
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private GridPane createInfoPopover() {
@@ -1590,6 +1604,7 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Helpers
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private ObservableList<PaymentAccount> getPaymentAccounts() {
@@ -1598,6 +1613,7 @@ public abstract class MutableOfferView<M extends MutableOfferViewModel<?>> exten
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Abstract Methods
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     protected abstract ObservableList<PaymentAccount> filterPaymentAccounts(ObservableList<PaymentAccount> paymentAccounts);

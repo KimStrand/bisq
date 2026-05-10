@@ -40,6 +40,7 @@ import bisq.core.payment.payload.PaymentMethod;
 import bisq.core.util.coin.CoinFormatter;
 import bisq.core.util.validation.InputValidator;
 
+import bisq.common.app.DevEnv;
 import bisq.common.util.Tuple3;
 import bisq.common.util.Utilities;
 
@@ -278,6 +279,11 @@ public abstract class PaymentMethodForm {
 
     void applyTradeCurrency(TradeCurrency tradeCurrency, FiatCurrency defaultCurrency) {
         if (!defaultCurrency.equals(tradeCurrency)) {
+            if (DevEnv.isIgnorePopupsInDevMode()) {
+                paymentAccount.setSingleTradeCurrency(tradeCurrency);
+                autoFillNameTextField();
+                return;
+            }
             new Popup().warning(Res.get("payment.foreign.currency"))
                     .actionButtonText(Res.get("shared.yes"))
                     .onAction(() -> {

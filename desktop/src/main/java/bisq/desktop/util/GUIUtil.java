@@ -255,6 +255,10 @@ public class GUIUtil {
             new Popup().warning(Res.get("guiUtil.accountExport.noAccountSetup")).show();
             return;
         }
+        if (DevEnv.isIgnorePopupsInDevMode()) {
+            doExportAccountsForBisq2(accounts, fileName, preferences, stage, signatureKeyPair);
+            return;
+        }
         new Popup().backgroundInfo(Res.get("guiUtil.accountAndPrivateKeyExport.info"))
                 .closeButtonText(Res.get("shared.no"))
                 .actionButtonText(Res.get("shared.yes"))
@@ -750,6 +754,10 @@ public class GUIUtil {
 
         if (DontShowAgainLookup.showAgain(OPEN_WEB_PAGE_KEY)) {
             final String finalTarget = target;
+            if (DevEnv.isIgnorePopupsInDevMode()) {
+                doOpenWebPage(finalTarget);
+                return;
+            }
             new Popup().information(Res.get("guiUtil.openWebBrowser.warning", target))
                     .actionButtonText(Res.get("guiUtil.openWebBrowser.doOpen"))
                     .onAction(() -> {
@@ -836,6 +844,10 @@ public class GUIUtil {
     public static void showMaximizedToProtectPrivacyMessage(Runnable runnable) {
         String msg = Res.get("shared.maximizedToProtectPrivacy");
         String id = "shared.maximizedToProtectPrivacy";
+        if (DevEnv.isIgnorePopupsInDevMode()) {
+            runnable.run();
+            return;
+        }
         if (preferences.showAgain(id)) {
             new Popup().information(msg)
                     .onClose(runnable)
@@ -848,6 +860,9 @@ public class GUIUtil {
     }
 
     public static void showUnsignedAccountWarningForSellerAsTaker() {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
+            return;
+        }
         String key = "unsignedAccountWarningForSellerAsTaker";
         String amount = OfferRestrictions.TOLERATED_SMALL_TRADE_AMOUNT.toFriendlyString();
         new Popup().warning(Res.get("payment.unsignedAccountWarningForSellerAsTaker.warning", amount))
@@ -858,6 +873,9 @@ public class GUIUtil {
     }
 
     public static void showUnsignedAccountWarningForSellerAsMaker() {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
+            return;
+        }
         String key = "unsignedAccountWarningForSellerAsMaker";
         String amount = OfferRestrictions.TOLERATED_SMALL_TRADE_AMOUNT.toFriendlyString();
         new Popup().warning(Res.get("payment.unsignedAccountWarningForSellerAsMaker.warning", amount, amount))
@@ -868,6 +886,9 @@ public class GUIUtil {
     }
 
     public static void showClearXchangeWarning() {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
+            return;
+        }
         String key = "confirmClearXchangeRequirements";
         final String currencyName = Config.baseCurrencyNetwork().getCurrencyName();
         new Popup().information(Res.get("payment.clearXchange.info", currencyName, currencyName))
@@ -878,6 +899,11 @@ public class GUIUtil {
     }
 
     public static void showFasterPaymentsWarning(Navigation navigation) {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
+            navigation.setReturnPath(navigation.getCurrentPath());
+            navigation.navigateTo(MainView.class, AccountView.class, FiatAccountsView.class);
+            return;
+        }
         String key = "recreateFasterPaymentsAccount";
         String currencyName = Config.baseCurrencyNetwork().getCurrencyName();
         new Popup().information(Res.get("payment.fasterPayments.newRequirements.info", currencyName))
@@ -985,6 +1011,9 @@ public class GUIUtil {
     }
 
     public static void showWantToBurnBTCPopup(Coin miningFee, Coin amount, CoinFormatter btcFormatter) {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
+            return;
+        }
         new Popup().warning(Res.get("popup.warning.burnBTC", btcFormatter.formatCoinWithCode(miningFee),
                 btcFormatter.formatCoinWithCode(amount))).show();
     }
@@ -1112,6 +1141,10 @@ public class GUIUtil {
                                            CoinFormatter btcFormatter,
                                            String type,
                                            Runnable actionHandler) {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
+            actionHandler.run();
+            return;
+        }
         String confirmationMessage;
 
         if (btcForIssuance != null) {

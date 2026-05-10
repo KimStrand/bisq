@@ -126,6 +126,9 @@ public class BsqSwapTakeOfferView extends BsqSwapOfferView<BsqSwapTakeOfferViewM
         if (!missingFundsPopupDisplayed) {
             String key = "BsqSwapTakerInfo";
             if (DontShowAgainLookup.showAgain(key)) {
+                if (DevEnv.isIgnorePopupsInDevMode()) {
+                    return;
+                }
                 new Popup().information(Res.get("bsqSwapOffer.feeHandling"))
                         .width(1000)
                         .closeButtonText(Res.get("shared.iUnderstand"))

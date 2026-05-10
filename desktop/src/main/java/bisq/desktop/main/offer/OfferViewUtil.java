@@ -38,6 +38,7 @@ import bisq.core.offer.Offer;
 import bisq.core.offer.OfferDirection;
 
 import bisq.common.UserThread;
+import bisq.common.app.DevEnv;
 import bisq.common.util.Tuple2;
 
 import javafx.scene.control.Label;
@@ -75,6 +76,9 @@ public class OfferViewUtil {
             return;
         }
         paymentAccountWarningDisplayed.put(msgKey, true);
+        if (DevEnv.isIgnorePopupsInDevMode()) {
+            return;
+        }
         UserThread.runAfter(() -> {
             new Popup().information(Res.get(msgKey))
                     .width(900)
@@ -107,11 +111,18 @@ public class OfferViewUtil {
 
         var info = new AutoTooltipLabel("BSQ is colored BTC that helps fund Bisq developers.");
         var learnMore = new HyperlinkWithIcon("Learn More");
-        learnMore.setOnAction(e -> new Popup().headLine(buyBsqText)
-                .information(Res.get("createOffer.buyBsq.popupMessage"))
-                .actionButtonText(buyBsqText)
-                .buttonAlignment(HPos.CENTER)
-                .onAction(() -> openBuyBsqOfferBook(navigation)).show());
+        learnMore.setOnAction(e -> {
+            if (DevEnv.isIgnorePopupsInDevMode()) {
+                openBuyBsqOfferBook(navigation);
+                return;
+            }
+            new Popup().headLine(buyBsqText)
+                    .information(Res.get("createOffer.buyBsq.popupMessage"))
+                    .actionButtonText(buyBsqText)
+                    .buttonAlignment(HPos.CENTER)
+                    .onAction(() -> openBuyBsqOfferBook(navigation))
+                    .show();
+        });
         learnMore.setMinWidth(100);
 
         HBox buyBsqBox = new HBox(buyBsqButton, info, learnMore);

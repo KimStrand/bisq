@@ -256,11 +256,13 @@ class BsqSwapCreateOfferViewModel extends BsqSwapOfferViewModel<BsqSwapCreateOff
                     minAmountValidationResult.set(isBtcInputValid(minAmount.get()));
             } else if (amount.get() != null && btcValidator.getMaxTradeLimit() != null && btcValidator.getMaxTradeLimit().value == OfferRestrictions.TOLERATED_SMALL_TRADE_AMOUNT.value) {
                 amount.set(btcFormatter.formatCoin(btcValidator.getMaxTradeLimit()));
-                new Popup().information(Res.get("popup.warning.tradeLimitDueAccountAgeRestriction.buyer",
-                        btcFormatter.formatCoinWithCode(OfferRestrictions.TOLERATED_SMALL_TRADE_AMOUNT),
-                        Res.get("offerbook.warning.newVersionAnnouncement")))
-                        .width(900)
-                        .show();
+                if (!DevEnv.isIgnorePopupsInDevMode()) {
+                    new Popup().information(Res.get("popup.warning.tradeLimitDueAccountAgeRestriction.buyer",
+                                    btcFormatter.formatCoinWithCode(OfferRestrictions.TOLERATED_SMALL_TRADE_AMOUNT),
+                                    Res.get("offerbook.warning.newVersionAnnouncement")))
+                            .width(900)
+                            .show();
+                }
             }
             // We want to trigger a recalculation of the volume
             UserThread.execute(() -> {

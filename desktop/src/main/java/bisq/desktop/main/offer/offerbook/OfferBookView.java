@@ -717,6 +717,10 @@ abstract public class OfferBookView<R extends GridPane, M extends OfferBookViewM
         if (model.canCreateOrTakeOffer()) {
             if (offer.getDirection() == OfferDirection.SELL &&
                     offer.getPaymentMethod().getId().equals(PaymentMethod.CASH_DEPOSIT.getId())) {
+                if (DevEnv.isIgnorePopupsInDevMode()) {
+                    model.onTakeOffer(offer);
+                    return;
+                }
                 new Popup().confirmation(Res.get("popup.info.cashDepositInfo", offer.getBankId()))
                         .actionButtonText(Res.get("popup.info.cashDepositInfo.confirm"))
                         .onAction(() -> model.onTakeOffer(offer))
@@ -734,6 +738,10 @@ abstract public class OfferBookView<R extends GridPane, M extends OfferBookViewM
                 String message = offer.isBsqSwapOffer() ?
                         Res.get("popup.warning.removeNoFeeOffer") :
                         Res.get("popup.warning.removeOffer", model.getMakerFeeAsString(offer));
+                if (DevEnv.isIgnorePopupsInDevMode()) {
+                    doRemoveOffer(offer);
+                    return;
+                }
                 new Popup().warning(message)
                         .actionButtonText(Res.get("shared.removeOffer"))
                         .onAction(() -> doRemoveOffer(offer))
@@ -761,12 +769,16 @@ abstract public class OfferBookView<R extends GridPane, M extends OfferBookViewM
                         return; // nothing to withdraw when Bsq swap is canceled (issue #5956)
                     }
                     log.debug(Res.get("offerbook.removeOffer.success"));
-                    if (DontShowAgainLookup.showAgain(key))
+                    if (DontShowAgainLookup.showAgain(key)) {
+                        if (DevEnv.isIgnorePopupsInDevMode()) {
+                            return;
+                        }
                         new Popup().instruction(Res.get("offerbook.withdrawFundsHint", Res.get("navigation.funds.availableForWithdrawal")))
                                 .actionButtonTextWithGoTo("navigation.funds.availableForWithdrawal")
                                 .onAction(() -> navigation.navigateTo(MainView.class, FundsView.class, WithdrawalView.class))
                                 .dontShowAgainId(key)
                                 .show();
+                    }
                 },
                 (message) -> {
                     log.error(message);
@@ -778,6 +790,12 @@ abstract public class OfferBookView<R extends GridPane, M extends OfferBookViewM
         String headline = Res.get("offerbook.warning.noMatchingAccount.headline");
 
         if (offer.getCurrencyCode().equals("BSQ")) {
+            if (DevEnv.isIgnorePopupsInDevMode()) {
+                var bsqAccount = model.createBsqAccount(offer);
+                log.info("Created BSQ account {} while skipping popup in dev mode.", bsqAccount.getAccountName());
+                model.onTakeOffer(offer);
+                return;
+            }
             new Popup().headLine(headline)
                     .instruction(Res.get("offerbook.warning.noMatchingBsqAccount.msg"))
                     .actionButtonText(Res.get("offerbook.takeOffer.createAccount"))
@@ -797,6 +815,11 @@ abstract public class OfferBookView<R extends GridPane, M extends OfferBookViewM
 
             var accountViewClass = offer.isFiatOffer() ? FiatAccountsView.class : AltCoinAccountsView.class;
 
+            if (DevEnv.isIgnorePopupsInDevMode()) {
+                navigation.setReturnPath(navigation.getCurrentPath());
+                navigation.navigateTo(MainView.class, AccountView.class, accountViewClass);
+                return;
+            }
             new Popup().headLine(headline)
                     .instruction(Res.get("offerbook.warning.noMatchingAccount.msg"))
                     .actionButtonTextWithGoTo("navigation.account")

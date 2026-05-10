@@ -35,6 +35,7 @@ import bisq.core.util.coin.CoinFormatter;
 import bisq.core.util.validation.InputValidator;
 
 import bisq.common.UserThread;
+import bisq.common.app.DevEnv;
 import bisq.common.util.Tuple3;
 
 import javafx.scene.control.CheckBox;
@@ -92,7 +93,7 @@ public class AssetsForm extends PaymentMethodForm {
         tradeInstantCheckBox.setSelected(tradeInstant);
         tradeInstantCheckBox.setOnAction(e -> {
             tradeInstant = tradeInstantCheckBox.isSelected();
-            if (tradeInstant)
+            if (tradeInstant && !DevEnv.isIgnorePopupsInDevMode())
                 new Popup().information(Res.get("payment.altcoin.tradeInstant.popup")).show();
             paymentLimitationsTextField.setText(getLimitationsText());
         });

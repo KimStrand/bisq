@@ -30,6 +30,7 @@ import bisq.core.locale.Res;
 import bisq.core.offer.OpenOfferManager;
 import bisq.core.user.DontShowAgainLookup;
 
+import bisq.common.app.DevEnv;
 import bisq.common.config.Config;
 
 import org.bitcoinj.crypto.MnemonicCode;
@@ -169,6 +170,10 @@ public class SeedWordsView extends ActivatableView<GridPane, Void> {
 
         String key = "showBackupWarningAtSeedPhrase";
         if (DontShowAgainLookup.showAgain(key)) {
+            if (DevEnv.isIgnorePopupsInDevMode()) {
+                showSeedPhrase();
+                return;
+            }
             new Popup().warning(Res.get("account.seed.backup.warning"))
                     .onAction(this::showSeedPhrase)
                     .actionButtonText(Res.get("shared.iUnderstand"))
@@ -190,6 +195,11 @@ public class SeedWordsView extends ActivatableView<GridPane, Void> {
         } else {
             String key = "showSeedWordsWarning";
             if (DontShowAgainLookup.showAgain(key)) {
+                if (DevEnv.isIgnorePopupsInDevMode()) {
+                    initSeedWords(keyChainSeed);
+                    showSeedScreen();
+                    return;
+                }
                 new Popup().warning(Res.get("account.seed.warn.noPw.msg"))
                         .actionButtonText(Res.get("account.seed.warn.noPw.yes"))
                         .onAction(() -> {

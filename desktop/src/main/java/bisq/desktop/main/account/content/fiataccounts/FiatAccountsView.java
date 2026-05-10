@@ -125,6 +125,7 @@ import bisq.core.payment.payload.PaymentMethod;
 import bisq.core.util.FormattingUtils;
 import bisq.core.util.coin.CoinFormatter;
 
+import bisq.common.app.DevEnv;
 import bisq.common.config.Config;
 import bisq.common.crypto.KeyRing;
 import bisq.common.util.Hex;
@@ -279,6 +280,11 @@ public class FiatAccountsView extends PaymentAccountsView<GridPane, FiatAccounts
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private void onSaveNewAccount(PaymentAccount paymentAccount) {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
+            doSaveNewAccount(paymentAccount);
+            return;
+        }
+
         Coin maxTradeLimitAsCoin = paymentAccount.getPaymentMethod().getMaxTradeLimitAsCoin("USD");
         Coin maxTradeLimitSecondMonth = maxTradeLimitAsCoin.divide(2L);
         Coin maxTradeLimitFirstMonth = maxTradeLimitAsCoin.divide(4L);
@@ -474,7 +480,8 @@ public class FiatAccountsView extends PaymentAccountsView<GridPane, FiatAccounts
             gridRow = 2;
             paymentMethodForm = getPaymentMethodForm(paymentMethodComboBox.getSelectionModel().getSelectedItem());
             if (paymentMethodForm != null) {
-                if (paymentMethodForm.getPaymentAccount().getMessageForAccountCreation() != null) {
+                if (paymentMethodForm.getPaymentAccount().getMessageForAccountCreation() != null &&
+                        !DevEnv.isIgnorePopupsInDevMode()) {
                     new Popup().information(Res.get(paymentMethodForm.getPaymentAccount().getMessageForAccountCreation()))
                             .width(900)
                             .closeButtonText(Res.get("shared.iUnderstand"))
@@ -769,4 +776,3 @@ public class FiatAccountsView extends PaymentAccountsView<GridPane, FiatAccounts
     }
 
 }
-
