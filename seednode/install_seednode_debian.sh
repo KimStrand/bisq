@@ -10,6 +10,8 @@ ROOT_GROUP=root
 ROOT_PKG="build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 git vim screen ufw zulu21-jdk"
 ROOT_HOME=/root
 AZUL_REPO_PKG="ca-certificates curl gnupg"
+AZUL_APT_KEY_URL=https://repos.azul.com/azul-repo.key
+AZUL_APT_KEY_FINGERPRINT=27BC0C8CB3D81623F59BDADCB1998361219BD9C9
 AZUL_APT_KEYRING=/usr/share/keyrings/azul.gpg
 AZUL_APT_SOURCE=/etc/apt/sources.list.d/zulu.list
 
@@ -66,7 +68,16 @@ sudo -H -i -u "${ROOT_USER}" DEBIAN_FRONTEND=noninteractive apt-get upgrade -qq 
 
 echo "[*] Installing Azul Zulu apt repository"
 sudo -H -i -u "${ROOT_USER}" DEBIAN_FRONTEND=noninteractive apt-get install -qq -y ${AZUL_REPO_PKG}
-sudo -H -i -u "${ROOT_USER}" sh -c "curl -fsSL https://repos.azul.com/azul-repo.key | gpg --dearmor --yes -o ${AZUL_APT_KEYRING}"
+AZUL_APT_KEY=$(mktemp)
+AZUL_APT_GNUPGHOME=$(mktemp -d)
+trap 'rm -rf "${AZUL_APT_KEY}" "${AZUL_APT_GNUPGHOME}"' EXIT
+curl -fsSL "${AZUL_APT_KEY_URL}" -o "${AZUL_APT_KEY}"
+AZUL_APT_ACTUAL_FINGERPRINT=$(GNUPGHOME="${AZUL_APT_GNUPGHOME}" gpg --batch --show-keys --with-fingerprint --with-colons "${AZUL_APT_KEY}" | awk -F: '/^fpr:/ {print $10; exit}')
+if [ "${AZUL_APT_ACTUAL_FINGERPRINT}" != "${AZUL_APT_KEY_FINGERPRINT}" ]; then
+	echo "Azul signing key fingerprint mismatch: expected ${AZUL_APT_KEY_FINGERPRINT}, got ${AZUL_APT_ACTUAL_FINGERPRINT}" >&2
+	exit 1
+fi
+sudo -H -i -u "${ROOT_USER}" gpg --batch --dearmor --yes -o "${AZUL_APT_KEYRING}" "${AZUL_APT_KEY}"
 sudo -H -i -u "${ROOT_USER}" chmod 644 "${AZUL_APT_KEYRING}"
 sudo -H -i -u "${ROOT_USER}" sh -c "echo 'deb [signed-by=${AZUL_APT_KEYRING}] https://repos.azul.com/zulu/deb stable main' > ${AZUL_APT_SOURCE}"
 sudo -H -i -u "${ROOT_USER}" DEBIAN_FRONTEND=noninteractive apt-get update -q
