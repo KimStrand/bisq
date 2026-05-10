@@ -19,18 +19,17 @@ package bisq.network.http;
 
 import bisq.network.Socks5ProxyProvider;
 
+import bisq.common.app.DevEnv;
 import bisq.common.app.Version;
 import bisq.common.config.Config;
 import bisq.common.util.Utilities;
 
-import javax.inject.Named;
-
 import org.apache.http.HttpEntity;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -44,6 +43,7 @@ import org.apache.http.ssl.SSLContexts;
 import com.runjva.sourceforge.jsocks.protocol.Socks5Proxy;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
@@ -255,7 +255,7 @@ public class HttpClientImpl implements HttpClient {
                         + httpMethod + " to onion host " + baseUrl);
             }
 
-            if (allowClearnetHttpRequests) {
+            if (allowClearnetHttpRequests || DevEnv.isDevMode()) {
                 // Dev/testing escape hatch: send directly without Tor.
                 log.info("No SOCKS5 proxy available; sending {} clearnet (no Tor) to non-local {} " +
                                 "because allowClearnetHttpRequests=true",
