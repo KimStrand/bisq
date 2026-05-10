@@ -46,7 +46,6 @@ import lombok.extern.slf4j.Slf4j;
 import static bisq.core.trade.model.bisq_v1.Trade.State.BUYER_RECEIVED_DEPOSIT_TX_PUBLISHED_MSG;
 import static bisq.core.trade.model.bisq_v1.Trade.State.BUYER_SAW_DEPOSIT_TX_IN_NETWORK;
 import static bisq.core.trade.validation.DepositTxValidation.checkCanonicalDepositTxFields;
-import static bisq.core.trade.validation.DepositTxValidation.checkDepositTxMatchesIgnoringWitnessesAndScriptSigs;
 import static bisq.core.trade.validation.TransactionValidation.checkSerializedTransaction;
 import static bisq.core.trade.validation.TransactionValidation.toVerifiedTransaction;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -73,11 +72,6 @@ public class BuyerProcessDepositTxAndDelayedPayoutTxMessage extends TradeTask {
 
             Transaction peersDepositTx = checkCanonicalDepositTxFields(toVerifiedTransaction(message.getDepositTx(),
                     btcWalletService));
-            Transaction myDepositTx = checkNotNull(processModel.getDepositTx(),
-                    "processModel.getDepositTx() must not be null");
-            checkDepositTxMatchesIgnoringWitnessesAndScriptSigs(peersDepositTx,
-                    myDepositTx,
-                    btcWalletService);
 
             // To access tx confidence we need to add that tx into our wallet.
             Transaction committedDepositTx = WalletService.maybeAddSelfTxToWallet(peersDepositTx, wallet);
