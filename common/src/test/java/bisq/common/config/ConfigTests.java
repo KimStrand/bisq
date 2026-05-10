@@ -205,6 +205,12 @@ public class ConfigTests {
     }
 
     @Test
+    public void whenIgnorePopupsInDevModeOptionIsSet_thenIgnorePopupsInDevModePropertyReflectsItsValue() {
+        assertTrue(new Config().ignorePopupsInDevMode);
+        assertFalse(configWithOpts(opt(IGNORE_POPUPS_IN_DEV_MODE, false)).ignorePopupsInDevMode);
+    }
+
+    @Test
     public void whenConfigIsConstructed_thenNoConsoleOutputSideEffectsShouldOccur() {
         PrintStream outOrig = System.out;
         PrintStream errOrig = System.err;

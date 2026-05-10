@@ -246,7 +246,7 @@ public class SupportView extends ActivatableView<TabPane, Void> {
         }
 
         String key = "supportInfo";
-        if (!DevEnv.isDevMode()) {
+        if (!DevEnv.isIgnorePopupsInDevMode()) {
             new Popup().backgroundInfo(Res.get("support.backgroundInfo"))
                     .width(900)
                     .dontShowAgainId(key)

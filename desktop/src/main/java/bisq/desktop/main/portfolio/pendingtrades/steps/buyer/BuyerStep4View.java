@@ -127,7 +127,7 @@ public class BuyerStep4View extends TradeStepView {
         });
 
         String key = "tradeCompleted" + trade.getId();
-        if (!DevEnv.isDevMode() && DontShowAgainLookup.showAgain(key)) {
+        if (!DevEnv.isIgnorePopupsInDevMode() && DontShowAgainLookup.showAgain(key)) {
             DontShowAgainLookup.dontShowAgain(key, true);
             new Notification().headLine(Res.get("notification.tradeCompleted.headline"))
                     .notification(Res.get("notification.tradeCompleted.msg"))
@@ -144,7 +144,7 @@ public class BuyerStep4View extends TradeStepView {
 
     private void openTradeFeedbackWindow() {
         String key = "feedbackPopupAfterTrade";
-        if (!DevEnv.isDevMode() && preferences.showAgain(key)) {
+        if (!DevEnv.isIgnorePopupsInDevMode() && preferences.showAgain(key)) {
             UserThread.runAfter(() -> new TradeFeedbackWindow()
                     .dontShowAgainId(key)
                     .onAction(this::showNavigateToClosedTradesViewPopup)
@@ -155,7 +155,7 @@ public class BuyerStep4View extends TradeStepView {
     }
 
     private void showNavigateToClosedTradesViewPopup() {
-        if (!DevEnv.isDevMode()) {
+        if (!DevEnv.isIgnorePopupsInDevMode()) {
             UserThread.runAfter(() -> new Popup().headLine(Res.get("portfolio.pending.step5_buyer.tradeCompleted.headline"))
                     .feedback(Res.get("portfolio.pending.step5_buyer.tradeCompleted.msg"))
                     .actionButtonTextWithGoTo("navigation.portfolio.closedTrades")

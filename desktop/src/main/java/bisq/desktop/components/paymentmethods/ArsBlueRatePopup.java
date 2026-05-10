@@ -7,6 +7,8 @@ import bisq.core.locale.Res;
 import bisq.core.locale.TradeCurrency;
 import bisq.core.user.DontShowAgainLookup;
 
+import bisq.common.app.DevEnv;
+
 public class ArsBlueRatePopup {
     public static boolean isTradeCurrencyArgentinePesos(TradeCurrency tradeCurrency) {
         FiatCurrency arsCurrency = new FiatCurrency("ARS");
@@ -14,10 +16,16 @@ public class ArsBlueRatePopup {
     }
 
     public static void show() {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
+            return;
+        }
         createPopup().show();
     }
 
     public static void showMaybe() {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
+            return;
+        }
         String key = "arsBlueMarketNotificationPopup";
         if (DontShowAgainLookup.showAgain(key)) {
             createPopup().dontShowAgainId(key)

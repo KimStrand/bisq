@@ -17,7 +17,6 @@
 
 package bisq.desktop.main.portfolio.pendingtrades.steps.seller;
 
-import bisq.core.app.ShutdownDelayer;
 import bisq.desktop.components.AutoTooltipButton;
 import bisq.desktop.components.BusyAnimation;
 import bisq.desktop.components.InfoTextField;
@@ -33,6 +32,7 @@ import bisq.desktop.main.portfolio.pendingtrades.steps.TradeStepView;
 import bisq.desktop.util.DisplayUtils;
 import bisq.desktop.util.GUIUtil;
 
+import bisq.core.app.ShutdownDelayer;
 import bisq.core.locale.Res;
 import bisq.core.payment.PaymentAccount;
 import bisq.core.payment.PaymentAccountUtil;
@@ -397,7 +397,7 @@ public class SellerStep3View extends TradeStepView {
         // are well connected to the Bitcoin network before triggering the broadcast.
         if (model.dataModel.isReadyForTxBroadcast()) {
             String key = "confirmPaymentReceived";
-            if (!DevEnv.isDevMode() && DontShowAgainLookup.showAgain(key)) {
+            if (!DevEnv.isIgnorePopupsInDevMode() && DontShowAgainLookup.showAgain(key)) {
                 PaymentAccountPayload paymentAccountPayload = model.dataModel.getSellersPaymentAccountPayload();
                 String message = Res.get("portfolio.pending.step3_seller.onPaymentReceived.part1", getCurrencyName(trade));
                 if (!(paymentAccountPayload instanceof AssetsAccountPayload)) {
@@ -478,7 +478,7 @@ public class SellerStep3View extends TradeStepView {
                 message += Res.get("portfolio.pending.step3_seller.onPaymentReceived.signer");
             }
         }
-        if (!DevEnv.isDevMode() && DontShowAgainLookup.showAgain(key)) {
+        if (!DevEnv.isIgnorePopupsInDevMode() && DontShowAgainLookup.showAgain(key)) {
             DontShowAgainLookup.dontShowAgain(key, true);
             new Popup().headLine(Res.get("popup.attention.forTradeWithId", trade.getShortId()))
                     .attention(message)

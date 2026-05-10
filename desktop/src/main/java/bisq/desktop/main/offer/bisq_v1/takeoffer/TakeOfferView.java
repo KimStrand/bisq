@@ -306,10 +306,12 @@ public class TakeOfferView extends ActivatableViewAndModel<AnchorPane, TakeOffer
         PaymentAccount lastPaymentAccount = model.getLastSelectedPaymentAccount();
 
         if (model.getPossiblePaymentAccounts().size() > 1) {
-            new Popup().headLine(Res.get("popup.info.multiplePaymentAccounts.headline"))
-                    .information(Res.get("popup.info.multiplePaymentAccounts.msg"))
-                    .dontShowAgainId("MultiplePaymentAccountsAvailableWarning")
-                    .show();
+            if (!DevEnv.isIgnorePopupsInDevMode()) {
+                new Popup().headLine(Res.get("popup.info.multiplePaymentAccounts.headline"))
+                        .information(Res.get("popup.info.multiplePaymentAccounts.msg"))
+                        .dontShowAgainId("MultiplePaymentAccountsAvailableWarning")
+                        .show();
+            }
 
             paymentAccountsComboBox.setItems(model.getPossiblePaymentAccounts());
             paymentAccountsComboBox.getSelectionModel().select(lastPaymentAccount);
@@ -399,10 +401,15 @@ public class TakeOfferView extends ActivatableViewAndModel<AnchorPane, TakeOffer
             volumeInfoTextField.setContentForPrivacyPopOver(popOverLabel);
         }
 
-        if (offer.getPrice() == null)
+        if (offer.getPrice() == null) {
+            if (DevEnv.isIgnorePopupsInDevMode()) {
+                close(false);
+                return;
+            }
             new Popup().warning(Res.get("takeOffer.noPriceFeedAvailable"))
                     .onClose(() -> close(false))
                     .show();
+        }
     }
 
     public void setCloseHandler(OfferView.CloseHandler closeHandler) {
@@ -435,7 +442,7 @@ public class TakeOfferView extends ActivatableViewAndModel<AnchorPane, TakeOffer
             return;
         }
 
-        if (DevEnv.isDevMode()) {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
             balanceSubscription.unsubscribe();
             model.onTakeOffer(() -> {
             });
@@ -516,12 +523,14 @@ public class TakeOfferView extends ActivatableViewAndModel<AnchorPane, TakeOffer
             model.fundFromSavingsWallet();
         } else {
             String key = "securityDepositInfo";
-            new Popup().backgroundInfo(Res.get("popup.info.securityDepositInfo"))
-                    .actionButtonText(Res.get("shared.faq"))
-                    .onAction(() -> GUIUtil.openWebPage("https://bisq.wiki/Frequently_asked_questions#Why_does_Bisq_require_a_security_deposit_in_BTC.3F"))
-                    .useIUnderstandButton()
-                    .dontShowAgainId(key)
-                    .show();
+            if (!DevEnv.isIgnorePopupsInDevMode()) {
+                new Popup().backgroundInfo(Res.get("popup.info.securityDepositInfo"))
+                        .actionButtonText(Res.get("shared.faq"))
+                        .onAction(() -> GUIUtil.openWebPage("https://bisq.wiki/Frequently_asked_questions#Why_does_Bisq_require_a_security_deposit_in_BTC.3F"))
+                        .useIUnderstandButton()
+                        .dontShowAgainId(key)
+                        .show();
+            }
 
 
             String tradeAmountText = model.isSeller() ? Res.get("takeOffer.takeOfferFundWalletInfo.tradeAmount", model.getTradeAmount()) : "";
@@ -533,10 +542,12 @@ public class TakeOfferView extends ActivatableViewAndModel<AnchorPane, TakeOffer
                     model.getTxFee()
             );
             key = "takeOfferFundWalletInfo";
-            new Popup().headLine(Res.get("takeOffer.takeOfferFundWalletInfo.headline"))
-                    .instruction(message)
-                    .dontShowAgainId(key)
-                    .show();
+            if (!DevEnv.isIgnorePopupsInDevMode()) {
+                new Popup().headLine(Res.get("takeOffer.takeOfferFundWalletInfo.headline"))
+                        .instruction(message)
+                        .dontShowAgainId(key)
+                        .show();
+            }
         }
 
         cancelButton2.setVisible(true);
@@ -730,7 +741,7 @@ public class TakeOfferView extends ActivatableViewAndModel<AnchorPane, TakeOffer
         });
 
         showTransactionPublishedScreenSubscription = EasyBind.subscribe(model.showTransactionPublishedScreen, newValue -> {
-            if (newValue && DevEnv.isDevMode()) {
+            if (newValue && DevEnv.isIgnorePopupsInDevMode()) {
                 close();
             } else if (newValue && model.getTrade() != null && !model.getTrade().hasFailed()) {
                 String key = "takeOfferSuccessInfo";
@@ -1346,4 +1357,3 @@ public class TakeOfferView extends ActivatableViewAndModel<AnchorPane, TakeOffer
     }
 
 }
-

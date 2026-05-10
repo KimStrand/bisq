@@ -74,6 +74,7 @@ public class Config {
     public static final String REFERRAL_ID = "referralId";
     public static final String USE_DEV_MODE = "useDevMode";
     public static final String USE_DEV_MODE_HEADER = "useDevModeHeader";
+    public static final String IGNORE_POPUPS_IN_DEV_MODE = "ignorePopupsInDevMode";
     public static final String TOR_DIR = "torDir";
     public static final String STORAGE_DIR = "storageDir";
     public static final String KEY_STORAGE_DIR = "keyStorageDir";
@@ -190,6 +191,7 @@ public class Config {
     public final String referralId;
     public final boolean useDevMode;
     public final boolean useDevModeHeader;
+    public final boolean ignorePopupsInDevMode;
     public final boolean useDevPrivilegeKeys;
     public final boolean dumpStatistics;
     public final boolean dumpBurningManData;
@@ -422,6 +424,13 @@ public class Config {
                         .withRequiredArg()
                         .ofType(boolean.class)
                         .defaultsTo(false);
+
+        ArgumentAcceptingOptionSpec<Boolean> ignorePopupsInDevModeOpt =
+                parser.accepts(IGNORE_POPUPS_IN_DEV_MODE,
+                                "If set to true dev mode skips popups. Set false to test popup flows in dev mode.")
+                        .withRequiredArg()
+                        .ofType(boolean.class)
+                        .defaultsTo(true);
 
         ArgumentAcceptingOptionSpec<Boolean> useDevPrivilegeKeysOpt =
                 parser.accepts(USE_DEV_PRIVILEGE_KEYS, "If set to true all privileged features requiring a private " +
@@ -880,6 +889,7 @@ public class Config {
             this.referralId = options.valueOf(referralIdOpt);
             this.useDevMode = options.valueOf(useDevModeOpt);
             this.useDevModeHeader = options.valueOf(useDevModeHeaderOpt);
+            this.ignorePopupsInDevMode = options.valueOf(ignorePopupsInDevModeOpt);
             this.useDevPrivilegeKeys = options.valueOf(useDevPrivilegeKeysOpt);
             this.dumpStatistics = options.valueOf(dumpStatisticsOpt);
             this.dumpBurningManData = options.valueOf(dumpBurningManDataOpt);

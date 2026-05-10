@@ -242,18 +242,23 @@ public class PreferencesView extends ActivatableViewAndModel<GridPane, Preferenc
         String key = "sensitiveDataRemovalInfo";
         if (DontShowAgainLookup.showAgain(key) &&
                 preferences.getClearDataAfterDays() == Preferences.CLEAR_DATA_AFTER_DAYS_INITIAL) {
-            new Popup()
-                    .headLine(Res.get("setting.info.headline"))
-                    .backgroundInfo(Res.get("settings.preferences.sensitiveDataRemoval.msg"))
-                    .actionButtonText(Res.get("shared.iUnderstand"))
-                    .onAction(() -> {
-                        DontShowAgainLookup.dontShowAgain(key, true);
-                        // user has acknowledged, enable the feature with a reasonable default value
-                        preferences.setClearDataAfterDays(Preferences.CLEAR_DATA_AFTER_DAYS_DEFAULT);
-                        clearDataAfterDaysInputTextField.setText(String.valueOf(preferences.getClearDataAfterDays()));
-                    })
-                    .closeButtonText(Res.get("shared.cancel"))
-                    .show();
+            if (DevEnv.isIgnorePopupsInDevMode()) {
+                preferences.setClearDataAfterDays(Preferences.CLEAR_DATA_AFTER_DAYS_DEFAULT);
+                clearDataAfterDaysInputTextField.setText(String.valueOf(preferences.getClearDataAfterDays()));
+            } else {
+                new Popup()
+                        .headLine(Res.get("setting.info.headline"))
+                        .backgroundInfo(Res.get("settings.preferences.sensitiveDataRemoval.msg"))
+                        .actionButtonText(Res.get("shared.iUnderstand"))
+                        .onAction(() -> {
+                            DontShowAgainLookup.dontShowAgain(key, true);
+                            // user has acknowledged, enable the feature with a reasonable default value
+                            preferences.setClearDataAfterDays(Preferences.CLEAR_DATA_AFTER_DAYS_DEFAULT);
+                            clearDataAfterDaysInputTextField.setText(String.valueOf(preferences.getClearDataAfterDays()));
+                        })
+                        .closeButtonText(Res.get("shared.cancel"))
+                        .show();
+            }
         }
 
         // We want to have it updated in case an asset got removed
@@ -1199,6 +1204,9 @@ public class PreferencesView extends ActivatableViewAndModel<GridPane, Preferenc
             if (fullModeDaoMonitorToggleButton.isSelected()) {
                 String key = "fullModeDaoMonitor";
                 if (DontShowAgainLookup.showAgain(key)) {
+                    if (DevEnv.isIgnorePopupsInDevMode()) {
+                        return;
+                    }
                     new Popup().information(Res.get("setting.preferences.dao.fullModeDaoMonitor.popup"))
                             .width(1000)
                             .dontShowAgainId(key)

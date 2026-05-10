@@ -44,6 +44,7 @@ import bisq.core.util.validation.RegexValidator;
 import bisq.asset.AddressValidationResult;
 import bisq.asset.CryptoNoteAddressValidator;
 
+import bisq.common.app.DevEnv;
 import bisq.common.util.Tuple3;
 import bisq.common.util.Utilities;
 
@@ -117,7 +118,7 @@ public class XmrForm extends AssetsForm {
         tradeInstantCheckBox.setSelected(tradeInstant);
         tradeInstantCheckBox.setOnAction(e -> {
             tradeInstant = tradeInstantCheckBox.isSelected();
-            if (tradeInstant)
+            if (tradeInstant && !DevEnv.isIgnorePopupsInDevMode())
                 new Popup().information(Res.get("payment.altcoin.tradeInstant.popup")).show();
             paymentLimitationsTextField.setText(getLimitationsText());
         });
@@ -365,6 +366,9 @@ public class XmrForm extends AssetsForm {
     }
 
     public static void showXmrSubAddressPopup() {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
+            return;
+        }
         new Popup()
                 .headLine(Res.get("account.altcoin.popup.xmr.dataDirWarningHeadline"))
                 .backgroundInfo(Res.get("account.altcoin.popup.xmr.dataDirWarning"))
@@ -376,6 +380,9 @@ public class XmrForm extends AssetsForm {
     private void maybeShowXmrSubAddressInfo() {
         String key = "xmrSubAddressInfo";
         if (DontShowAgainLookup.showAgain(key)) {
+            if (DevEnv.isIgnorePopupsInDevMode()) {
+                return;
+            }
             new Popup()
                     .headLine(Res.get("account.altcoin.popup.xmr.subAddressHeadline"))
                     .attention(Res.get("account.altcoin.popup.xmr.subAddressInfo"))

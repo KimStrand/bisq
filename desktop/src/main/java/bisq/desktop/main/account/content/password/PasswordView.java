@@ -249,4 +249,3 @@ public class PasswordView extends ActivatableView<GridPane, Void> {
         pwButton.setDisable(true);
     }
 }
-

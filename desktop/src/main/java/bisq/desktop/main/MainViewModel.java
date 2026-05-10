@@ -271,6 +271,9 @@ public class MainViewModel implements ViewModel, BisqSetup.BisqSetupListener {
                                 case SECOND_HALF:
                                     key = "displayHalfTradePeriodOver" + trade.getId();
                                     if (DontShowAgainLookup.showAgain(key)) {
+                                        if (DevEnv.isIgnorePopupsInDevMode()) {
+                                            break;
+                                        }
                                         DontShowAgainLookup.dontShowAgain(key, true);
                                         new Popup().warning(Res.get("popup.warning.tradePeriod.halfReached",
                                                         trade.getShortId(),
@@ -281,6 +284,9 @@ public class MainViewModel implements ViewModel, BisqSetup.BisqSetupListener {
                                 case TRADE_PERIOD_OVER:
                                     key = "displayTradePeriodOver" + trade.getId();
                                     if (DontShowAgainLookup.showAgain(key)) {
+                                        if (DevEnv.isIgnorePopupsInDevMode()) {
+                                            break;
+                                        }
                                         DontShowAgainLookup.dontShowAgain(key, true);
                                         new Popup().warning(Res.get("popup.warning.tradePeriod.ended",
                                                         trade.getShortId(),
@@ -447,12 +453,18 @@ public class MainViewModel implements ViewModel, BisqSetup.BisqSetupListener {
                 .closeButtonText(Res.get("shared.close"))
                 .onClose(() -> user.setDisplayedAlert(alert))
                 .show());
-        bisqSetup.setDisplayPrivateNotificationHandler(privateNotification ->
-                new Popup().headLine(Res.get("popup.privateNotification.headline"))
-                        .attention(privateNotification.getMessage())
-                        .onClose(privateNotificationManager::removePrivateNotification)
-                        .useIUnderstandButton()
-                        .show());
+        bisqSetup.setDisplayPrivateNotificationHandler(privateNotification -> {
+            if (DevEnv.isIgnorePopupsInDevMode()) {
+                privateNotificationManager.removePrivateNotification();
+                return;
+            }
+
+            new Popup().headLine(Res.get("popup.privateNotification.headline"))
+                    .attention(privateNotification.getMessage())
+                    .onClose(privateNotificationManager::removePrivateNotification)
+                    .useIUnderstandButton()
+                    .show();
+        });
         bisqSetup.setDaoErrorMessageHandler(errorMessage -> new Popup().error(errorMessage).show());
         bisqSetup.setDaoWarnMessageHandler(warnMessage -> new Popup().warning(warnMessage).show());
         bisqSetup.setDisplaySecurityRecommendationHandler(key ->
@@ -461,7 +473,7 @@ public class MainViewModel implements ViewModel, BisqSetup.BisqSetupListener {
                         .dontShowAgainId(key)
                         .show());
         bisqSetup.setDisplayLocalhostHandler(key -> {
-            if (!DevEnv.isDevMode()) {
+            if (!DevEnv.isIgnorePopupsInDevMode()) {
                 Popup popup = new Popup().backgroundInfo(Res.get("popup.bitcoinLocalhostNode.msg"))
                         .dontShowAgainId(key);
                 popup.setDisplayOrderPriority(5);
@@ -494,6 +506,9 @@ public class MainViewModel implements ViewModel, BisqSetup.BisqSetupListener {
         bisqSetup.setQubesOSInfoHandler(() -> {
             String key = "qubesOSSetupInfo";
             if (preferences.showAgain(key)) {
+                if (DevEnv.isIgnorePopupsInDevMode()) {
+                    return;
+                }
                 new Popup().information(Res.get("popup.info.qubesOSSetupInfo"))
                         .closeButtonText(Res.get("shared.iUnderstand"))
                         .dontShowAgainId(key)
@@ -513,12 +528,14 @@ public class MainViewModel implements ViewModel, BisqSetup.BisqSetupListener {
                 .hideCloseButton()
                 .show());
 
-        bisqSetup.setTorAddressUpgradeHandler(() -> new Popup().information(Res.get("popup.info.torMigration.msg"))
-                .actionButtonTextWithGoTo("navigation.account.backup")
-                .onAction(() -> {
-                    navigation.setReturnPath(navigation.getCurrentPath());
-                    navigation.navigateTo(MainView.class, AccountView.class, BackupView.class);
-                }).show());
+        bisqSetup.setTorAddressUpgradeHandler(() -> {
+            new Popup().information(Res.get("popup.info.torMigration.msg"))
+                    .actionButtonTextWithGoTo("navigation.account.backup")
+                    .onAction(() -> {
+                        navigation.setReturnPath(navigation.getCurrentPath());
+                        navigation.navigateTo(MainView.class, AccountView.class, BackupView.class);
+                    }).show();
+        });
 
         corruptedStorageFileHandler.getFiles().ifPresent(files -> new Popup()
                 .warning(Res.get("popup.warning.incompatibleDB", files.toString(), config.appDataDir))

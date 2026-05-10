@@ -139,6 +139,9 @@ public class BsqSwapCreateOfferView extends BsqSwapOfferView<BsqSwapCreateOfferV
 
             String key = "BsqSwapMakerInfo";
             if (DontShowAgainLookup.showAgain(key)) {
+                if (DevEnv.isIgnorePopupsInDevMode()) {
+                    return;
+                }
                 new Popup().information(Res.get("createOffer.bsqSwap.offerVisibility") + "\n\n" + Res.get("bsqSwapOffer.feeHandling"))
                         .width(1000)
                         .closeButtonText(Res.get("shared.iUnderstand"))
@@ -241,7 +244,7 @@ public class BsqSwapCreateOfferView extends BsqSwapOfferView<BsqSwapCreateOfferV
             return;
         }
 
-        if (DevEnv.isDevMode()) {
+        if (DevEnv.isIgnorePopupsInDevMode()) {
             model.onPlaceOffer();
             requestFocus();
             return;
@@ -304,7 +307,7 @@ public class BsqSwapCreateOfferView extends BsqSwapOfferView<BsqSwapCreateOfferV
         paymentAccountsComboBoxSelectionHandler = e -> onPaymentAccountsComboBoxSelected();
 
         placeOfferCompletedListener = (o, oldValue, newValue) -> {
-            if (DevEnv.isDevMode()) {
+            if (DevEnv.isIgnorePopupsInDevMode()) {
                 close();
             } else if (newValue) {
                 // We need a bit of delay to avoid issues with fade out/fade in of 2 popups

@@ -40,6 +40,7 @@ import bisq.network.p2p.network.CloseConnectionReason;
 import bisq.network.p2p.network.Connection;
 import bisq.network.p2p.network.ConnectionListener;
 
+import bisq.common.app.DevEnv;
 import bisq.common.handlers.ErrorMessageHandler;
 
 import org.bitcoinj.core.Coin;
@@ -217,18 +218,20 @@ class BsqSwapTakeOfferViewModel extends BsqSwapOfferViewModel<BsqSwapTakeOfferDa
                     amountValidationResult.set(new InputValidator.ValidationResult(false,
                             Res.get("takeOffer.validation.amountLargerThanOfferAmount")));
             } else if (btcValidator.getMaxTradeLimit() != null && btcValidator.getMaxTradeLimit().value == OfferRestrictions.TOLERATED_SMALL_TRADE_AMOUNT.value) {
-                if (dataModel.isBuyOffer()) {
-                    new Popup().information(Res.get("popup.warning.tradeLimitDueAccountAgeRestriction.seller",
-                            btcFormatter.formatCoinWithCode(OfferRestrictions.TOLERATED_SMALL_TRADE_AMOUNT),
-                            Res.get("offerbook.warning.newVersionAnnouncement")))
-                            .width(900)
-                            .show();
-                } else {
-                    new Popup().information(Res.get("popup.warning.tradeLimitDueAccountAgeRestriction.buyer",
-                            btcFormatter.formatCoinWithCode(OfferRestrictions.TOLERATED_SMALL_TRADE_AMOUNT),
-                            Res.get("offerbook.warning.newVersionAnnouncement")))
-                            .width(900)
-                            .show();
+                if (!DevEnv.isIgnorePopupsInDevMode()) {
+                    if (dataModel.isBuyOffer()) {
+                        new Popup().information(Res.get("popup.warning.tradeLimitDueAccountAgeRestriction.seller",
+                                        btcFormatter.formatCoinWithCode(OfferRestrictions.TOLERATED_SMALL_TRADE_AMOUNT),
+                                        Res.get("offerbook.warning.newVersionAnnouncement")))
+                                .width(900)
+                                .show();
+                    } else {
+                        new Popup().information(Res.get("popup.warning.tradeLimitDueAccountAgeRestriction.buyer",
+                                        btcFormatter.formatCoinWithCode(OfferRestrictions.TOLERATED_SMALL_TRADE_AMOUNT),
+                                        Res.get("offerbook.warning.newVersionAnnouncement")))
+                                .width(900)
+                                .show();
+                    }
                 }
             }
         }

@@ -82,6 +82,7 @@ public class CoreModule extends AppModule {
         bindConstant().annotatedWith(named(USE_DEV_PRIVILEGE_KEYS)).to(config.useDevPrivilegeKeys);
         bindConstant().annotatedWith(named(USE_DEV_MODE)).to(config.useDevMode);
         bindConstant().annotatedWith(named(USE_DEV_MODE_HEADER)).to(config.useDevModeHeader);
+        bindConstant().annotatedWith(named(IGNORE_POPUPS_IN_DEV_MODE)).to(config.ignorePopupsInDevMode);
         bindConstant().annotatedWith(named(REFERRAL_ID)).to(config.referralId);
 
         // ordering is used for shut down sequence

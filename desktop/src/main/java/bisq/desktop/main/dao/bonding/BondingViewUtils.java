@@ -122,7 +122,7 @@ public class BondingViewUtils {
     private void lockupBond(byte[] hash, Coin lockupAmount, int lockupTime, LockupReason lockupReason,
                             Consumer<String> resultHandler) {
         if (GUIUtil.isReadyForTxBroadcastOrShowPopup(p2PService, walletsSetup)) {
-            if (!DevEnv.isDevMode()) {
+            if (!DevEnv.isIgnorePopupsInDevMode()) {
                 try {
                     Tuple2<Coin, Integer> miningFeeAndTxVsize = daoFacade.getLockupTxMiningFeeAndTxVsize(lockupAmount, lockupTime, lockupReason, hash);
                     Coin miningFee = miningFeeAndTxVsize.first;
@@ -162,7 +162,7 @@ public class BondingViewUtils {
                 lockupReason,
                 hash,
                 txId -> {
-                    if (!DevEnv.isDevMode())
+                    if (!DevEnv.isIgnorePopupsInDevMode())
                         new Popup().feedback(Res.get("dao.tx.published.success")).show();
 
                     if (resultHandler != null)
@@ -185,7 +185,7 @@ public class BondingViewUtils {
             int lockTime = opLockTime.orElse(-1);
 
             try {
-                if (!DevEnv.isDevMode()) {
+                if (!DevEnv.isIgnorePopupsInDevMode()) {
                     Tuple2<Coin, Integer> miningFeeAndTxVsize = daoFacade.getUnlockTxMiningFeeAndTxVsize(lockupTxId);
                     Coin miningFee = miningFeeAndTxVsize.first;
                     int txVsize = miningFeeAndTxVsize.second;
@@ -218,7 +218,7 @@ public class BondingViewUtils {
     private void publishUnlockTx(String lockupTxId, Consumer<String> resultHandler) {
         daoFacade.publishUnlockTx(lockupTxId,
                 txId -> {
-                    if (!DevEnv.isDevMode())
+                    if (!DevEnv.isIgnorePopupsInDevMode())
                         new Popup().confirmation(Res.get("dao.tx.published.success")).show();
 
                     if (resultHandler != null)
