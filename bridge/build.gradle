@@ -33,6 +33,10 @@ dependencies {
         exclude(module: 'animal-sniffer-annotations')
         exclude(module: 'guava')
     }
+    runtimeOnly(libs.grpc.netty.shaded) {
+        exclude(module: 'animal-sniffer-annotations')
+        exclude(module: 'guava')
+    }
 
     testAnnotationProcessor libs.lombok
     testCompileOnly libs.lombok

@@ -39,8 +39,4 @@ dependencies {
     implementation libs.kotlin.stdlib.jdk8
     implementation libs.jetbrains.annotations
     implementation libs.slf4j.api
-    runtimeOnly(libs.grpc.netty.shaded) {
-        exclude(module: 'animal-sniffer-annotations')
-        exclude(module: 'guava')
-    }
 }
