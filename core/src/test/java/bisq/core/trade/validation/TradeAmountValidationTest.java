@@ -17,6 +17,8 @@
 
 package bisq.core.trade.validation;
 
+import bisq.core.payment.TradeLimits;
+
 import org.bitcoinj.core.Coin;
 
 import org.junit.jupiter.api.Test;
@@ -58,6 +60,68 @@ class TradeAmountValidationTest {
 
         assertEquals("Trade amount must not be higher than maximum offer amount. " +
                         "tradeAmount=0.00005001 BTC, offerMaxAmount=0.00005 BTC",
+                exception.getMessage());
+    }
+
+    @Test
+    void checkTradeAmountRejectsAmountsAboveMaxTradeAmount() {
+        // Pre-hotfix offers may persist with offer.getAmount() above MAX_TRADE_AMOUNT.
+        // Re-clamp must reject regardless of offer bounds.
+        Coin overCap = TradeLimits.MAX_TRADE_AMOUNT.add(Coin.valueOf(1));
+        Coin offerMax = overCap.add(Coin.valueOf(1));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> TradeAmountValidation.checkTradeAmount(overCap, OFFER_MIN_AMOUNT, offerMax));
+
+        assertEquals("Trade amount must not exceed the network max trade amount. " +
+                        "tradeAmount=" + overCap.toFriendlyString() +
+                        ", max=" + TradeLimits.MAX_TRADE_AMOUNT.toFriendlyString(),
+                exception.getMessage());
+    }
+
+    @Test
+    void checkTradeAmountAcceptsMaxTradeAmount() {
+        Coin offerMax = TradeLimits.MAX_TRADE_AMOUNT;
+        assertSame(offerMax,
+                TradeAmountValidation.checkTradeAmount(offerMax, OFFER_MIN_AMOUNT, offerMax));
+    }
+
+    @Test
+    void checkTradeAmountAcceptsPartialTakeOfLegacyOverCapOffer() {
+        // Legacy pre-hotfix offer with offer.getAmount() above the cap. Taker requesting
+        // an amount at-or-below the cap must still succeed (partial take of legacy offer).
+        Coin offerMax = TradeLimits.MAX_TRADE_AMOUNT.add(Coin.valueOf(1_000_000));
+        Coin underCap = TradeLimits.MAX_TRADE_AMOUNT.subtract(Coin.valueOf(1));
+
+        assertSame(underCap,
+                TradeAmountValidation.checkTradeAmount(underCap, OFFER_MIN_AMOUNT, offerMax));
+        assertSame(TradeLimits.MAX_TRADE_AMOUNT,
+                TradeAmountValidation.checkTradeAmount(TradeLimits.MAX_TRADE_AMOUNT, OFFER_MIN_AMOUNT, offerMax));
+    }
+
+    @Test
+    void checkTradeAmountRejectsExactlyOneSatoshiAboveMaxTradeAmount() {
+        // Boundary: MAX + 1 sat must be rejected even when offer bounds permit it.
+        Coin overCapByOneSat = TradeLimits.MAX_TRADE_AMOUNT.add(Coin.valueOf(1));
+        Coin offerMax = overCapByOneSat.add(Coin.valueOf(1));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> TradeAmountValidation.checkTradeAmount(overCapByOneSat, OFFER_MIN_AMOUNT, offerMax));
+    }
+
+    @Test
+    void checkTradeAmountChecksOfferMaxBeforeNetworkCap() {
+        // Precedence: when both per-offer max and network cap would reject, the per-offer
+        // message wins (more specific). Guards against future reordering breaking UX.
+        Coin offerMax = TradeLimits.MAX_TRADE_AMOUNT.add(Coin.valueOf(1_000));
+        Coin tradeAmount = offerMax.add(Coin.valueOf(1));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> TradeAmountValidation.checkTradeAmount(tradeAmount, OFFER_MIN_AMOUNT, offerMax));
+
+        assertEquals("Trade amount must not be higher than maximum offer amount. " +
+                        "tradeAmount=" + tradeAmount.toFriendlyString() +
+                        ", offerMaxAmount=" + offerMax.toFriendlyString(),
                 exception.getMessage());
     }
 
