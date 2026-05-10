@@ -1,3 +1,5 @@
+import org.gradle.api.artifacts.VersionCatalogsExtension
+
 plugins {
     id 'bisq.java-conventions'
     id 'idea'
