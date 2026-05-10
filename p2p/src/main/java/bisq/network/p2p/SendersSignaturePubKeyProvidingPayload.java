@@ -19,14 +19,16 @@ package bisq.network.p2p;
 
 import java.security.PublicKey;
 
+import javax.annotation.Nullable;
+
 /**
  * Interface for payloads that include the sender's signature public key.
  */
 public interface SendersSignaturePubKeyProvidingPayload {
     PublicKey getSenderSignaturePubKey();
 
-    static boolean isSenderSignaturePubKeyMatching(PublicKey payloadSenderSignaturePubKey,
-                                                   PublicKey expectedSenderSignaturePubKey) {
+    static boolean isSenderSignaturePubKeyMatching(@Nullable PublicKey payloadSenderSignaturePubKey,
+                                                   @Nullable PublicKey expectedSenderSignaturePubKey) {
         return payloadSenderSignaturePubKey != null &&
                 payloadSenderSignaturePubKey.equals(expectedSenderSignaturePubKey);
     }

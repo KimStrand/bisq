@@ -30,6 +30,8 @@ import java.security.PublicKey;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public abstract class BsqSwapRequest extends TradeMessage
@@ -54,7 +56,7 @@ public abstract class BsqSwapRequest extends TradeMessage
                              long tradeDate) {
         super(messageVersion, tradeId, uid);
         this.senderNodeAddress = senderNodeAddress;
-        this.takerPubKeyRing = takerPubKeyRing;
+        this.takerPubKeyRing = checkNotNull(takerPubKeyRing, "takerPubKeyRing must not be null");
         this.tradeAmount = tradeAmount;
         this.txFeePerVbyte = txFeePerVbyte;
         this.makerFee = makerFee;
@@ -64,6 +66,6 @@ public abstract class BsqSwapRequest extends TradeMessage
 
     @Override
     public PublicKey getSenderSignaturePubKey() {
-        return takerPubKeyRing != null ? takerPubKeyRing.getSignaturePubKey() : null;
+        return takerPubKeyRing.getSignaturePubKey();
     }
 }

@@ -550,7 +550,7 @@ public class P2PService implements SetupListener, MessageListener, ConnectionLis
             }, MoreExecutors.directExecutor());
         } catch (CryptoException e) {
             log.error("Encrypting direct message {} for peer {} failed",
-                    payload.getClass().getSimpleName(), peersNodeAddress);
+                    payload.getClass().getSimpleName(), peersNodeAddress, e);
             sendDirectMessageListener.onFault(e.toString());
         }
     }

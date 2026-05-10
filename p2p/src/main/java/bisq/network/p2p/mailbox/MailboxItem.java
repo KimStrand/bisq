@@ -101,10 +101,8 @@ public class MailboxItem implements PersistablePayload {
                 .getPrefixedSealedAndSignedMessage()
                 .getSenderNodeAddress();
 
-        // MailboxMessage implements SendersNodeAddressProvidingPayload thus the cast is safe
-        SendersNodeAddressProvidingPayload nodeAddressProvidingPayload =
-                (SendersNodeAddressProvidingPayload) decryptedPayload;
-        NodeAddress payloadSenderNodeAddress = nodeAddressProvidingPayload.getSenderNodeAddress();
+        MailboxMessage mailboxMessage = (MailboxMessage) decryptedPayload;
+        NodeAddress payloadSenderNodeAddress = mailboxMessage.getSenderNodeAddress();
         if (!SendersNodeAddressProvidingPayload.isSenderNodeAddressMatching(payloadSenderNodeAddress,
                 senderNodeAddress)) {
             log.error("Decrypted mailbox item sender address mismatch. " +
