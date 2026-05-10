@@ -44,6 +44,7 @@ dependencies {
     implementation libs.fontawesomefx.materialdesign.font
     implementation libs.qrgen
     implementation libs.apache.commons.lang3
+    implementation libs.bouncycastle.bcprov.jdk15to18
     implementation(libs.bouncycastle.bcpg.jdk15on) {
         exclude(module: 'bcprov-jdk15on')
     }

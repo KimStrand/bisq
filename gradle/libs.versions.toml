@@ -64,6 +64,7 @@ apache-commons-lang3 = { module = "org.apache.commons:commons-lang3", version.re
 bitcoinj = { module = "com.github.bisq-network:bitcoinj", version.ref = "bitcoinj" }
 bouncycastle-bcpg-jdk18on = { module = "org.bouncycastle:bcpg-jdk18on", version.ref = "bouncycastle" }
 bouncycastle-bcpg-jdk15on = { module = "org.bouncycastle:bcpg-jdk15on", version.ref = "bouncycastle-bitcoinj" }
+bouncycastle-bcprov-jdk15to18 = { module = "org.bouncycastle:bcprov-jdk15to18", version.ref = "bouncycastle-bitcoinj" }
 
 checker-qual = { module = "org.checkerframework:checker-qual", version.ref = "checker-qual" }
 commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
