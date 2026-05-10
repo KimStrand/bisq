@@ -368,6 +368,8 @@ public class TradeManager implements PersistedDataHost, DecryptedDirectMessageLi
         initTradeAndProtocol(trade, tradeProtocol);
 
         ((MakerProtocol) tradeProtocol).handleTakeOfferRequest(inputsForDepositTxRequest, peer, errorMessage -> {
+            // Free the offer immediately on failure so a retry does not have to wait for the RESERVED timeout.
+            openOfferManager.unreserveOpenOffer(openOffer);
             if (takeOfferRequestErrorMessageHandler != null)
                 takeOfferRequestErrorMessageHandler.handleErrorMessage(errorMessage);
         });
