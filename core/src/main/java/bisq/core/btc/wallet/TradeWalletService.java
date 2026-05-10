@@ -575,7 +575,7 @@ public class TradeWalletService {
                 TransactionInput makersInput = makersDepositTx.getInputs().get(i);
                 byte[] makersScriptSigProgram = makersInput.getScriptSig().getProgram();
                 TransactionInput input = getTransactionInput(depositTx, makersScriptSigProgram, buyerInputs.get(i));
-                // Maker inputs are validated upstream by TradePeerTxInputValidator
+                // Maker inputs are validated upstream by DepositTxValidation.validatePeersInputs
                 // and DepositTxValidation.checkCanonicalDepositTxShape. Re-check here so this signing
                 // path cannot be reached with a non-P2WPKH input even if a future caller skips them.
                 Script scriptPubKey = checkNotNull(input.getConnectedOutput()).getScriptPubKey();
@@ -604,7 +604,7 @@ public class TradeWalletService {
             // We get the deposit tx unsigned if maker is seller
             for (int k = 0; k < sellerInputs.size(); k++) {
                 TransactionInput input = getTransactionInput(depositTx, new byte[]{}, sellerInputs.get(k));
-                // Maker inputs are validated upstream by TradePeerTxInputValidator
+                // Maker inputs are validated upstream by DepositTxValidation.validatePeersInputs
                 // and DepositTxValidation.checkCanonicalDepositTxShape. Re-check here so this signing
                 // path cannot be reached with a non-P2WPKH input even if a future caller skips them.
                 Script scriptPubKey = checkNotNull(input.getConnectedOutput()).getScriptPubKey();

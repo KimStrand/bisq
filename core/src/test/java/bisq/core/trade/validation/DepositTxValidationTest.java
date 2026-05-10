@@ -829,6 +829,24 @@ class DepositTxValidationTest {
         assertEquals(ArrayIndexOutOfBoundsException.class, exception.getCause().getClass());
     }
 
+    @Test
+    void rejectsMixedP2WPKHAndNonP2WPKHInputs() {
+        List<RawTransactionInput> rawTransactionInputs = Arrays.asList(
+                rawInput(parentTxWithP2wpkhOutput(40_000)),
+                rawInput(parentTxWithP2pkhOutput(60_000)));
+        BtcWalletService btcWalletService = walletServiceFor(rawTransactionInputs);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> DepositTxValidation.validatePeersInputs(
+                        rawTransactionInputs,
+                        Coin.valueOf(100_000),
+                        btcWalletService,
+                        TAKER_ROLE));
+
+        assertEquals(true, exception.getMessage().contains("position 1"),
+                "error must point at the offending input index, was: " + exception.getMessage());
+    }
+
     private static BtcWalletService walletServiceFor(List<RawTransactionInput> rawTransactionInputs) {
         BtcWalletService btcWalletService = btcWalletService();
         rawTransactionInputs.forEach(rawTransactionInput -> {
