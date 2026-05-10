@@ -746,6 +746,13 @@ public class OpenOfferManager implements PeerManager.Listener, DecryptedDirectMe
         requestPersistence();
     }
 
+    public void unreserveOpenOffer(OpenOffer openOffer) {
+        if (openOffer.getState() == OpenOffer.State.RESERVED) {
+            openOffer.setState(OpenOffer.State.AVAILABLE);
+            requestPersistence();
+        }
+    }
+
     public boolean cannotActivateOffer(Offer offer) {
         return openOffers.stream()
                 .filter(openOffer -> !openOffer.getOffer().isBsqSwapOffer())    // We only handle non-BSQ offers
