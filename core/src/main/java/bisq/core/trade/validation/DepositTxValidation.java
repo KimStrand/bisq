@@ -38,7 +38,9 @@ import org.bitcoinj.script.Script;
 import com.google.common.annotations.VisibleForTesting;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static bisq.core.trade.validation.TransactionValidation.checkTransaction;
 import static bisq.core.util.Validator.checkNonEmptyBytes;
@@ -46,6 +48,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class DepositTxValidation {
+    // Practical upper bound for a single parent transaction. Real wallet UTXOs come from txs
+    // well under this size; an attacker passing a much larger blob is grief / memory pressure.
+    static final int MAX_PARENT_TX_BYTES = 100 * 1024;
+
+    // Cap on the number of inputs we accept from a peer for a single deposit-tx contribution.
+    static final int MAX_INPUTS = 100;
+
     private DepositTxValidation() {
     }
 
@@ -510,6 +519,8 @@ public final class DepositTxValidation {
                                            String peerRole) {
         checkNotNull(rawTransactionInputs, "%s raw transaction inputs must not be null", peerRole);
         checkArgument(!rawTransactionInputs.isEmpty(), "%s raw transaction inputs must not be empty", peerRole);
+        checkArgument(rawTransactionInputs.size() <= MAX_INPUTS,
+                "%s raw transaction inputs count exceeds %s", peerRole, MAX_INPUTS);
         checkNotNull(walletService, "%s wallet service must not be null", peerRole);
         checkNotNull(expectedInputAmount, "%s expected input value must not be null", peerRole);
         checkArgument(expectedInputAmount.isPositive(), "%s expected input value must be positive", peerRole);
@@ -523,6 +534,10 @@ public final class DepositTxValidation {
     private static long getValidatedInputValue(List<RawTransactionInput> rawTransactionInputs,
                                                BtcWalletService walletService,
                                                String peerRole) {
+        // Dedup outpoints (txid:index) so a peer cannot double-count by listing the same UTXO
+        // more than once. Without this, the equality check on the sum is satisfied while the
+        // actual on-chain inputs would be duplicates rejected by Bitcoin nodes.
+        Set<String> seenOutpoints = new HashSet<>();
         Coin inputValue = Coin.ZERO;
         for (int listPos = 0; listPos < rawTransactionInputs.size(); listPos++) {
             RawTransactionInput input = rawTransactionInputs.get(listPos);
@@ -531,7 +546,16 @@ public final class DepositTxValidation {
                     "%s raw transaction input at position %s must have positive value",
                     peerRole,
                     listPos);
+            checkNotNull(input.parentTransaction,
+                    "%s raw transaction input at position %s parent tx must not be null", peerRole, listPos);
+            // Bound parentTransaction size so a peer cannot ship a multi-MB blob to grief us.
+            checkArgument(input.parentTransaction.length <= MAX_PARENT_TX_BYTES,
+                    "%s parentTransaction size %s at position %s exceeds limit %s",
+                    peerRole, input.parentTransaction.length, listPos, MAX_PARENT_TX_BYTES);
             input.validate(walletService);
+            String outpointKey = input.getParentTxId(walletService) + ":" + input.index;
+            checkArgument(seenOutpoints.add(outpointKey),
+                    "%s duplicate outpoint detected at position %s: %s", peerRole, listPos, outpointKey);
             checkArgument(walletService.isP2WPKH(input),
                     "%s funding input at position %s (parent vout=%s) is not native segwit P2WPKH " +
                             "(bech32: bc1q on mainnet, tb1q on testnet, bcrt1q on regtest). " +
