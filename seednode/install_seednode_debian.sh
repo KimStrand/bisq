@@ -7,8 +7,11 @@ echo "[*] Bisq Seednode installation script"
 
 ROOT_USER=root
 ROOT_GROUP=root
-ROOT_PKG="build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 git vim screen ufw openjdk-21-jdk"
+ROOT_PKG="build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 git vim screen ufw zulu21-jdk"
 ROOT_HOME=/root
+AZUL_REPO_PKG="ca-certificates curl gnupg"
+AZUL_APT_KEYRING=/usr/share/keyrings/azul.gpg
+AZUL_APT_SOURCE=/etc/apt/sources.list.d/zulu.list
 
 SYSTEMD_SERVICE_HOME=/etc/systemd/system
 SYSTEMD_ENV_HOME=/etc/default
@@ -60,6 +63,13 @@ sudo -H -i -u "${ROOT_USER}" DEBIAN_FRONTEND=noninteractive apt-get update -q
 
 echo "[*] Upgrading OS packages"
 sudo -H -i -u "${ROOT_USER}" DEBIAN_FRONTEND=noninteractive apt-get upgrade -qq -y
+
+echo "[*] Installing Azul Zulu apt repository"
+sudo -H -i -u "${ROOT_USER}" DEBIAN_FRONTEND=noninteractive apt-get install -qq -y ${AZUL_REPO_PKG}
+sudo -H -i -u "${ROOT_USER}" sh -c "curl -fsSL https://repos.azul.com/azul-repo.key | gpg --dearmor --yes -o ${AZUL_APT_KEYRING}"
+sudo -H -i -u "${ROOT_USER}" chmod 644 "${AZUL_APT_KEYRING}"
+sudo -H -i -u "${ROOT_USER}" sh -c "echo 'deb [signed-by=${AZUL_APT_KEYRING}] https://repos.azul.com/zulu/deb stable main' > ${AZUL_APT_SOURCE}"
+sudo -H -i -u "${ROOT_USER}" DEBIAN_FRONTEND=noninteractive apt-get update -q
 
 echo "[*] Installing base packages"
 sudo -H -i -u "${ROOT_USER}" DEBIAN_FRONTEND=noninteractive apt-get install -qq -y ${ROOT_PKG}
