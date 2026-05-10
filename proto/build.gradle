@@ -1,7 +1,15 @@
+import org.gradle.api.artifacts.VersionCatalogsExtension
+
 plugins {
     id 'bisq.java-conventions'
     id 'idea'
-    id 'com.google.protobuf' version "0.9.3"
+    alias(libs.plugins.protobuf)
+}
+
+def versionCatalog = extensions.getByType(VersionCatalogsExtension).named("libs")
+def getStrictVersion = { versionAlias ->
+    def version = versionCatalog.findVersion(versionAlias).get()
+    version.strictVersion ?: version.requiredVersion
 }
 
 dependencies {
@@ -26,12 +34,12 @@ dependencies {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.19.1"
+        artifact = "com.google.protobuf:protoc:${getStrictVersion("protobuf")}"
     }
 
     plugins {
         grpc {
-            artifact = "io.grpc:protoc-gen-grpc-java:1.42.1"
+            artifact = "io.grpc:protoc-gen-grpc-java:${getStrictVersion("grpc")}"
         }
     }
 

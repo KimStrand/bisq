@@ -31,14 +31,15 @@ abstract class BisqToolchainResolver : JavaToolchainResolver {
         when (javaVersion) {
             11 -> "https://cdn.azul.com/zulu/bin/zulu11.66.15-ca-jdk11.0.20-linux_x64.zip"
             17 -> "https://cdn.azul.com/zulu/bin/zulu17.44.15-ca-jdk17.0.8-linux_x64.zip"
+            21 -> "https://cdn.azul.com/zulu/bin/zulu21.48.15-ca-jdk21.0.10-linux_x64.zip"
             else -> null
         }
 
     private fun getToolchainUrlForMacOs(javaVersion: Int): String? =
         when (javaVersion) {
             11 -> "https://cdn.azul.com/zulu/bin/zulu11.66.15_1-ca-jdk11.0.20-macosx_x64.tar.gz"
-            15 -> "https://cdn.azul.com/zulu/bin/zulu15.46.17-ca-jdk15.0.10-macosx_x64.tar.gz"
             17 -> "https://cdn.azul.com/zulu/bin/zulu17.44.15_1-ca-jdk17.0.8-macosx_x64.tar.gz"
+            21 -> "https://cdn.azul.com/zulu/bin/zulu21.48.15-ca-jdk21.0.10-macosx_${getMacOsArchitectureClassifier()}.tar.gz"
             else -> null
         }
 
@@ -46,6 +47,16 @@ abstract class BisqToolchainResolver : JavaToolchainResolver {
         when (javaVersion) {
             11 -> "https://cdn.azul.com/zulu/bin/zulu11.66.15-ca-jdk11.0.20-win_x64.zip"
             17 -> "https://cdn.azul.com/zulu/bin/zulu17.44.15-ca-jdk17.0.8-win_x64.zip"
+            21 -> "https://cdn.azul.com/zulu/bin/zulu21.48.15-ca-jdk21.0.10-win_x64.zip"
             else -> null
         }
+
+    private fun getMacOsArchitectureClassifier(): String {
+        val architecture = System.getProperty("os.arch").toLowerCase(Locale.US)
+        return if (architecture.contains("aarch") || architecture.contains("arm")) {
+            "aarch64"
+        } else {
+            "x64"
+        }
+    }
 }

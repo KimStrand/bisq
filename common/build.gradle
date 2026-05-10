@@ -32,12 +32,11 @@ dependencies {
     implementation libs.commons.io
     implementation libs.jopt
     implementation libs.apache.commons.lang3
-    implementation libs.bouncycastle.bcpg.jdk15on
+    implementation libs.bouncycastle.bcprov.jdk15to18
+    implementation(libs.bouncycastle.bcpg.jdk15on) {
+        exclude(module: 'bcprov-jdk15on')
+    }
     implementation libs.kotlin.stdlib.jdk8
     implementation libs.jetbrains.annotations
     implementation libs.slf4j.api
-    runtimeOnly(libs.grpc.netty.shaded) {
-        exclude(module: 'animal-sniffer-annotations')
-        exclude(module: 'guava')
-    }
 }

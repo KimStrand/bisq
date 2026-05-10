@@ -12,6 +12,7 @@ configurations {
 
 dependencies {
     integrationTestImplementation libs.junit.jupiter
+    integrationTestRuntimeOnly libs.junit.platform.launcher
 }
 
 tasks.register('integrationTest', Test) {

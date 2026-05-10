@@ -33,21 +33,23 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class RollingBackupsTests {
+    @TempDir
+    private Path tempDir;
     private Path baseFilePath;
 
     @BeforeEach
-    void setup(@TempDir Path tempDir) {
+    void setup() {
         baseFilePath = tempDir.resolve("file");
     }
 
     @Test
-    void noBackup(@TempDir Path tempDir) {
+    void noBackup() {
         File file = new File(tempDir.toFile(), "file");
         assertThrows(IllegalArgumentException.class, () -> new RollingBackups(file, 0));
     }
 
     @Test
-    void firstBackup(@TempDir Path tempDir) throws IOException {
+    void firstBackup() throws IOException {
         Files.writeString(baseFilePath, "ABC");
         assertThat(tempDir, hasNChildren(1));
 
@@ -62,7 +64,7 @@ public class RollingBackupsTests {
     }
 
     @Test
-    void oneBackupWithExistingFiles(@TempDir Path tempDir) throws IOException {
+    void oneBackupWithExistingFiles() throws IOException {
         Files.writeString(baseFilePath, "NEW_CONTENT");
 
         Path backupPath = tempDir.resolve("file_0");
@@ -79,7 +81,7 @@ public class RollingBackupsTests {
     }
 
     @Test
-    void threeBackupsFirstBackup(@TempDir Path tempDir) throws IOException {
+    void threeBackupsFirstBackup() throws IOException {
         Files.writeString(baseFilePath, "NEW_CONTENT");
         assertThat(tempDir, hasNChildren(1));
 
@@ -94,7 +96,7 @@ public class RollingBackupsTests {
     }
 
     @Test
-    void threeBackupsWithExistingFiles(@TempDir Path tempDir) throws IOException {
+    void threeBackupsWithExistingFiles() throws IOException {
         Files.writeString(baseFilePath, "A");
 
         Path firstBackupPath = tempDir.resolve("file_0");
@@ -124,7 +126,7 @@ public class RollingBackupsTests {
     }
 
     @Test
-    void threeBackupsFirstBackupMissing(@TempDir Path tempDir) throws IOException {
+    void threeBackupsFirstBackupMissing() throws IOException {
         Files.writeString(baseFilePath, "A");
 
         Path secondBackupPath = tempDir.resolve("file_1");
@@ -149,7 +151,7 @@ public class RollingBackupsTests {
     }
 
     @Test
-    void threeBackupsFileMissingInMiddles(@TempDir Path tempDir) throws IOException {
+    void threeBackupsFileMissingInMiddles() throws IOException {
         Files.writeString(baseFilePath, "A");
 
         Path firstBackupPath = tempDir.resolve("file_0");

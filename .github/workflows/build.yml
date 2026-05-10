@@ -13,8 +13,8 @@ jobs:
     strategy:
         matrix:
             os: [ubuntu-latest, macOS-latest, windows-latest]
-            java: ['11']
-    name: Test Java ${{ matrix.Java }}, ${{ matrix.os }}
+            java: [ '21' ]
+    name: Test Java ${{ matrix.java }}, ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v6.0.2
       with:

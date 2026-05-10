@@ -1,5 +1,3 @@
-import org.apache.tools.ant.taskdefs.condition.Os
-
 plugins {
     id 'java'
     id 'jacoco'
@@ -13,11 +11,7 @@ repositories {
 
 java {
     toolchain {
-        if (Os.isFamily(Os.FAMILY_MAC)) {
-            languageVersion = JavaLanguageVersion.of(15)
-        } else {
-            languageVersion = JavaLanguageVersion.of(11)
-        }
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -26,6 +20,9 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 dependencies {
+    compileOnly libs.google.findbugs
+
+    testCompileOnly libs.google.findbugs
     testImplementation libs.hamcrest
     testImplementation libs.junit.jupiter.api
     testImplementation libs.junit.jupiter.params
@@ -33,6 +30,7 @@ dependencies {
     testImplementation libs.mockito.junit.jupiter
 
     testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly libs.junit.platform.launcher
 }
 
 test {
