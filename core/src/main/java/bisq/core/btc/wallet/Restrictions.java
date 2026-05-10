@@ -22,8 +22,8 @@ import bisq.common.config.Config;
 import org.bitcoinj.core.Coin;
 
 public class Restrictions {
-    public static final int LOCKTIME_FOR_FIAT = 144 * 20;
-    public static final int LOCKTIME_FOR_ALTCOIN = 144 * 10;
+    private static final int LOCKTIME_FOR_FIAT = 144 * 20;
+    private static final int LOCKTIME_FOR_ALTCOIN = 144 * 10;
 
     private static final Coin MIN_TRADE_AMOUNT = Coin.valueOf(10_000);
     private static final Coin MIN_SECURITY_DEPOSIT = Coin.parseCoin("0.0003");

@@ -26,7 +26,10 @@ import static bisq.core.util.Validator.checkIsNotNegative;
 import static bisq.core.util.Validator.checkIsPositive;
 
 public class TradeFeeFactory {
-    // Average estimated values
+    // Average estimated vsizes for the standard P2WPKH trade-fee tx (single input + change)
+    // and the 2-of-2 multisig deposit tx. Values must be reviewed if input/output script
+    // types or the number of typical inputs change (e.g. taproot migration, mixed wallet
+    // outputs), since they directly affect getTradeTxFee() and downstream tolerance checks.
     public static final int TAKER_FEE_TX_VSIZE = 192;
     public static final int DEPOSIT_TX_VSIZE = 233;
 
