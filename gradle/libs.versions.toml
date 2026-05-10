@@ -3,7 +3,7 @@ apache-commons-lang3 = { strictly = '3.20.0' }
 apache-httpclient = { strictly = '4.5.14' }
 apache-httpcore = { strictly = '4.4.16' }
 
-bitcoinj = { strictly = '7dc0851a807857ba19f76824e48d75ab0390eca7' }
+bitcoinj = { strictly = '7473c6516b16a6a732958043537541038bc9ddf6' }
 bouncycastle = { strictly = '1.84' }
 bouncycastle-bitcoinj = { strictly = '1.63' }
 
