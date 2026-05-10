@@ -5,11 +5,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
- * Java 17 compatible replacement for JFoenix' reflection helper.
+ * Java 21 compatible replacement for JFoenix' reflection helper.
  * <p>
  * JFoenix 9.0.10 tries to call the private AccessibleObject#setAccessible0 method,
- * which requires opening java.base/java.lang.reflect. Standard setAccessible is
- * sufficient when the target package is open to the unnamed module.
+ * which requires opening java.base/java.lang.reflect. Standard setAccessible avoids
+ * that broad opening; only reflected target packages need to be opened.
  */
 public class ReflectionHelper {
 
