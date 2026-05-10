@@ -32,7 +32,8 @@ import javax.annotation.Nullable;
 public class FeeHttpClient extends HttpClientImpl {
     @Inject
     public FeeHttpClient(@Nullable Socks5ProxyProvider socks5ProxyProvider,
-                         @Named(Config.ALLOW_LAN_FOR_HTTP_REQUESTS) boolean allowLanForHttpRequests) {
-        super(socks5ProxyProvider, allowLanForHttpRequests);
+                         @Named(Config.ALLOW_LAN_FOR_HTTP_REQUESTS) boolean allowLanForHttpRequests,
+                         @Named(Config.ALLOW_CLEARNET_HTTP_REQUESTS) boolean allowClearnetHttpRequests) {
+        super(socks5ProxyProvider, allowLanForHttpRequests, allowClearnetHttpRequests);
     }
 }

@@ -51,9 +51,10 @@ public class MempoolRequest {
 
     public MempoolRequest(Preferences preferences,
                           Socks5ProxyProvider socks5ProxyProvider,
-                          boolean allowLanForHttpRequests) {
+                          boolean allowLanForHttpRequests,
+                          boolean allowClearnetHttpRequests) {
         this.txBroadcastServices.addAll(preferences.getDefaultTxBroadcastServices());
-        this.mempoolHttpClient = new MempoolHttpClient(socks5ProxyProvider, allowLanForHttpRequests);
+        this.mempoolHttpClient = new MempoolHttpClient(socks5ProxyProvider, allowLanForHttpRequests, allowClearnetHttpRequests);
     }
 
     public void getTxStatus(SettableFuture<String> mempoolServiceCallback, String txId) {

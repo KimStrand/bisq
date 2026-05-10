@@ -54,6 +54,9 @@ public class CommonSetup {
         AsciiLogo.showAsciiLogo();
         Version.setBaseCryptoNetworkId(config.getBaseCurrencyNetwork().ordinal());
         Version.printVersion();
+        if (config.allowClearnetHttpRequests && config.getBaseCurrencyNetwork().isMainnet()) {
+            log.warn("allowClearnetHttpRequests is enabled on mainnet — HTTP requests may bypass Tor and leak your IP address.");
+        }
         maybePrintPathOfCodeSource();
         Profiler.printSystemLoad();
 

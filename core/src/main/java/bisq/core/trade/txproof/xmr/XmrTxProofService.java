@@ -84,6 +84,7 @@ public class XmrTxProofService implements AssetTxProofService {
     private final WalletsSetup walletsSetup;
     private final Socks5ProxyProvider socks5ProxyProvider;
     private final boolean allowLanForHttpRequests;
+    private final boolean allowClearnetHttpRequests;
     private final Map<String, XmrTxProofRequestsPerTrade> servicesByTradeId = new HashMap<>();
     private AutoConfirmSettings autoConfirmSettings;
     private final Map<String, ChangeListener<Trade.State>> tradeStateListenerMap = new HashMap<>();
@@ -109,7 +110,8 @@ public class XmrTxProofService implements AssetTxProofService {
                              P2PService p2PService,
                              WalletsSetup walletsSetup,
                              Socks5ProxyProvider socks5ProxyProvider,
-                             @Named(Config.ALLOW_LAN_FOR_HTTP_REQUESTS) boolean allowLanForHttpRequests) {
+                             @Named(Config.ALLOW_LAN_FOR_HTTP_REQUESTS) boolean allowLanForHttpRequests,
+                             @Named(Config.ALLOW_CLEARNET_HTTP_REQUESTS) boolean allowClearnetHttpRequests) {
         this.filterManager = filterManager;
         this.preferences = preferences;
         this.tradeManager = tradeManager;
@@ -121,6 +123,7 @@ public class XmrTxProofService implements AssetTxProofService {
         this.walletsSetup = walletsSetup;
         this.socks5ProxyProvider = socks5ProxyProvider;
         this.allowLanForHttpRequests = allowLanForHttpRequests;
+        this.allowClearnetHttpRequests = allowClearnetHttpRequests;
     }
 
 
@@ -273,7 +276,8 @@ public class XmrTxProofService implements AssetTxProofService {
                 mediationManager,
                 filterManager,
                 refundManager,
-                allowLanForHttpRequests);
+                allowLanForHttpRequests,
+                allowClearnetHttpRequests);
         servicesByTradeId.put(trade.getId(), service);
         service.requestFromAllServices(
                 assetTxProofResult -> {

@@ -61,6 +61,8 @@ Here is an overview:
  - `--nodePort`: Port number for localhost mode. For seed nodes there is a convention with the last digit is marking the network type and there is a list of hard coded seed nodes addresses (see: `DefaultSeedNodeAddresses.java`). For regtest: 2002 and 3002. For testnet 2001, 3001 and 4001 and for mainnet:  2000, 3000 and 4000. For normal nodes the port can be chosen freely.
  - `--useDevPrivilegeKeys`: Important for dev testing to allow the developer key for arbitration registration
  - `--appName`: Custom application name which is used for the data directory. It is important to separate your nodes to not interfere. If not set, it uses the default `Bisq` directory.
+ - `--allowLanForHttpRequests=true`: Allow HTTP requests to RFC1918 private IP ranges (10/8, 172.16/12, 192.168/16) and link-local/unique-local addresses to bypass Tor. Default `false` (only loopback bypasses Tor). Useful if you run a price/fee/explorer service on a trusted LAN.
+ - `--allowClearnetHttpRequests=true`: Fallback escape hatch when no SOCKS5/Tor proxy is running. Lets HTTP requests to non-local clearnet hosts (e.g. a self-hosted price node like `http://1.2.3.4:8080/getAllMarketPrices`) go directly over the clearnet. Has **no effect** when Tor is up — Tor is always preferred. Onion hosts are always rejected without a proxy. **WARNING:** leaks your IP address to the destination server; do not enable on mainnet with real funds.
 
 
 ## Run Bisq seednode

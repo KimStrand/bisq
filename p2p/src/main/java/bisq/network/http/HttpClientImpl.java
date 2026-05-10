@@ -105,6 +105,7 @@ public class HttpClientImpl implements HttpClient {
     @Nullable
     private final Socks5ProxyProvider socks5ProxyProvider;
     private final boolean allowLanForHttpRequests;
+    private final boolean allowClearnetHttpRequests;
     @Nullable
     private volatile HttpURLConnection connection;
     @Nullable
@@ -119,20 +120,27 @@ public class HttpClientImpl implements HttpClient {
 
     @Inject
     public HttpClientImpl(@Nullable Socks5ProxyProvider socks5ProxyProvider,
-                          @Named(Config.ALLOW_LAN_FOR_HTTP_REQUESTS) boolean allowLanForHttpRequests) {
+                          @Named(Config.ALLOW_LAN_FOR_HTTP_REQUESTS) boolean allowLanForHttpRequests,
+                          @Named(Config.ALLOW_CLEARNET_HTTP_REQUESTS) boolean allowClearnetHttpRequests) {
         this.socks5ProxyProvider = socks5ProxyProvider;
         this.allowLanForHttpRequests = allowLanForHttpRequests;
+        this.allowClearnetHttpRequests = allowClearnetHttpRequests;
+        if (allowClearnetHttpRequests) {
+            log.warn("allowClearnetHttpRequests is enabled: HTTP requests to non-local destinations will " +
+                    "bypass Tor and leak your IP address. Use only for development/testing.");
+        }
         uid = UUID.randomUUID().toString();
     }
 
     public HttpClientImpl(@Nullable Socks5ProxyProvider socks5ProxyProvider) {
         // Test/legacy entry point. Defaults to strict loopback-only.
-        this(socks5ProxyProvider, false);
+        this(socks5ProxyProvider, false, false);
     }
 
     public HttpClientImpl(String baseUrl) {
         this.socks5ProxyProvider = null;
         this.allowLanForHttpRequests = false;
+        this.allowClearnetHttpRequests = false;
         setBaseUrl(baseUrl);
         uid = UUID.randomUUID().toString();
     }
@@ -216,6 +224,7 @@ public class HttpClientImpl implements HttpClient {
                 throw new IOException(e.getMessage());
             }
             boolean local = UrlSafetyChecker.isLocal(uri, allowLanForHttpRequests);
+            boolean onion = UrlSafetyChecker.isOnion(uri);
             Socks5Proxy socks5Proxy = getSocks5Proxy(socks5ProxyProvider);
 
             if (local) {
@@ -231,15 +240,31 @@ public class HttpClientImpl implements HttpClient {
                         "refusing to send " + httpMethod + " to non-local " + baseUrl);
             }
 
-            if (socks5Proxy == null) {
-                // Fail closed: rather than fall back to clearnet (the previous
-                // behaviour), refuse to send the request. The caller decides
-                // whether to retry once Tor is up.
-                throw new IOException("No SOCKS5 proxy available, refusing to send "
-                        + httpMethod + " to non-local " + baseUrl);
+            if (socks5Proxy != null) {
+                // Tor available — always prefer it for non-local destinations,
+                // even when allowClearnetHttpRequests=true. The flag is a
+                // last-resort fallback, not a global Tor disable.
+                return doRequestWithProxy(baseUrl, param, httpMethod, socks5Proxy, headerKey, headerValue);
             }
 
-            return doRequestWithProxy(baseUrl, param, httpMethod, socks5Proxy, headerKey, headerValue);
+            // No proxy available.
+            if (onion) {
+                // Onion hosts are only reachable through Tor; a direct attempt
+                // would leak the lookup to the system DNS resolver and fail.
+                throw new IOException("No SOCKS5 proxy available, refusing to send "
+                        + httpMethod + " to onion host " + baseUrl);
+            }
+
+            if (allowClearnetHttpRequests) {
+                // Dev/testing escape hatch: send directly without Tor.
+                log.info("No SOCKS5 proxy available; sending {} clearnet (no Tor) to non-local {} " +
+                                "because allowClearnetHttpRequests=true",
+                        httpMethod, baseUrl);
+                return requestWithoutProxy(baseUrl, param, httpMethod, headerKey, headerValue);
+            }
+
+            throw new IOException("No SOCKS5 proxy available, refusing to send "
+                    + httpMethod + " to non-local " + baseUrl);
         } finally {
             hasPendingRequest.set(false);
         }

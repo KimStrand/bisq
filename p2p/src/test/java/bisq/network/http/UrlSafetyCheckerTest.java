@@ -381,6 +381,69 @@ class UrlSafetyCheckerTest {
         assertFalse(UrlSafetyChecker.isLocal(java.net.URI.create("http://127.1/"), true));
     }
 
+    // -- isOnion -----------------------------------------------------------------
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "http://expyuzz4wqqyqhjn.onion/",
+            "https://duckduckgogg42xjoc72x3sjasowoarfbgcmvfimaftt6twagswzczad.onion/",
+            "http://example.onion:8080/path?query=1",
+            "https://EXPYUZZ4WQQYQHJN.ONION/",
+            "http://Mixed.OnIoN/",
+            "http://sub.domain.example.onion/",
+    })
+    void isOnionRecognisesOnionHosts(String url) {
+        assertTrue(UrlSafetyChecker.isOnion(UrlSafetyChecker.parseAndValidate(url)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "http://example.com/",
+            "https://example.org/onion",
+            "http://onion.example.com/",
+            "http://127.0.0.1/",
+            "http://localhost/",
+            "http://[::1]/",
+            "http://192.168.1.1/",
+            "http://example.onion.evil.com/",
+            "http://onion/",
+            "http://onionx/",
+            "http://example.onionx/",
+    })
+    void isOnionRejectsNonOnionHosts(String url) {
+        assertFalse(UrlSafetyChecker.isOnion(UrlSafetyChecker.parseAndValidate(url)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "http://expyuzz4wqqyqhjn.onion./",
+            "https://example.onion./path",
+            "http://EXAMPLE.ONION./",
+    })
+    void isOnionMatchesTrailingDotFqdn(String url) {
+        // FQDN form (one or more trailing dots) resolves to the same destination.
+        // Must match so a no-proxy clearnet attempt cannot leak the lookup.
+        // Note: consecutive-dot labels (e.g. "host.onion..") are not tested here
+        // because Java's URI parser returns host=null for them, and
+        // parseAndValidate rejects null-host URIs upstream — they never reach
+        // isOnion. The trailing-dot strip in isOnion is still a defence in depth
+        // for the single-dot FQDN case the URI parser does accept.
+        assertTrue(UrlSafetyChecker.isOnion(java.net.URI.create(url)));
+    }
+
+    @Test
+    void isOnionRejectsHostThatEqualsOnion() {
+        // ".onion" alone (no label) is not a valid v2/v3 onion address; URI
+        // parsing rejects an empty label, but bare "onion" must not match.
+        assertFalse(UrlSafetyChecker.isOnion(java.net.URI.create("http://onion/")));
+    }
+
+    @Test
+    void isOnionFalseForUriWithoutHost() {
+        // Defensive: URI with no host (e.g. "http:/foo") — host() returns null.
+        assertFalse(UrlSafetyChecker.isOnion(java.net.URI.create("http:/foo")));
+    }
+
     @Test
     void hostnameNeverTriggersDnsLookup() {
         // Implementation invariant: a non-numeric, non-"localhost" host MUST NOT
