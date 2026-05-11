@@ -260,6 +260,24 @@ public abstract class WalletService {
         }
     }
 
+    // Bisq deposit-tx flows witness-strip but not scriptSig-strip on the buyer side
+    // before peer validation. Legacy P2PK/P2PKH inputs leave scriptSig populated
+    // after witness-strip, which the peer's checkTransactionIsUnsigned rejects.
+    // Fail early at the local funding step instead of mid-trade with the peer.
+    public static void assertAllInputsSpendP2WPKH(Transaction transaction) {
+        for (TransactionInput input : transaction.getInputs()) {
+            TransactionOutput connectedOutput = input.getConnectedOutput();
+            checkNotNull(connectedOutput, "connectedOutput must not be null for input %s", input);
+            Script scriptPubKey = connectedOutput.getScriptPubKey();
+            if (!ScriptPattern.isP2WPKH(scriptPubKey)) {
+                throw new IllegalStateException(
+                        "Your wallet contains a non-SegWit (legacy) UTXO that cannot be used for trading. " +
+                                "Please consolidate your funds to a SegWit (bech32, bc1...) address before " +
+                                "creating or taking offers. Offending input scriptPubKey: " + scriptPubKey);
+            }
+        }
+    }
+
     public static void checkAllScriptSignaturesForTx(Transaction transaction) throws TransactionVerificationException {
         for (int i = 0; i < transaction.getInputs().size(); i++) {
             WalletService.checkScriptSig(transaction, transaction.getInputs().get(i), i);
