@@ -46,14 +46,10 @@ class MediatedPayoutTxValidationTest {
     /* --------------------------------------------------------------------- */
 
     @Test
-    void checkMediatedPayoutAmountsAcceptsMediationResultTotalAndReturnsBuyerAmount() {
-        Coin buyerPayoutAmount = Coin.valueOf(6_000);
-        Coin sellerPayoutAmount = Coin.valueOf(4_000);
-
-        assertEquals(buyerPayoutAmount,
-                checkMediatedPayoutAmounts(buyerPayoutAmount,
-                        sellerPayoutAmount,
-                        Coin.valueOf(10_000)));
+    void checkMediatedPayoutAmountsAcceptsMediationResultTotal() {
+        checkMediatedPayoutAmounts(Coin.valueOf(6_000),
+                Coin.valueOf(4_000),
+                Coin.valueOf(10_000));
     }
 
     @Test
@@ -70,12 +66,11 @@ class MediatedPayoutTxValidationTest {
 
     @Test
     void checkMediatedPayoutAddressesAcceptsValidAddressesForPositiveAmounts() {
-        assertEquals(BUYER_ADDRESS,
-                checkMediatedPayoutAddresses(BUYER_ADDRESS,
-                        Coin.valueOf(6_000),
-                        SELLER_ADDRESS,
-                        Coin.valueOf(4_000),
-                        ValidationTestUtils.btcWalletService()));
+        checkMediatedPayoutAddresses(BUYER_ADDRESS,
+                Coin.valueOf(6_000),
+                SELLER_ADDRESS,
+                Coin.valueOf(4_000),
+                ValidationTestUtils.btcWalletService());
     }
 
     @Test
