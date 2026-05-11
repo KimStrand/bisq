@@ -73,13 +73,15 @@ public class SellerProcessShareBuyerPaymentAccountMessage extends TradeTask {
             PaymentAccountPayload myPaymentAccountPayload = checkNotNull(processModel.getPaymentAccountPayload(trade),
                     "Payment account payload cannot be null for trade: " + trade.getId());
 
-            PaymentAccountPayload peersPaymentAccountPayload = message.getBuyerPaymentAccountPayload();
+            PaymentAccountPayload peersPaymentAccountPayload = checkNotNull(message.getBuyerPaymentAccountPayload(),
+                    "buyerPaymentAccountPayload must not be null for trade: " + trade.getId());
             byte[] peersHashFromAccountPayload = peersPaymentAccountPayload.getHashForContract();
             byte[] peersCommittedHashFromContract = contract.getHashOfPeersPaymentAccountPayload(myPubKeyRing);
 
             // Check if the hash of the provided payment account payload matches the hash from the contract
             // which the peer committed in early stages of the trade protocol.
-            checkHashFromContract(peersHashFromAccountPayload, peersCommittedHashFromContract);
+            checkHashFromContract(peersHashFromAccountPayload, peersCommittedHashFromContract,
+                    "peersPaymentAccountPayloadHash");
 
             processModel.getTradePeer().setPaymentAccountPayload(peersPaymentAccountPayload);
 

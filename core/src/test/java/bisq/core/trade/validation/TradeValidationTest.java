@@ -118,27 +118,27 @@ class TradeValidationTest {
     void checkHashFromContractAcceptsMatchingByteArrays() {
         byte[] current = new byte[]{1, 2, 3};
 
-        assertSame(current, TradeValidation.checkHashFromContract(current, new byte[]{1, 2, 3}));
+        assertSame(current, TradeValidation.checkHashFromContract(current, new byte[]{1, 2, 3}, "testHash"));
     }
 
     @Test
     void checkHashFromContractRejectsMismatchingByteArrays() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> TradeValidation.checkHashFromContract(new byte[]{1, 2, 3}, new byte[]{1, 2, 4}));
+                () -> TradeValidation.checkHashFromContract(new byte[]{1, 2, 3}, new byte[]{1, 2, 4}, "testHash"));
 
-        assertEquals("current is not matching expected. current=010203, expected=010204", exception.getMessage());
+        assertEquals("testHash mismatch. current=010203, expected=010204", exception.getMessage());
     }
 
     @Test
     void checkHashFromContractRejectsNullAndEmptyByteArrays() {
         assertThrows(NullPointerException.class,
-                () -> TradeValidation.checkHashFromContract(null, new byte[]{1}));
+                () -> TradeValidation.checkHashFromContract(null, new byte[]{1}, "testHash"));
         assertThrows(NullPointerException.class,
-                () -> TradeValidation.checkHashFromContract(new byte[]{1}, null));
+                () -> TradeValidation.checkHashFromContract(new byte[]{1}, null, "testHash"));
         assertThrows(IllegalArgumentException.class,
-                () -> TradeValidation.checkHashFromContract(new byte[0], new byte[]{1}));
+                () -> TradeValidation.checkHashFromContract(new byte[0], new byte[]{1}, "testHash"));
         assertThrows(IllegalArgumentException.class,
-                () -> TradeValidation.checkHashFromContract(new byte[]{1}, new byte[0]));
+                () -> TradeValidation.checkHashFromContract(new byte[]{1}, new byte[0], "testHash"));
     }
 
     /* --------------------------------------------------------------------- */

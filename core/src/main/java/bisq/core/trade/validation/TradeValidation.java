@@ -87,12 +87,12 @@ public final class TradeValidation {
     // Contract hash
     /* --------------------------------------------------------------------- */
 
-    public static byte[] checkHashFromContract(byte[] current, byte[] expected) {
-        checkNonEmptyBytes(current, "current");
-        checkNonEmptyBytes(expected, "expected");
+    public static byte[] checkHashFromContract(byte[] current, byte[] expected, String label) {
+        checkNonEmptyBytes(current, label + " (current)");
+        checkNonEmptyBytes(expected, label + " (expected)");
         checkArgument(Arrays.equals(current, expected),
-                "current is not matching expected. " +
-                        "current=%s, expected=%s",
+                "%s mismatch. current=%s, expected=%s",
+                label,
                 Utilities.toTruncatedString(Hex.encode(current), 8),
                 Utilities.toTruncatedString(Hex.encode(expected), 8));
         return current;
