@@ -23,6 +23,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.crypto.TransactionSignature;
+import org.bouncycastle.math.ec.ECPoint;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -72,9 +73,19 @@ public final class WitnessValidation {
                 "witness pubKey for input %s must be compressed. size=%s",
                 inputIndex,
                 pubKey.length);
-        checkArgument(ECKey.fromPublicOnly(pubKey).isCompressed(),
-                "witness pubKey for input %s must be a compressed valid curve point",
+        checkArgument(pubKey[0] == 0x02 || pubKey[0] == 0x03,
+                "witness pubKey for input %s must use a valid compressed public key prefix",
                 inputIndex);
+        try {
+            ECKey key = ECKey.fromPublicOnly(pubKey);
+            ECPoint point = key.getPubKeyPoint();
+            checkArgument(key.isCompressed() && !point.isInfinity() && point.isValid(),
+                    "witness pubKey for input %s must be a compressed valid curve point",
+                    inputIndex);
+        } catch (RuntimeException e) {
+            throw new IllegalArgumentException("witness pubKey for input " + inputIndex +
+                    " must be a compressed valid curve point", e);
+        }
 
         return checkedWitness;
     }

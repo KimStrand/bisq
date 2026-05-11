@@ -119,6 +119,19 @@ public class WitnessValidationTest {
     }
 
     @Test
+    void checkCanonicalP2WpkhWitnessRejectsInvalidCompressedPubKeyPrefix() {
+        byte[] invalidCompressedPubKey = Arrays.copyOf(new ECKey().getPubKey(), 33);
+        invalidCompressedPubKey[0] = 0x04;
+
+        TransactionWitness witness = new TransactionWitness(2);
+        witness.setPush(0, canonicalSignature(Transaction.SigHash.ALL, false));
+        witness.setPush(1, invalidCompressedPubKey);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> WitnessValidation.checkCanonicalP2WpkhWitness(witness, 0));
+    }
+
+    @Test
     void checkCanonicalP2WpkhWitnessRejectsInvalidCompressedPubKey() {
         byte[] invalidCompressedPubKey = new byte[33];
         Arrays.fill(invalidCompressedPubKey, (byte) 0xff);
