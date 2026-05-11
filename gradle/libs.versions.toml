@@ -40,7 +40,7 @@ jsonrpc4j = { strictly = '1.6.0.bisq.1' }
 junit-jupiter = { strictly = '5.14.3' }
 junit-platform = { strictly = '1.14.3' }
 
-kotlin = { strictly = '2.3.20' }
+kotlin = { strictly = '2.3.21' }
 logback = { strictly = '1.2.13' }
 lombok = { strictly = '1.18.42' }
 mockito = { strictly = '5.23.0' }
