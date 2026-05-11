@@ -3,9 +3,8 @@ apache-commons-lang3 = { strictly = '3.20.0' }
 apache-httpclient = { strictly = '4.5.14' }
 apache-httpcore = { strictly = '4.4.16' }
 
-bitcoinj = { strictly = '7473c6516b16a6a732958043537541038bc9ddf6' }
+bitcoinj = { strictly = '6c32c0629d4ac7ecc95889eb1a46fa0d77a4e15a' }
 bouncycastle = { strictly = '1.84' }
-bouncycastle-bitcoinj = { strictly = '1.63' }
 
 checker-qual = { strictly = '3.54.0' }
 commons-codec = { strictly = '1.22.0' }
@@ -63,8 +62,6 @@ apache-commons-lang3 = { module = "org.apache.commons:commons-lang3", version.re
 
 bitcoinj = { module = "com.github.bisq-network:bitcoinj", version.ref = "bitcoinj" }
 bouncycastle-bcpg-jdk18on = { module = "org.bouncycastle:bcpg-jdk18on", version.ref = "bouncycastle" }
-bouncycastle-bcpg-jdk15on = { module = "org.bouncycastle:bcpg-jdk15on", version.ref = "bouncycastle-bitcoinj" }
-bouncycastle-bcprov-jdk15to18 = { module = "org.bouncycastle:bcprov-jdk15to18", version.ref = "bouncycastle-bitcoinj" }
 
 checker-qual = { module = "org.checkerframework:checker-qual", version.ref = "checker-qual" }
 commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
