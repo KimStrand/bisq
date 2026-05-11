@@ -68,9 +68,7 @@ public class SignMediatedPayoutTx extends TradeTask {
             Coin buyerPayoutAmount = Coin.valueOf(processModel.getBuyerPayoutAmountFromMediation());
             Coin sellerPayoutAmount = Coin.valueOf(processModel.getSellerPayoutAmountFromMediation());
 
-            Coin validatedBuyerPayoutAmount = checkMediatedPayoutAmounts(buyerPayoutAmount,
-                    sellerPayoutAmount,
-                    totalPayoutAmount);
+            checkMediatedPayoutAmounts(buyerPayoutAmount, sellerPayoutAmount, totalPayoutAmount);
 
             boolean isMyRoleBuyer = contract.isMyRoleBuyer(processModel.getPubKeyRing());
 
@@ -78,8 +76,8 @@ public class SignMediatedPayoutTx extends TradeTask {
             String peersPayoutAddressString = tradingPeer.getPayoutAddressString();
             String buyerPayoutAddressString = isMyRoleBuyer ? myPayoutAddressString : peersPayoutAddressString;
             String sellerPayoutAddressString = isMyRoleBuyer ? peersPayoutAddressString : myPayoutAddressString;
-            String validatedBuyerPayoutAddressString = checkMediatedPayoutAddresses(buyerPayoutAddressString,
-                    validatedBuyerPayoutAmount,
+            checkMediatedPayoutAddresses(buyerPayoutAddressString,
+                    buyerPayoutAmount,
                     sellerPayoutAddressString,
                     sellerPayoutAmount,
                     walletService);
@@ -100,9 +98,9 @@ public class SignMediatedPayoutTx extends TradeTask {
 
             byte[] mediatedPayoutTxSignature = processModel.getTradeWalletService().signMediatedPayoutTx(
                     depositTx,
-                    validatedBuyerPayoutAmount,
+                    buyerPayoutAmount,
                     sellerPayoutAmount,
-                    validatedBuyerPayoutAddressString,
+                    buyerPayoutAddressString,
                     sellerPayoutAddressString,
                     myMultiSigKeyPair,
                     buyerMultiSigPubKey,

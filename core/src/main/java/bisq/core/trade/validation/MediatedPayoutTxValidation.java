@@ -48,7 +48,7 @@ public final class MediatedPayoutTxValidation {
     // Mediated payout amounts
     /* --------------------------------------------------------------------- */
 
-    public static Coin checkMediatedPayoutAmounts(Coin buyerPayoutAmount,
+    public static void checkMediatedPayoutAmounts(Coin buyerPayoutAmount,
                                                   Coin sellerPayoutAmount,
                                                   Coin expectedTotalPayoutAmount) {
         Coin checkedBuyerPayoutAmount = checkIsNotNegative(buyerPayoutAmount, "buyerPayoutAmount");
@@ -61,7 +61,6 @@ public final class MediatedPayoutTxValidation {
                 checkedBuyerPayoutAmount.toFriendlyString(),
                 checkedSellerPayoutAmount.toFriendlyString(),
                 checkedExpectedTotalPayoutAmount.toFriendlyString());
-        return checkedBuyerPayoutAmount;
     }
 
 
@@ -69,11 +68,11 @@ public final class MediatedPayoutTxValidation {
     // Mediated payout addresses
     /* --------------------------------------------------------------------- */
 
-    public static String checkMediatedPayoutAddresses(String buyerPayoutAddressString,
-                                                      Coin buyerPayoutAmount,
-                                                      String sellerPayoutAddressString,
-                                                      Coin sellerPayoutAmount,
-                                                      BtcWalletService btcWalletService) {
+    public static void checkMediatedPayoutAddresses(String buyerPayoutAddressString,
+                                                    Coin buyerPayoutAmount,
+                                                    String sellerPayoutAddressString,
+                                                    Coin sellerPayoutAmount,
+                                                    BtcWalletService btcWalletService) {
         String checkedBuyerPayoutAddressString = checkNonBlankString(buyerPayoutAddressString, "buyerPayoutAddressString");
         Coin checkedBuyerPayoutAmount = checkIsNotNegative(buyerPayoutAmount, "buyerPayoutAmount");
         String checkedSellerPayoutAddressString = checkNonBlankString(sellerPayoutAddressString, "sellerPayoutAddressString");
@@ -86,7 +85,6 @@ public final class MediatedPayoutTxValidation {
         if (checkedSellerPayoutAmount.isPositive()) {
             checkBitcoinAddress(checkedSellerPayoutAddressString, btcWalletService);
         }
-        return checkedBuyerPayoutAddressString;
     }
 
 
@@ -110,9 +108,7 @@ public final class MediatedPayoutTxValidation {
         Coin buyerPayoutAmount = Coin.valueOf(processModel.getBuyerPayoutAmountFromMediation());
         Coin sellerPayoutAmount = Coin.valueOf(processModel.getSellerPayoutAmountFromMediation());
         Coin expectedTotalPayoutAmount = getExpectedTotalPayoutAmount(trade);
-        Coin validatedBuyerPayoutAmount = checkMediatedPayoutAmounts(buyerPayoutAmount,
-                sellerPayoutAmount,
-                expectedTotalPayoutAmount);
+        checkMediatedPayoutAmounts(buyerPayoutAmount, sellerPayoutAmount, expectedTotalPayoutAmount);
 
         boolean isMyRoleBuyer = contract.isMyRoleBuyer(processModel.getPubKeyRing());
         String myPayoutAddressString = btcWalletService.getOrCreateAddressEntry(trade.getId(),
@@ -120,17 +116,17 @@ public final class MediatedPayoutTxValidation {
         String peersPayoutAddressString = tradingPeer.getPayoutAddressString();
         String buyerPayoutAddressString = isMyRoleBuyer ? myPayoutAddressString : peersPayoutAddressString;
         String sellerPayoutAddressString = isMyRoleBuyer ? peersPayoutAddressString : myPayoutAddressString;
-        String validatedBuyerPayoutAddressString = checkMediatedPayoutAddresses(buyerPayoutAddressString,
-                validatedBuyerPayoutAmount,
+        checkMediatedPayoutAddresses(buyerPayoutAddressString,
+                buyerPayoutAmount,
                 sellerPayoutAddressString,
                 sellerPayoutAmount,
                 btcWalletService);
 
         return checkMediatedPayoutTx(payoutTx,
                 depositTx,
-                validatedBuyerPayoutAmount,
+                buyerPayoutAmount,
                 sellerPayoutAmount,
-                validatedBuyerPayoutAddressString,
+                buyerPayoutAddressString,
                 sellerPayoutAddressString,
                 params);
     }
@@ -206,9 +202,7 @@ public final class MediatedPayoutTxValidation {
         Coin buyerPayoutAmount = Coin.valueOf(processModel.getBuyerPayoutAmountFromMediation());
         Coin sellerPayoutAmount = Coin.valueOf(processModel.getSellerPayoutAmountFromMediation());
         Coin expectedTotalPayoutAmount = getExpectedTotalPayoutAmount(trade);
-        Coin validatedBuyerPayoutAmount = checkMediatedPayoutAmounts(buyerPayoutAmount,
-                sellerPayoutAmount,
-                expectedTotalPayoutAmount);
+        checkMediatedPayoutAmounts(buyerPayoutAmount, sellerPayoutAmount, expectedTotalPayoutAmount);
 
         boolean isMyRoleBuyer = contract.isMyRoleBuyer(processModel.getPubKeyRing());
         String myPayoutAddressString = btcWalletService.getOrCreateAddressEntry(trade.getId(),
@@ -216,8 +210,8 @@ public final class MediatedPayoutTxValidation {
         String peersPayoutAddressString = tradingPeer.getPayoutAddressString();
         String buyerPayoutAddressString = isMyRoleBuyer ? myPayoutAddressString : peersPayoutAddressString;
         String sellerPayoutAddressString = isMyRoleBuyer ? peersPayoutAddressString : myPayoutAddressString;
-        String validatedBuyerPayoutAddressString = checkMediatedPayoutAddresses(buyerPayoutAddressString,
-                validatedBuyerPayoutAmount,
+        checkMediatedPayoutAddresses(buyerPayoutAddressString,
+                buyerPayoutAmount,
                 sellerPayoutAddressString,
                 sellerPayoutAmount,
                 btcWalletService);
@@ -230,9 +224,9 @@ public final class MediatedPayoutTxValidation {
         return PayoutTxValidation.checkPayoutTxSignature(txSignature,
                 btcWalletService,
                 depositTx,
-                validatedBuyerPayoutAmount,
+                buyerPayoutAmount,
                 sellerPayoutAmount,
-                validatedBuyerPayoutAddressString,
+                buyerPayoutAddressString,
                 sellerPayoutAddressString,
                 peersMultiSigPubKey,
                 buyerMultiSigPubKey,

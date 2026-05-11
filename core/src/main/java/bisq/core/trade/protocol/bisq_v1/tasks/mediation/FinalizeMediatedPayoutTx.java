@@ -73,16 +73,14 @@ public class FinalizeMediatedPayoutTx extends TradeTask {
             Coin totalPayoutAmount = offer.getBuyerSecurityDeposit().add(tradeAmount).add(offer.getSellerSecurityDeposit());
             Coin buyerPayoutAmount = Coin.valueOf(processModel.getBuyerPayoutAmountFromMediation());
             Coin sellerPayoutAmount = Coin.valueOf(processModel.getSellerPayoutAmountFromMediation());
-            Coin validatedBuyerPayoutAmount = checkMediatedPayoutAmounts(buyerPayoutAmount,
-                    sellerPayoutAmount,
-                    totalPayoutAmount);
+            checkMediatedPayoutAmounts(buyerPayoutAmount, sellerPayoutAmount, totalPayoutAmount);
 
             String myPayoutAddressString = walletService.getOrCreateAddressEntry(tradeId, AddressEntry.Context.TRADE_PAYOUT).getAddressString();
             String peersPayoutAddressString = tradingPeer.getPayoutAddressString();
             String buyerPayoutAddressString = isMyRoleBuyer ? myPayoutAddressString : peersPayoutAddressString;
             String sellerPayoutAddressString = isMyRoleBuyer ? peersPayoutAddressString : myPayoutAddressString;
-            String validatedBuyerPayoutAddressString = checkMediatedPayoutAddresses(buyerPayoutAddressString,
-                    validatedBuyerPayoutAmount,
+            checkMediatedPayoutAddresses(buyerPayoutAddressString,
+                    buyerPayoutAmount,
                     sellerPayoutAddressString,
                     sellerPayoutAmount,
                     walletService);
@@ -105,9 +103,9 @@ public class FinalizeMediatedPayoutTx extends TradeTask {
                     depositTx,
                     buyerSignature,
                     sellerSignature,
-                    validatedBuyerPayoutAmount,
+                    buyerPayoutAmount,
                     sellerPayoutAmount,
-                    validatedBuyerPayoutAddressString,
+                    buyerPayoutAddressString,
                     sellerPayoutAddressString,
                     multiSigKeyPair,
                     buyerMultiSigPubKey,
@@ -116,9 +114,9 @@ public class FinalizeMediatedPayoutTx extends TradeTask {
 
             Transaction validatedTransaction = checkMediatedPayoutTx(transaction,
                     depositTx,
-                    validatedBuyerPayoutAmount,
+                    buyerPayoutAmount,
                     sellerPayoutAmount,
-                    validatedBuyerPayoutAddressString,
+                    buyerPayoutAddressString,
                     sellerPayoutAddressString,
                     walletService);
             trade.setPayoutTx(validatedTransaction);
