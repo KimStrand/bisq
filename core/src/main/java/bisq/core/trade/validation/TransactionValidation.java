@@ -134,6 +134,10 @@ public final class TransactionValidation {
     // Bitcoin signature
     /* --------------------------------------------------------------------- */
 
+    // Expects raw DER-encoded ECDSA signature without a trailing sighash byte
+    // (e.g. the output of ECKey.ECDSASignature.encodeToDER()). Signatures extracted
+    // from a scriptSig or witness stack include a sighash byte and must have it
+    // stripped before being passed here.
     public static byte[] checkDerEncodedEcdsaSignature(byte[] bitcoinSignature) {
         toVerifiedDerEncodedEcdsaSignature(bitcoinSignature);
         return bitcoinSignature;

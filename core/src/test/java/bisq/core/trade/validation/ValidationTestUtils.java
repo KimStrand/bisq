@@ -49,6 +49,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionWitness;
+import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.script.ScriptBuilder;
 
@@ -180,6 +181,19 @@ class ValidationTestUtils {
         return transaction.bitcoinSerialize();
     }
 
+    // Mimics buyer-as-taker path when a legacy P2PKH UTXO is signed:
+    // wallet sets a real DER sig + pubkey push in scriptSig, then
+    // bitcoinSerialize(false) strips witness but keeps scriptSig.
+    static byte[] serializedTransactionWithLegacyP2pkhSignedInputAfterWitnessStrip() {
+        ECKey key = new ECKey();
+        byte[] dummyHash = new byte[32];
+        ECKey.ECDSASignature sig = key.sign(Sha256Hash.wrap(dummyHash));
+        TransactionSignature txSig = new TransactionSignature(
+                sig, Transaction.SigHash.ALL, false);
+        byte[] scriptSigProgram = ScriptBuilder.createInputScript(txSig, key).getProgram();
+        return transaction(scriptSigProgram).bitcoinSerialize(false);
+    }
+
     static Transaction transaction(byte[] scriptSigProgram) {
         Transaction transaction = new Transaction(MainNetParams.get());
         transaction.addInput(new TransactionInput(MainNetParams.get(),
@@ -189,6 +203,17 @@ class ValidationTestUtils {
                 Coin.valueOf(2_000)));
         transaction.addOutput(Coin.valueOf(1_000), ScriptBuilder.createP2WPKHOutputScript(new ECKey()));
         return transaction;
+    }
+
+    static byte[] serializedTransactionWithDuplicateOutpoints() {
+        Transaction transaction = new Transaction(MainNetParams.get());
+        TransactionOutPoint outPoint = new TransactionOutPoint(MainNetParams.get(), 0, Sha256Hash.ZERO_HASH);
+        transaction.addInput(new TransactionInput(MainNetParams.get(),
+                transaction, new byte[]{}, outPoint, Coin.valueOf(2_000)));
+        transaction.addInput(new TransactionInput(MainNetParams.get(),
+                transaction, new byte[]{}, outPoint, Coin.valueOf(2_000)));
+        transaction.addOutput(Coin.valueOf(1_000), ScriptBuilder.createP2WPKHOutputScript(new ECKey()));
+        return transaction.bitcoinSerialize();
     }
 
     static Transaction transactionWithoutOutputs() {

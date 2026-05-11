@@ -152,6 +152,13 @@ class TransactionValidationTest {
     }
 
     @Test
+    void toVerifiedTransactionRejectsTransactionWithDuplicateOutpoints() {
+        assertThrows(IllegalArgumentException.class, () -> TransactionValidation.toVerifiedTransaction(
+                ValidationTestUtils.serializedTransactionWithDuplicateOutpoints(),
+                btcWalletService()));
+    }
+
+    @Test
     void toVerifiedTransactionRejectsNullSerializedTransaction() {
         assertThrows(NullPointerException.class, () -> TransactionValidation.toVerifiedTransaction(null,
                 btcWalletService()));

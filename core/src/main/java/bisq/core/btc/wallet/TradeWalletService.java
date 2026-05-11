@@ -362,6 +362,7 @@ public class TradeWalletService {
                 "Reserve amount does not equal input amount");
         dummyTX.addInput(reservedForTradeOutput);
 
+        WalletService.assertAllInputsSpendP2WPKH(dummyTX);
         WalletService.verifyTransaction(dummyTX);
 
         //WalletService.printTx("dummyTX", dummyTX);
@@ -447,6 +448,7 @@ public class TradeWalletService {
         TransactionOutput dummyOutput = new TransactionOutput(params, dummyTx, makerInputAmount, SegwitAddress.fromKey(params, new ECKey()));
         dummyTx.addOutput(dummyOutput);
         addAvailableInputsAndChangeOutputs(dummyTx, makerAddress, makerChangeAddress);
+        WalletService.assertAllInputsSpendP2WPKH(dummyTx);
         // Normally we have only 1 input but we support multiple inputs if the user has paid in with several transactions.
         List<TransactionInput> makerInputs = dummyTx.getInputs();
         TransactionOutput makerOutput = null;

@@ -568,6 +568,17 @@ class DepositTxValidationTest {
                 btcWalletService()));
     }
 
+    // Regression: buyer-as-taker funded from a legacy P2PKH UTXO signs the input,
+    // then bitcoinSerialize(false) strips witness but the scriptSig remains.
+    // Validator rejects → trade aborts mid-protocol. The wallet must gate this
+    // earlier; this test pins current validator behavior.
+    @Test
+    void checkTransactionIsUnsignedRejectsLegacyP2pkhSignedInputAfterWitnessStrip() {
+        assertThrows(IllegalArgumentException.class, () -> DepositTxValidation.checkTransactionIsUnsigned(
+                ValidationTestUtils.serializedTransactionWithLegacyP2pkhSignedInputAfterWitnessStrip(),
+                btcWalletService()));
+    }
+
     @Test
     void checkTransactionIsUnsignedRejectsNullTransaction() {
         assertThrows(NullPointerException.class, () -> DepositTxValidation.checkTransactionIsUnsigned(null,
