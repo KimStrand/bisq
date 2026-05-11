@@ -392,14 +392,6 @@ public class BisqV1MessageIntegrityTest {
                 args.supportedBurningManAddressListVersions);
     }
 
-    private static protobuf.RefreshTradeStateRequest refreshTradeStateRequest(String tradeId, String uid) {
-        return protobuf.RefreshTradeStateRequest.newBuilder()
-                .setTradeId(tradeId)
-                .setUid(uid)
-                .setSenderNodeAddress(NODE_ADDRESS.toProtoMessage())
-                .build();
-    }
-
     private static SignedWitness signedWitness() {
         return new SignedWitness(SignedWitness.VerificationMethod.TRADE,
                 bytes(12),
