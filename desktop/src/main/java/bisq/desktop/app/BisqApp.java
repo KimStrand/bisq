@@ -284,9 +284,9 @@ public class BisqApp extends Application implements UncaughtExceptionHandler {
     private void layoutStageFromPersistedData(Stage stage, User user) {
         Cookie cookie = user.getCookie();
         cookie.getAsOptionalDouble(CookieKey.STAGE_X).flatMap(x ->
-                cookie.getAsOptionalDouble(CookieKey.STAGE_Y).flatMap(y ->
-                        cookie.getAsOptionalDouble(CookieKey.STAGE_W).flatMap(w ->
-                                cookie.getAsOptionalDouble(CookieKey.STAGE_H).map(h -> new BoundingBox(x, y, w, h)))))
+                        cookie.getAsOptionalDouble(CookieKey.STAGE_Y).flatMap(y ->
+                                cookie.getAsOptionalDouble(CookieKey.STAGE_W).flatMap(w ->
+                                        cookie.getAsOptionalDouble(CookieKey.STAGE_H).map(h -> new BoundingBox(x, y, w, h)))))
                 .ifPresent(stageBoundingBox -> {
                     stage.setX(stageBoundingBox.getMinX());
                     stage.setY(stageBoundingBox.getMinY());
@@ -429,19 +429,7 @@ public class BisqApp extends Application implements UncaughtExceptionHandler {
                 return asyncStatus;
             }
         }
-        // if no warning popup has been shown yet, prompt user if they really intend to shut down
-        String key = "popup.info.shutDownQuery";
-        if (injector.getInstance(Preferences.class).showAgain(key) && !DevEnv.isIgnorePopupsInDevMode()) {
-            new Popup().headLine(Res.get("popup.info.shutDownQuery"))
-                    .actionButtonText(Res.get("shared.yes"))
-                    .onAction(() -> asyncStatus.complete(true))
-                    .closeButtonText(Res.get("shared.no"))
-                    .onClose(() -> asyncStatus.complete(false))
-                    .dontShowAgainId(key)
-                    .show();
-        } else {
-            asyncStatus.complete(true);
-        }
+        asyncStatus.complete(true);
         return asyncStatus;
     }
 
