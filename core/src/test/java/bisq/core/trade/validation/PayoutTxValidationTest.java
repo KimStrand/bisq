@@ -17,6 +17,7 @@
 
 package bisq.core.trade.validation;
 
+import bisq.core.btc.model.AddressEntry;
 import bisq.core.btc.wallet.BtcWalletService;
 
 import org.bitcoinj.core.Address;
@@ -35,9 +36,11 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
@@ -58,6 +61,116 @@ class PayoutTxValidationTest {
     private static final String SELLER_PAYOUT_ADDRESS = SegwitAddress.fromKey(PARAMS, SELLER_PAYOUT_KEY).toString();
     private static final String FUNDING_TX_ID = "0000000000000000000000000000000000000000000000000000000000000001";
     private static final String OTHER_FUNDING_TX_ID = "0000000000000000000000000000000000000000000000000000000000000002";
+
+    /* --------------------------------------------------------------------- */
+    // Payout address validation
+    /* --------------------------------------------------------------------- */
+
+    @Test
+    void checkTradePayoutAddressEntryReturnsContractAddressWhenAddressEntryMatches() {
+        BtcWalletService btcWalletService = btcWalletServiceWithParams();
+        AddressEntry payoutAddressEntry = mock(AddressEntry.class);
+        when(btcWalletService.getAddressEntry("trade-id", AddressEntry.Context.TRADE_PAYOUT))
+                .thenReturn(Optional.of(payoutAddressEntry));
+        when(payoutAddressEntry.getAddressString()).thenReturn(BUYER_PAYOUT_ADDRESS);
+
+        assertEquals(BUYER_PAYOUT_ADDRESS,
+                PayoutTxValidation.checkTradePayoutAddressEntry(BUYER_PAYOUT_ADDRESS,
+                        btcWalletService,
+                        "trade-id",
+                        "Buyer"));
+    }
+
+    @Test
+    void checkTradePayoutAddressEntryAcceptsEquivalentParsedAddress() {
+        BtcWalletService btcWalletService = btcWalletServiceWithParams();
+        AddressEntry payoutAddressEntry = mock(AddressEntry.class);
+        when(btcWalletService.getAddressEntry("trade-id", AddressEntry.Context.TRADE_PAYOUT))
+                .thenReturn(Optional.of(payoutAddressEntry));
+        when(payoutAddressEntry.getAddressString()).thenReturn(BUYER_PAYOUT_ADDRESS.toUpperCase());
+
+        assertEquals(BUYER_PAYOUT_ADDRESS,
+                PayoutTxValidation.checkTradePayoutAddressEntry(BUYER_PAYOUT_ADDRESS,
+                        btcWalletService,
+                        "trade-id",
+                        "Buyer"));
+    }
+
+    @Test
+    void checkTradePayoutAddressEntryRejectsMissingAddressEntry() {
+        BtcWalletService btcWalletService = btcWalletServiceWithParams();
+        when(btcWalletService.getAddressEntry("trade-id", AddressEntry.Context.TRADE_PAYOUT))
+                .thenReturn(Optional.empty());
+
+        assertThrows(NullPointerException.class,
+                () -> PayoutTxValidation.checkTradePayoutAddressEntry(BUYER_PAYOUT_ADDRESS,
+                        btcWalletService,
+                        "trade-id",
+                        "Buyer"));
+    }
+
+    @Test
+    void checkTradePayoutAddressEntryRejectsAddressEntryMismatch() {
+        BtcWalletService btcWalletService = btcWalletServiceWithParams();
+        AddressEntry payoutAddressEntry = mock(AddressEntry.class);
+        when(btcWalletService.getAddressEntry("trade-id", AddressEntry.Context.TRADE_PAYOUT))
+                .thenReturn(Optional.of(payoutAddressEntry));
+        when(payoutAddressEntry.getAddressString()).thenReturn(SELLER_PAYOUT_ADDRESS);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> PayoutTxValidation.checkTradePayoutAddressEntry(BUYER_PAYOUT_ADDRESS,
+                        btcWalletService,
+                        "trade-id",
+                        "Buyer"));
+    }
+
+    @Test
+    void checkTradingPeerPayoutAddressReturnsContractAddressWhenPeerAddressMatches() {
+        BtcWalletService btcWalletService = btcWalletServiceWithParams();
+
+        assertEquals(SELLER_PAYOUT_ADDRESS,
+                PayoutTxValidation.checkTradingPeerPayoutAddress(SELLER_PAYOUT_ADDRESS,
+                        SELLER_PAYOUT_ADDRESS,
+                        btcWalletService,
+                        "trade-id",
+                        "Seller"));
+    }
+
+    @Test
+    void checkTradingPeerPayoutAddressAcceptsEquivalentParsedAddress() {
+        BtcWalletService btcWalletService = btcWalletServiceWithParams();
+
+        assertEquals(SELLER_PAYOUT_ADDRESS,
+                PayoutTxValidation.checkTradingPeerPayoutAddress(SELLER_PAYOUT_ADDRESS,
+                        SELLER_PAYOUT_ADDRESS.toUpperCase(),
+                        btcWalletService,
+                        "trade-id",
+                        "Seller"));
+    }
+
+    @Test
+    void checkTradingPeerPayoutAddressRejectsPeerAddressMismatch() {
+        BtcWalletService btcWalletService = btcWalletServiceWithParams();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> PayoutTxValidation.checkTradingPeerPayoutAddress(SELLER_PAYOUT_ADDRESS,
+                        BUYER_PAYOUT_ADDRESS,
+                        btcWalletService,
+                        "trade-id",
+                        "Seller"));
+    }
+
+    @Test
+    void checkTradingPeerPayoutAddressRejectsBlankPeerAddress() {
+        BtcWalletService btcWalletService = btcWalletServiceWithParams();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> PayoutTxValidation.checkTradingPeerPayoutAddress(SELLER_PAYOUT_ADDRESS,
+                        " ",
+                        btcWalletService,
+                        "trade-id",
+                        "Seller"));
+    }
 
     /* --------------------------------------------------------------------- */
     // Valid payout tx
@@ -546,6 +659,12 @@ class PayoutTxValidationTest {
         witness.setPush(2, buyerSignature);
         witness.setPush(3, redeemScript.getProgram());
         payoutTx.getInput(0).setWitness(witness);
+    }
+
+    private static BtcWalletService btcWalletServiceWithParams() {
+        BtcWalletService btcWalletService = mock(BtcWalletService.class);
+        when(btcWalletService.getParams()).thenReturn(PARAMS);
+        return btcWalletService;
     }
 
     private static final class PayoutFixture {
