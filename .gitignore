@@ -41,3 +41,4 @@ deploy
 /build-logic/regtest/out/*
 /build-logic/toolchain-resolver/out/*
 /build-logic/tor-binary/out/*
+.env
