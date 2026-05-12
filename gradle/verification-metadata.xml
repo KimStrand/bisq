@@ -22,7 +22,10 @@
          <trusted-key id="147B691A19097624902F4EA9689CBE64F4BC997F" group="org.mockito"/>
          <trusted-key id="19BEAB2D799C020F17C69126B16698A4ADF4D638" group="org.checkerframework" name="checker-qual" version="4.1.0"/>
          <trusted-key id="1A55F091AD28C07F831FA44D7905DE25C78AD456" group="com.google.protobuf"/>
-         <trusted-key id="1BD97A6A154E7810EE0BC832E2F38302C8075E3D" group="org.gradle.kotlin" name="gradle-kotlin-dsl-plugins" version="4.4.0"/>
+         <trusted-key id="1BD97A6A154E7810EE0BC832E2F38302C8075E3D">
+            <trusting group="gradle" name="gradle" version="8.9"/>
+            <trusting group="org.gradle.kotlin" name="gradle-kotlin-dsl-plugins" version="4.4.0"/>
+         </trusted-key>
          <trusted-key id="1DBB44E80F61493D6369B5FB95C15058A5EDA4F1" group="^com[.]google($|([.].*))" regex="true"/>
          <trusted-key id="1F47744C9B6E14F2049C2857F1F111AF65925306" group="io.github.classgraph" name="classgraph" version="4.8.184"/>
          <trusted-key id="207EEB28C8E18344209ACFBA08D10FD8BAD264C9" group="com.natpryce" name="make-it-easy" version="4.0.1"/>
@@ -1651,6 +1654,7 @@
       </component>
       <component group="gradle" name="gradle" version="8.9">
          <artifact name="gradle-8.9-src.zip">
+            <pgp value="1BD97A6A154E7810EE0BC832E2F38302C8075E3D"/>
             <sha256 value="cfeccc3375aa0ea1b7838361ec9acdb291bd36dd10c46ea0777c8508a40684ae" origin="Computed by alvasw"/>
          </artifact>
       </component>
