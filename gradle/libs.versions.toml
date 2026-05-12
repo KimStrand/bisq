@@ -54,7 +54,7 @@ pushy = { strictly = '0.13.10' }
 qrgen = { strictly = '1.4' }
 slf4j = { strictly = '2.0.17' }
 spark = { strictly = '2.9.4' }
-swagger-lib = { strictly = '2.2.42' }
+swagger-lib = { strictly = '2.2.49' }
 
 [libraries]
 apache-httpclient = { module = "org.apache.httpcomponents:httpclient", version.ref = "apache-httpclient" }
