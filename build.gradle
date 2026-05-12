@@ -10,6 +10,508 @@ plugins {
     id 'bisq.gradle.regtest_plugin.RegtestPlugin'
 }
 
+def dependencyVerificationMetadata = layout.projectDirectory.file('gradle/verification-metadata.xml')
+def dependencyVerificationKeyring = layout.projectDirectory.file('gradle/verification-keyring.keys')
+def dependencyVerificationBinaryKeyring = layout.projectDirectory.file('gradle/verification-keyring.gpg')
+def dependencySignatureReport = layout.projectDirectory.file('docs/dependency-signature-report.md')
+def gradleWrapperCommand = System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows') ? 'gradlew.bat' : './gradlew'
+
+def htmlEscape = { value ->
+    value == null
+            ? ''
+            : value.toString()
+            .replace('&', '&amp;')
+            .replace('<', '&lt;')
+            .replace('>', '&gt;')
+            .replace('|', '&#124;')
+}
+
+def keyIdSuffix = { String keyId ->
+    def normalized = keyId.toUpperCase(Locale.ROOT).replaceAll(/\s/, '')
+    normalized.length() > 16 ? normalized.substring(normalized.length() - 16) : normalized
+}
+
+def parsePublicKeyCreatedDate = { String armoredPublicKey ->
+    def base64Lines = []
+    def inBody = false
+    armoredPublicKey.eachLine { line ->
+        if (line.startsWith('-----BEGIN')) {
+            return
+        }
+        if (!inBody) {
+            if (line.trim().empty) {
+                inBody = true
+            }
+            return
+        }
+        if (line.startsWith('=') || line.startsWith('-----END')) {
+            return
+        }
+        if (!line.trim().empty) {
+            base64Lines << line.trim()
+        }
+    }
+
+    if (base64Lines.empty) {
+        return null
+    }
+
+    try {
+        byte[] bytes = Base64.decoder.decode(base64Lines.join(''))
+        int offset = 0
+        while (offset < bytes.length) {
+            int ctb = bytes[offset++] & 0xff
+            if ((ctb & 0x80) == 0) {
+                return null
+            }
+
+            int tag
+            long length
+            if ((ctb & 0x40) != 0) {
+                tag = ctb & 0x3f
+                int firstLengthOctet = bytes[offset++] & 0xff
+                if (firstLengthOctet < 192) {
+                    length = firstLengthOctet
+                } else if (firstLengthOctet <= 223) {
+                    length = ((firstLengthOctet - 192) << 8) + (bytes[offset++] & 0xff) + 192
+                } else if (firstLengthOctet == 255) {
+                    length = ((bytes[offset++] & 0xffL) << 24) |
+                            ((bytes[offset++] & 0xffL) << 16) |
+                            ((bytes[offset++] & 0xffL) << 8) |
+                            (bytes[offset++] & 0xffL)
+                } else {
+                    return null
+                }
+            } else {
+                tag = (ctb >> 2) & 0x0f
+                int lengthType = ctb & 0x03
+                if (lengthType == 0) {
+                    length = bytes[offset++] & 0xff
+                } else if (lengthType == 1) {
+                    length = ((bytes[offset++] & 0xff) << 8) | (bytes[offset++] & 0xff)
+                } else if (lengthType == 2) {
+                    length = ((bytes[offset++] & 0xffL) << 24) |
+                            ((bytes[offset++] & 0xffL) << 16) |
+                            ((bytes[offset++] & 0xffL) << 8) |
+                            (bytes[offset++] & 0xffL)
+                } else {
+                    length = bytes.length - offset
+                }
+            }
+
+            if (tag == 6 && offset + 5 <= bytes.length) {
+                long created = ((bytes[offset + 1] & 0xffL) << 24) |
+                        ((bytes[offset + 2] & 0xffL) << 16) |
+                        ((bytes[offset + 3] & 0xffL) << 8) |
+                        (bytes[offset + 4] & 0xffL)
+                return java.time.Instant.ofEpochSecond(created)
+                        .atZone(java.time.ZoneOffset.UTC)
+                        .toLocalDate()
+                        .toString()
+            }
+
+            offset += (int) length
+        }
+    } catch (Exception ignored) {
+        return null
+    }
+
+    null
+}
+
+def parseSignerUserId = { String userId ->
+    def matcher = userId =~ /^(.*?)\s*<([^>]+)>$/
+    matcher.matches()
+            ? [name: matcher[0][1].trim(), email: matcher[0][2].trim(), userId: userId]
+            : [name: userId, email: '', userId: userId]
+}
+
+def loadSignerMetadata = { File keyringFile ->
+    def signers = [:]
+    if (!keyringFile.exists()) {
+        return signers
+    }
+
+    def current = null
+    def saveCurrent = {
+        if (current?.keyId) {
+            def user = current.userIds ? parseSignerUserId(current.userIds[0]) : [name: '', email: '', userId: '']
+            def signer = user + [
+                    keyId  : current.keyId,
+                    created: parsePublicKeyCreatedDate(current.armor.toString()) ?: ''
+            ]
+            ([current.keyId] + current.subKeyIds).each { keyId ->
+                signers[keyId] = signer
+            }
+        }
+    }
+
+    keyringFile.eachLine { line ->
+        def pubMatcher = line =~ /^pub\s+([0-9A-Fa-f]+)\s*$/
+        if (pubMatcher.matches()) {
+            saveCurrent()
+            current = [
+                    keyId    : keyIdSuffix(pubMatcher[0][1]),
+                    subKeyIds: [],
+                    userIds  : [],
+                    armor    : new StringBuilder(),
+                    inArmor  : false
+            ]
+            return
+        }
+
+        if (current == null) {
+            return
+        }
+
+        def uidMatcher = line =~ /^uid\s+(.*)$/
+        if (uidMatcher.matches()) {
+            current.userIds << uidMatcher[0][1].trim()
+            return
+        }
+
+        def subMatcher = line =~ /^sub\s+([0-9A-Fa-f]+)\s*$/
+        if (subMatcher.matches()) {
+            current.subKeyIds << keyIdSuffix(subMatcher[0][1])
+            return
+        }
+
+        if (line.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----')) {
+            current.inArmor = true
+        }
+        if (current.inArmor) {
+            current.armor << line << '\n'
+        }
+        if (line.startsWith('-----END PGP PUBLIC KEY BLOCK-----')) {
+            current.inArmor = false
+        }
+    }
+    saveCurrent()
+
+    signers
+}
+
+def resolvableConfigurations = {
+    allprojects.collectMany { project ->
+        (project.configurations + project.buildscript.configurations).findAll { it.canBeResolved }.collect { configuration ->
+            [project: project, configuration: configuration]
+        }
+    }.sort { left, right ->
+        def leftPath = "${left.project.path}:${left.configuration.name}"
+        def rightPath = "${right.project.path}:${right.configuration.name}"
+        leftPath <=> rightPath
+    }
+}
+
+def resolveConfigurations = { boolean collectComponents ->
+    def resolvedComponents = new TreeSet<String>()
+    def directComponents = new TreeSet<String>()
+    def failures = []
+
+    resolvableConfigurations().each { entry ->
+        def configuration = entry.configuration
+        try {
+            if (collectComponents) {
+                def result = configuration.incoming.resolutionResult
+                result.root.dependencies.each { dependency ->
+                    def selected = dependency.hasProperty('selected') ? dependency.selected?.id : null
+                    if (selected instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier) {
+                        directComponents.add("${selected.group}:${selected.module}:${selected.version}".toString())
+                    }
+                }
+                result.allComponents.each { component ->
+                    def id = component.id
+                    if (id instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier) {
+                        resolvedComponents.add("${id.group}:${id.module}:${id.version}".toString())
+                    }
+                }
+            }
+
+            configuration.resolve()
+        } catch (Exception exception) {
+            failures << "${entry.project.path}:${configuration.name} - ${exception.message}"
+        }
+    }
+
+    if (!failures.empty) {
+        throw new GradleException("Failed to resolve ${failures.size()} configuration(s):\n - ${failures.join('\n - ')}")
+    }
+
+    [resolvedComponents: resolvedComponents, directComponents: directComponents]
+}
+
+tasks.register('resolveAndVerifyDependencies') {
+    group = 'verification'
+    description = 'Resolves every resolvable configuration so Gradle dependency verification checks all dependency artifacts.'
+
+    doLast {
+        resolveConfigurations(false)
+        logger.lifecycle("Resolved and verified ${resolvableConfigurations().size()} configurations.")
+    }
+}
+
+tasks.register('refreshDependencyVerificationKeyring') {
+    group = 'verification'
+    description = 'Refreshes dependency verification PGP public keys from key servers and exports the armored keyring.'
+
+    inputs.file(dependencyVerificationMetadata)
+    outputs.file(dependencyVerificationKeyring)
+    outputs.upToDateWhen { false }
+
+    doLast {
+        def keyringFile = dependencyVerificationKeyring.asFile
+        def previousModified = keyringFile.exists() ? keyringFile.lastModified() : 0L
+        def result = exec {
+            commandLine gradleWrapperCommand, '--no-daemon', 'help', '--refresh-keys', '--export-keys'
+            ignoreExitValue = true
+        }
+
+        if (!keyringFile.exists()) {
+            throw new GradleException("Failed to write ${keyringFile}. Check network access to the configured Gradle verification key servers.")
+        }
+
+        if (result.exitValue != 0) {
+            if (keyringFile.lastModified() <= previousModified) {
+                throw new GradleException("Gradle --refresh-keys --export-keys failed with exit code ${result.exitValue} and did not update ${keyringFile}.")
+            }
+            logger.warn("Gradle --refresh-keys --export-keys exited with ${result.exitValue} after updating ${keyringFile}. This can happen in some Gradle/Bouncy Castle combinations.")
+        }
+
+        if (dependencyVerificationBinaryKeyring.asFile.exists()) {
+            logger.warn("Ignoring ${dependencyVerificationBinaryKeyring.asFile}; dependency verification is configured to use the armored keyring.")
+        }
+
+        logger.lifecycle("Refreshed ${keyringFile}.")
+    }
+}
+
+tasks.register('dependencySignatureReport') {
+    group = 'verification'
+    description = 'Writes a report of signed and checksum-only dependencies from Gradle verification metadata.'
+
+    inputs.file(dependencyVerificationMetadata)
+    inputs.file(dependencyVerificationKeyring).optional()
+    outputs.file(dependencySignatureReport)
+    outputs.upToDateWhen { false }
+
+    doLast {
+        def resolved = resolveConfigurations(true)
+        def metadataFile = dependencyVerificationMetadata.asFile
+        def keyringFile = dependencyVerificationKeyring.asFile
+        if (!metadataFile.exists()) {
+            throw new GradleException("Missing ${metadataFile}. Run './gradlew resolveAndVerifyDependencies --write-verification-metadata pgp,sha256' first.")
+        }
+        def signerMetadata = loadSignerMetadata(keyringFile)
+
+        def metadata = new XmlSlurper(false, false).parse(metadataFile)
+        def componentsById = new TreeMap<String, Object>()
+        metadata.components.component.each { component ->
+            def id = "${component.@group}:${component.@name}:${component.@version}".toString()
+            componentsById[id] = component
+        }
+
+        def trustedKeys = []
+        metadata.configuration.'trusted-keys'.'trusted-key'.each { trustedKey ->
+            def entries = []
+            if (trustedKey.@group.text() || trustedKey.@name.text() || trustedKey.@version.text()) {
+                entries << [
+                        group  : trustedKey.@group.text(),
+                        name   : trustedKey.@name.text(),
+                        version: trustedKey.@version.text(),
+                        regex  : trustedKey.@regex.text()
+                ]
+            }
+            trustedKey.trusting.each { trusting ->
+                entries << [
+                        group  : trusting.@group.text(),
+                        name   : trusting.@name.text(),
+                        version: trusting.@version.text(),
+                        regex  : trusting.@regex.text()
+                ]
+            }
+            trustedKeys << [id: trustedKey.@id.text(), entries: entries]
+        }
+
+        def matches = { String pattern, String value, boolean regex ->
+            if (!pattern) {
+                return true
+            }
+            regex ? (value ==~ pattern) : pattern == value
+        }
+
+        def rows = []
+        resolved.resolvedComponents.each { id ->
+            def component = componentsById[id]
+            if (component == null) {
+                rows << [
+                        id               : id,
+                        scope            : resolved.directComponents.contains(id) ? 'direct' : 'transitive',
+                        status           : 'missing from metadata',
+                        signedCount      : 0,
+                        checksumOnlyCount: 0,
+                        keyIds           : [],
+                        checksumArtifacts: ['metadata entry missing']
+                ]
+                return
+            }
+
+            def group = component.@group.text()
+            def name = component.@name.text()
+            def version = component.@version.text()
+            def artifacts = component.artifact.collect { artifact ->
+                def checksumOnly = artifact.sha256.any { checksum ->
+                    checksum.@reason.text() == 'Artifact is not signed'
+                }
+                [
+                        name        : artifact.@name.text(),
+                        checksumOnly: checksumOnly,
+                        keyIds      : artifact.pgp.collect { it.@value.text() }.findAll { it }
+                ]
+            }
+
+            def matchingTrustedKeys = trustedKeys.findAll { trustedKey ->
+                trustedKey.entries.any { entry ->
+                    def regex = entry.regex == 'true'
+                    matches(entry.group, group, regex) &&
+                            matches(entry.name, name, regex) &&
+                            matches(entry.version, version, regex)
+                }
+            }.collect { it.id }
+
+            def signedCount = artifacts.count { !it.checksumOnly }
+            def checksumOnlyCount = artifacts.count { it.checksumOnly }
+            def status = checksumOnlyCount == 0
+                    ? 'PGP signed'
+                    : signedCount == 0 ? 'checksum fallback' : 'mixed'
+
+            def keyIds = signedCount == 0
+                    ? []
+                    : (artifacts.collectMany { it.keyIds } + matchingTrustedKeys).unique().sort()
+
+            rows << [
+                    id               : id,
+                    scope            : resolved.directComponents.contains(id) ? 'direct' : 'transitive',
+                    status           : status,
+                    signedCount      : signedCount,
+                    checksumOnlyCount: checksumOnlyCount,
+                    keyIds           : keyIds,
+                    checksumArtifacts: artifacts.findAll { it.checksumOnly }.collect { it.name }.sort()
+            ]
+        }
+
+        def reportFile = dependencySignatureReport.asFile
+        reportFile.parentFile.mkdirs()
+
+        def signedRows = rows.findAll { it.status == 'PGP signed' }
+        def checksumRows = rows.findAll { it.status == 'checksum fallback' }
+        def mixedRows = rows.findAll { it.status == 'mixed' }
+        def missingRows = rows.findAll { it.status == 'missing from metadata' }
+        def totalArtifacts = rows.sum { it.signedCount + it.checksumOnlyCount } ?: 0
+        def signedArtifacts = rows.sum { it.signedCount } ?: 0
+        def checksumOnlyArtifacts = rows.sum { it.checksumOnlyCount } ?: 0
+        def reportedKeyIds = rows.collectMany { it.keyIds }.unique().sort()
+        def reportedKeyIdsInKeyring = reportedKeyIds.count { signerMetadata[keyIdSuffix(it)] != null }
+        def reportedKeyIdsWithUserId = reportedKeyIds.count {
+            def signer = signerMetadata[keyIdSuffix(it)]
+            signer?.name || signer?.email
+        }
+        def reportedKeyIdsWithCreatedDate = reportedKeyIds.count {
+            signerMetadata[keyIdSuffix(it)]?.created
+        }
+
+        def signerDetails = { List<String> keyIds ->
+            if (!keyIds) {
+                return '-'
+            }
+
+            keyIds.collect { keyId ->
+                def signer = signerMetadata[keyIdSuffix(keyId)]
+                if (signer == null) {
+                    return "`$keyId`"
+                }
+
+                def lines = ["`$keyId`"]
+                if (signer.name) {
+                    lines << htmlEscape(signer.name)
+                }
+                if (signer.email) {
+                    lines << "`$signer.email`"
+                }
+                if (signer.created) {
+                    lines << "created ${signer.created}"
+                }
+                lines.join('<br>')
+            }.join('<br><br>')
+        }
+
+        def markdown = new StringBuilder()
+        markdown << '# Dependency Signature Report\n\n'
+        markdown << "Generated from `gradle/verification-metadata.xml` after resolving ${resolvableConfigurations().size()} configurations.\n\n"
+        if (keyringFile.exists()) {
+            markdown << 'Signer metadata is loaded from `gradle/verification-keyring.keys`; names and emails come from the first OpenPGP user ID, and creation dates come from the public key packet.\n\n'
+        } else {
+            markdown << 'Signer metadata is unavailable because `gradle/verification-keyring.keys` is missing.\n\n'
+        }
+        markdown << 'Refresh the metadata before regenerating this report:\n\n'
+        markdown << '```bash\n'
+        markdown << './gradlew resolveAndVerifyDependencies --write-verification-metadata pgp,sha256\n'
+        markdown << './gradlew refreshDependencyVerificationKeyring\n'
+        markdown << './gradlew dependencySignatureReport\n'
+        markdown << '```\n\n'
+        markdown << '## Summary\n\n'
+        markdown << "| Metric | Count |\n"
+        markdown << "| --- | ---: |\n"
+        markdown << "| Resolved external modules | ${rows.size()} |\n"
+        markdown << "| Modules with PGP-signed artifacts only | ${signedRows.size()} |\n"
+        markdown << "| Modules using checksum fallback only | ${checksumRows.size()} |\n"
+        markdown << "| Modules with mixed signed/checksum-only artifacts | ${mixedRows.size()} |\n"
+        markdown << "| Modules missing verification metadata | ${missingRows.size()} |\n"
+        markdown << "| Verified artifacts | ${totalArtifacts} |\n"
+        markdown << "| PGP-signed artifacts | ${signedArtifacts} |\n"
+        markdown << "| Checksum-fallback artifacts | ${checksumOnlyArtifacts} |\n"
+        markdown << "| Signer keys found in exported keyring | ${reportedKeyIdsInKeyring} / ${reportedKeyIds.size()} |\n"
+        markdown << "| Signer keys with name or email | ${reportedKeyIdsWithUserId} / ${reportedKeyIds.size()} |\n"
+        markdown << "| Signer keys with creation date | ${reportedKeyIdsWithCreatedDate} / ${reportedKeyIds.size()} |\n\n"
+
+        markdown << '## Handling Transitive Dependencies\n\n'
+        markdown << 'Treat transitive dependencies the same as direct dependencies. Gradle verifies the resolved artifact graph, so a transitive artifact with a published signature should be PGP-verified, and an unsigned transitive artifact should keep an explicit SHA-256 checksum fallback. Review metadata changes separately when dependency versions change, especially new trusted keys and new checksum-only artifacts.\n\n'
+
+        markdown << '## Checksum Fallback Dependencies\n\n'
+        if (checksumRows.empty && mixedRows.empty) {
+            markdown << 'All resolved modules have PGP-signed artifacts in the current metadata.\n\n'
+        } else {
+            markdown << "| Dependency | Scope | Checksum-only artifacts |\n"
+            markdown << "| --- | --- | --- |\n"
+            (checksumRows + mixedRows).sort { it.id }.each { row ->
+                def checksumArtifacts = row.checksumArtifacts.collect { artifactName -> "`$artifactName`" }.join('<br>')
+                markdown << "| `${row.id}` | ${row.scope} | ${checksumArtifacts} |\n"
+            }
+            markdown << '\n'
+        }
+
+        if (!missingRows.empty) {
+            markdown << '## Missing Metadata\n\n'
+            markdown << "| Dependency | Scope |\n"
+            markdown << "| --- | --- |\n"
+            missingRows.sort { it.id }.each { row ->
+                markdown << "| `${row.id}` | ${row.scope} |\n"
+            }
+            markdown << '\n'
+        }
+
+        markdown << '## Full Resolved Dependency Inventory\n\n'
+        markdown << "| Dependency | Scope | Status | Artifacts | Signer key and metadata |\n"
+        markdown << "| --- | --- | --- | ---: | --- |\n"
+        rows.sort { it.id }.each { row ->
+            def artifactSummary = "${row.signedCount} signed / ${row.checksumOnlyCount} checksum"
+            markdown << "| `${row.id}` | ${row.scope} | ${row.status} | ${artifactSummary} | ${signerDetails(row.keyIds)} |\n"
+        }
+
+        reportFile.text = markdown.toString()
+        logger.lifecycle("Wrote ${reportFile}.")
+    }
+}
+
 if (hasProperty('buildScan')) {
     buildScan {
         termsOfServiceUrl = 'https://gradle.com/terms-of-service'

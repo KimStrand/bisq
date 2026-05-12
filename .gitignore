@@ -14,6 +14,7 @@
 *.sw[op]
 .DS_Store
 .gradle
+/gradle/verification-keyring.gpg
 build
 .classpath
 .project
