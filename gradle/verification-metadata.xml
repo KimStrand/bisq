@@ -112,6 +112,7 @@
          <trusted-key id="F4DD59C90148BDC52BEB90A4530AA5F25C25011F">
             <trusting group="commons-codec"/>
             <trusting group="commons-io"/>
+            <trusting group="org.apache.commons" name="commons-parent" version="98"/>
          </trusted-key>
          <trusted-key id="FC411CD3CB7DCB0ABC9801058118B3BCDB1A5000" group="jakarta.xml.bind"/>
          <trusted-key id="FF6E2C001948C5F2F38B0CC385911F425EC61B51">
