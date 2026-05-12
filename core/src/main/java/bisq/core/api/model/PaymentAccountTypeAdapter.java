@@ -281,12 +281,22 @@ class PaymentAccountTypeAdapter extends TypeAdapter<PaymentAccount> {
     }
 
     private boolean isSetterOnPaymentAccountClass(Method setter, PaymentAccount account) {
-        return isSetterOnClass(setter, account.getClass())  || isSetterOnClass(setter, account.getClass().getSuperclass());
+        return isSetterOnClassHierarchy(setter, account.getClass());
     }
 
     private boolean isSetterOnPaymentAccountPayloadClass(Method setter, PaymentAccount account) {
-        return isSetterOnClass(setter, account.getPaymentAccountPayload().getClass())
-                || isSetterOnClass(setter, account.getPaymentAccountPayload().getClass().getSuperclass());
+        return isSetterOnClassHierarchy(setter, account.getPaymentAccountPayload().getClass());
+    }
+
+    private boolean isSetterOnClassHierarchy(Method setter, Class<?> clazz) {
+        Class<?> currentClass = clazz;
+        while (currentClass != null && currentClass != Object.class) {
+            if (isSetterOnClass(setter, currentClass)) {
+                return true;
+            }
+            currentClass = currentClass.getSuperclass();
+        }
+        return false;
     }
 
     private Map<Field, Optional<Method>> getFieldSetterMap() {

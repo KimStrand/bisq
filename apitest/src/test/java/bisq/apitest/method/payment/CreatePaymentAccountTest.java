@@ -924,7 +924,7 @@ public class CreatePaymentAccountTest extends AbstractPaymentAccountTest {
                 PROPERTY_NAME_EMAIL);
         COMPLETED_FORM_MAP.put(PROPERTY_NAME_PAYMENT_METHOD_ID, TRANSFERWISE_ID);
         COMPLETED_FORM_MAP.put(PROPERTY_NAME_ACCOUNT_NAME, "Transferwise Acct");
-        COMPLETED_FORM_MAP.put(PROPERTY_NAME_TRADE_CURRENCIES, "ARS,CAD,HRK,CZK,EUR,HKD,IDR,JPY,CHF,NZD");
+        COMPLETED_FORM_MAP.put(PROPERTY_NAME_TRADE_CURRENCIES, "ARS,CAD,AUD,CZK,EUR,HKD,IDR,JPY,CHF,NZD");
         COMPLETED_FORM_MAP.put(PROPERTY_NAME_SELECTED_TRADE_CURRENCY, "CHF");
         COMPLETED_FORM_MAP.put(PROPERTY_NAME_EMAIL, "jane@doe.info");
         COMPLETED_FORM_MAP.put(PROPERTY_NAME_SALT, "");
@@ -935,7 +935,7 @@ public class CreatePaymentAccountTest extends AbstractPaymentAccountTest {
         List<TradeCurrency> expectedTradeCurrencies = new ArrayList<>() {{
             add(getTradeCurrency("ARS").get()); // 1st in list = selected ccy
             add(getTradeCurrency("CAD").get());
-            add(getTradeCurrency("HRK").get());
+            add(getTradeCurrency("AUD").get());
             add(getTradeCurrency("CZK").get());
             add(getTradeCurrency(EUR).get());
             add(getTradeCurrency("HKD").get());
@@ -979,21 +979,21 @@ public class CreatePaymentAccountTest extends AbstractPaymentAccountTest {
     }
 
     @Test
-    public void testCreateTransferwiseAccountWithInvalidBrlTradeCurrencyShouldThrowException(TestInfo testInfo) {
+    public void testCreateTransferwiseAccountWithInvalidUsdTradeCurrencyShouldThrowException(TestInfo testInfo) {
         File emptyForm = getEmptyForm(testInfo, TRANSFERWISE_ID);
         verifyEmptyForm(emptyForm,
                 TRANSFERWISE_ID,
                 PROPERTY_NAME_EMAIL);
         COMPLETED_FORM_MAP.put(PROPERTY_NAME_PAYMENT_METHOD_ID, TRANSFERWISE_ID);
         COMPLETED_FORM_MAP.put(PROPERTY_NAME_ACCOUNT_NAME, "Transferwise Acct");
-        COMPLETED_FORM_MAP.put(PROPERTY_NAME_TRADE_CURRENCIES, "eur, hkd, idr, jpy, chf, nzd, brl, gbp");
+        COMPLETED_FORM_MAP.put(PROPERTY_NAME_TRADE_CURRENCIES, "eur, hkd, idr, jpy, chf, nzd, usd, gbp");
         COMPLETED_FORM_MAP.put(PROPERTY_NAME_EMAIL, "jane@doe.info");
         COMPLETED_FORM_MAP.put(PROPERTY_NAME_SALT, "");
         String jsonString = getCompletedFormAsJsonString();
 
         Throwable exception = assertThrows(StatusRuntimeException.class, () ->
                 createPaymentAccount(aliceClient, jsonString));
-        assertEquals("INVALID_ARGUMENT: BRL is not a member of valid currencies list",
+        assertEquals("INVALID_ARGUMENT: USD is not a member of valid currencies list",
                 exception.getMessage());
     }
 
@@ -1012,7 +1012,7 @@ public class CreatePaymentAccountTest extends AbstractPaymentAccountTest {
 
         Throwable exception = assertThrows(StatusRuntimeException.class, () ->
                 createPaymentAccount(aliceClient, jsonString));
-        assertEquals("INVALID_ARGUMENT: no trade currency defined for transferwise payment account",
+        assertEquals("INVALID_ARGUMENT: no trade currency defined for wise payment account",
                 exception.getMessage());
     }
 
