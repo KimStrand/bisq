@@ -6,7 +6,7 @@ apache-httpcore = { strictly = '4.4.16' }
 bitcoinj = { strictly = '6c32c0629d4ac7ecc95889eb1a46fa0d77a4e15a' }
 bouncycastle = { strictly = '1.84' }
 
-checker-qual = { strictly = '3.54.0' }
+checker-qual = { strictly = '4.1.0' }
 commons-codec = { strictly = '1.22.0' }
 commons-io = { strictly = '2.22.0' }
 
