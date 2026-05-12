@@ -40,7 +40,7 @@ junit-jupiter = { strictly = '5.14.3' }
 junit-platform = { strictly = '1.14.3' }
 
 kotlin = { strictly = '2.3.21' }
-logback = { strictly = '1.2.13' }
+logback = { strictly = '1.5.32' }
 lombok = { strictly = '1.18.42' }
 mockito = { strictly = '5.23.0' }
 natpryce-make-it-easy = { strictly = '4.0.1' }
@@ -51,7 +51,7 @@ protobuf = { strictly = '3.25.8' }
 protobuf-plugin = { strictly = '0.9.5' }
 pushy = { strictly = '0.13.10' }
 qrgen = { strictly = '1.3' }
-slf4j = { strictly = '1.7.36' }
+slf4j = { strictly = '2.0.17' }
 spark = { strictly = '2.9.4' }
 swagger-lib = { strictly = '2.2.42' }
 
