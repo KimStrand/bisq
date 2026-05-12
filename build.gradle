@@ -6,6 +6,11 @@ buildscript {
     }
 }
 
+import org.gradle.jvm.tasks.Jar
+
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
+
 plugins {
     id 'bisq.gradle.regtest_plugin.RegtestPlugin'
 }
@@ -31,7 +36,7 @@ def keyIdSuffix = { String keyId ->
     normalized.length() > 16 ? normalized.substring(normalized.length() - 16) : normalized
 }
 
-def parsePublicKeyCreatedDate = { String armoredPublicKey ->
+def decodeArmoredPublicKey = { String armoredPublicKey ->
     def base64Lines = []
     def inBody = false
     armoredPublicKey.eachLine { line ->
@@ -53,16 +58,26 @@ def parsePublicKeyCreatedDate = { String armoredPublicKey ->
     }
 
     if (base64Lines.empty) {
-        return null
+        return new byte[0]
     }
 
     try {
-        byte[] bytes = Base64.decoder.decode(base64Lines.join(''))
+        Base64.decoder.decode(base64Lines.join(''))
+    } catch (Exception ignored) {
+        new byte[0]
+    }
+}
+
+def parseOpenPgpPackets = { String armoredPublicKey ->
+    def packets = []
+
+    try {
+        byte[] bytes = decodeArmoredPublicKey(armoredPublicKey)
         int offset = 0
         while (offset < bytes.length) {
             int ctb = bytes[offset++] & 0xff
             if ((ctb & 0x80) == 0) {
-                return null
+                return packets
             }
 
             int tag
@@ -80,7 +95,7 @@ def parsePublicKeyCreatedDate = { String armoredPublicKey ->
                             ((bytes[offset++] & 0xffL) << 8) |
                             (bytes[offset++] & 0xffL)
                 } else {
-                    return null
+                    return packets
                 }
             } else {
                 tag = (ctb >> 2) & 0x0f
@@ -99,24 +114,52 @@ def parsePublicKeyCreatedDate = { String armoredPublicKey ->
                 }
             }
 
-            if (tag == 6 && offset + 5 <= bytes.length) {
-                long created = ((bytes[offset + 1] & 0xffL) << 24) |
-                        ((bytes[offset + 2] & 0xffL) << 16) |
-                        ((bytes[offset + 3] & 0xffL) << 8) |
-                        (bytes[offset + 4] & 0xffL)
-                return java.time.Instant.ofEpochSecond(created)
-                        .atZone(java.time.ZoneOffset.UTC)
-                        .toLocalDate()
-                        .toString()
+            if (length > Integer.MAX_VALUE || offset + (int) length > bytes.length) {
+                return packets
             }
 
+            packets << [
+                    tag : tag,
+                    body: Arrays.copyOfRange(bytes, offset, offset + (int) length)
+            ]
             offset += (int) length
         }
     } catch (Exception ignored) {
+        return packets
+    }
+
+    packets
+}
+
+def normalizeOpenPgpUserId = { String userId ->
+    userId
+            .replace('\uFFFDamonn McManus <eamonn@mcmanus.net>', '\u00C9amonn McManus <eamonn@mcmanus.net>')
+            .replace('\u003Famonn McManus <eamonn@mcmanus.net>', '\u00C9amonn McManus <eamonn@mcmanus.net>')
+}
+
+def parsePublicKeyUserIds = { String armoredPublicKey ->
+    parseOpenPgpPackets(armoredPublicKey)
+            .findAll { it.tag == 13 }
+            .collect { packet -> normalizeOpenPgpUserId(new String(packet.body, StandardCharsets.UTF_8).trim()) }
+            .findAll { it }
+}
+
+def parsePublicKeyCreatedDate = { String armoredPublicKey ->
+    def publicKeyPacket = parseOpenPgpPackets(armoredPublicKey).find { it.tag == 6 }
+    if (publicKeyPacket?.body == null || publicKeyPacket.body.length < 5) {
         return null
     }
 
-    null
+    byte[] body = publicKeyPacket.body
+    long created = ((body[1] & 0xffL) << 24) |
+            ((body[2] & 0xffL) << 16) |
+            ((body[3] & 0xffL) << 8) |
+            (body[4] & 0xffL)
+
+    java.time.Instant.ofEpochSecond(created)
+            .atZone(java.time.ZoneOffset.UTC)
+            .toLocalDate()
+            .toString()
 }
 
 def parseSignerUserId = { String userId ->
@@ -135,7 +178,8 @@ def loadSignerMetadata = { File keyringFile ->
     def current = null
     def saveCurrent = {
         if (current?.keyId) {
-            def user = current.userIds ? parseSignerUserId(current.userIds[0]) : [name: '', email: '', userId: '']
+            def userIds = parsePublicKeyUserIds(current.armor.toString()) ?: current.userIds
+            def user = userIds ? parseSignerUserId(userIds[0]) : [name: '', email: '', userId: '']
             def signer = user + [
                     keyId  : current.keyId,
                     created: parsePublicKeyCreatedDate(current.armor.toString()) ?: ''
@@ -146,7 +190,7 @@ def loadSignerMetadata = { File keyringFile ->
         }
     }
 
-    keyringFile.eachLine { line ->
+    keyringFile.eachLine(StandardCharsets.UTF_8.name()) { line ->
         def pubMatcher = line =~ /^pub\s+([0-9A-Fa-f]+)\s*$/
         if (pubMatcher.matches()) {
             saveCurrent()
@@ -454,8 +498,8 @@ tasks.register('dependencySignatureReport') {
         }
         markdown << 'Refresh the metadata before regenerating this report:\n\n'
         markdown << '```bash\n'
-        markdown << './gradlew resolveAndVerifyDependencies --write-verification-metadata pgp,sha256\n'
         markdown << './gradlew refreshDependencyVerificationKeyring\n'
+        markdown << './gradlew resolveAndVerifyDependencies --write-verification-metadata pgp,sha256\n'
         markdown << './gradlew dependencySignatureReport\n'
         markdown << '```\n\n'
         markdown << '## Summary\n\n'
@@ -507,7 +551,7 @@ tasks.register('dependencySignatureReport') {
             markdown << "| `${row.id}` | ${row.scope} | ${row.status} | ${artifactSummary} | ${signerDetails(row.keyIds)} |\n"
         }
 
-        reportFile.text = markdown.toString()
+        reportFile.setText(markdown.toString(), StandardCharsets.UTF_8.name())
         logger.lifecycle("Wrote ${reportFile}.")
     }
 }
@@ -516,5 +560,59 @@ if (hasProperty('buildScan')) {
     buildScan {
         termsOfServiceUrl = 'https://gradle.com/terms-of-service'
         termsOfServiceAgree = 'yes'
+    }
+}
+
+def sha256 = { File file ->
+    MessageDigest digest = MessageDigest.getInstance('SHA-256')
+    file.withInputStream { input ->
+        byte[] buffer = new byte[8192]
+        int read
+        while ((read = input.read(buffer)) != -1) {
+            digest.update(buffer, 0, read)
+        }
+    }
+    digest.digest().collect { String.format('%02x', it) }.join()
+}
+
+tasks.register('generateJarHashes') {
+    group = 'verification'
+    description = 'Builds all project Jar task outputs and writes a canonical SHA-256 and size manifest.'
+
+    def jarTasks = provider {
+        allprojects.collectMany { project ->
+            project.tasks.withType(Jar).findAll { it.enabled }
+        }
+    }
+
+    dependsOn { jarTasks.get() }
+    inputs.files(provider {
+        jarTasks.get()
+                .collect { jarTask -> jarTask.archiveFile.get().asFile }
+                .findAll { it.exists() }
+    })
+
+    def outputFile = layout.buildDirectory.file('reports/checksums/jars.sha256')
+    outputs.file(outputFile)
+
+    doLast {
+        def lines = jarTasks.get()
+                .collect { jarTask -> jarTask.archiveFile.get().asFile }
+                .findAll { it.exists() }
+                .collect { jarFile ->
+                    def canonicalPath = rootProject.relativePath(jarFile).replace(File.separatorChar, '/' as char)
+                    [
+                            path: canonicalPath,
+                            line: "${sha256(jarFile)}  ${jarFile.length()}  ${canonicalPath}"
+                    ]
+                }
+                .sort { left, right -> left.path <=> right.path }
+                .collect { it.line }
+
+        def output = outputFile.get().asFile
+        output.parentFile.mkdirs()
+        output.setText(lines.join('\n') + '\n', StandardCharsets.UTF_8.name())
+
+        logger.lifecycle("Wrote ${lines.size()} jar checksums to ${rootProject.relativePath(output)}")
     }
 }

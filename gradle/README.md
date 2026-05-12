@@ -30,17 +30,22 @@ To update the verification-metadata file without PGP signature metadata run:
 
 To refresh dependency PGP signature verification metadata run:
 
-- `./gradlew resolveAndVerifyDependencies --write-verification-metadata pgp,sha256`
 - `./gradlew refreshDependencyVerificationKeyring`
+- `./gradlew resolveAndVerifyDependencies --write-verification-metadata pgp,sha256`
 
-This resolves every resolvable Gradle configuration, enables `verify-signatures` in
-`gradle/verification-metadata.xml`, configures the armored keyring format, records
-trusted PGP keys for signed artifacts, and keeps SHA-256 checksums with
-`reason="Artifact is not signed"` for artifacts whose publishers do not provide
-detached signatures. The exported armored keyring
-(`gradle/verification-keyring.keys`) provides the public keys Gradle uses for
-signature verification and the signer identity data used by the report. The binary
-keyring format (`gradle/verification-keyring.gpg`) is ignored.
+Refresh the keyring first so newly available signing keys are present before
+Gradle rewrites verification metadata. This avoids recording checksum-only
+fallbacks for artifacts whose signatures can now be verified.
+
+This refreshes Gradle's dependency verification keys from the configured key
+servers, exports the armored keyring, resolves every resolvable Gradle
+configuration, enables `verify-signatures` in `gradle/verification-metadata.xml`,
+configures the armored keyring format, records trusted PGP keys for signed
+artifacts, and keeps SHA-256 checksums with `reason="Artifact is not signed"` for
+artifacts whose publishers do not provide detached signatures. The exported
+armored keyring (`gradle/verification-keyring.keys`) provides the public keys
+Gradle uses for signature verification and the signer identity data used by the
+report. The binary keyring format (`gradle/verification-keyring.gpg`) is ignored.
 
 The `refreshDependencyVerificationKeyring` task wraps
 `./gradlew help --refresh-keys --export-keys`, so it refreshes Gradle's dependency
