@@ -25,7 +25,7 @@ google-guava = { strictly = '33.6.0-jre' }
 google-guice = { strictly = '6.0.0' }
 
 grpc = { strictly = '1.81.0' }
-hamcrest = { strictly = '2.2' }
+hamcrest = { strictly = '3.0' }
 
 jackson-annotations = { strictly = '2.21' }
 jackson-core = { strictly = '2.21.2' }
