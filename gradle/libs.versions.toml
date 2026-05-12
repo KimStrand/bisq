@@ -37,8 +37,7 @@ jfoenix = { strictly = '9.0.10' }
 jopt = { strictly = '5.0.4' }
 jsonrpc4j = { strictly = '1.6.0.bisq.1' }
 
-junit-jupiter = { strictly = '5.14.3' }
-junit-platform = { strictly = '1.14.3' }
+junit-jupiter = { strictly = '6.0.3' }
 
 kotlin = { strictly = '2.3.21' }
 logback = { strictly = '1.5.32' }
@@ -107,7 +106,7 @@ junit-jupiter = { module = 'org.junit.jupiter:junit-jupiter', version.ref = 'jun
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
-junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-jupiter" }
 
 kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
 
