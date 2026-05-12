@@ -1,5 +1,6 @@
 plugins {
     id 'bisq.application'
+    id 'bisq.javafx'
     id 'bisq.gradle.app_start_plugin.AppStartPlugin'
     id 'bisq.gradle.docker.image_builder.DockerImageBuilderPlugin'
 }
@@ -10,12 +11,17 @@ application {
                                  '-Djava.net.preferIPv4Stack=true']
 }
 
+javafx {
+    modules = ['javafx.base']
+}
+
 distTar.enabled = true
 
 dependencies {
     implementation enforcedPlatform(project(':platform'))
     implementation project(':common')
     implementation project(':proto')
+    implementation project(':assets')
     implementation project(':p2p')
     implementation project(':core')
     implementation libs.protobuf.java
