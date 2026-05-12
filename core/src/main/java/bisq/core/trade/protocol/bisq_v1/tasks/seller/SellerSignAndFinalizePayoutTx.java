@@ -20,6 +20,7 @@ package bisq.core.trade.protocol.bisq_v1.tasks.seller;
 import bisq.core.btc.model.AddressEntry;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.offer.Offer;
+import bisq.core.trade.model.bisq_v1.Contract;
 import bisq.core.trade.model.bisq_v1.Trade;
 import bisq.core.trade.protocol.bisq_v1.model.TradingPeer;
 import bisq.core.trade.protocol.bisq_v1.tasks.TradeTask;
@@ -35,6 +36,8 @@ import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static bisq.core.trade.validation.PayoutTxValidation.checkTradePayoutAddressEntry;
+import static bisq.core.trade.validation.PayoutTxValidation.checkTradingPeerPayoutAddress;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @Slf4j
@@ -61,9 +64,17 @@ public class SellerSignAndFinalizePayoutTx extends TradeTask {
             Coin buyerPayoutAmount = checkNotNull(offer.getBuyerSecurityDeposit()).add(trade.getAmount());
             Coin sellerPayoutAmount = offer.getSellerSecurityDeposit();
 
-            final String buyerPayoutAddressString = tradingPeer.getPayoutAddressString();
-            String sellerPayoutAddressString = walletService.getOrCreateAddressEntry(id,
-                    AddressEntry.Context.TRADE_PAYOUT).getAddressString();
+            Contract contract = checkNotNull(trade.getContract(), "contract must not be null");
+
+            String buyerPayoutAddressString = checkTradingPeerPayoutAddress(contract.getBuyerPayoutAddressString(),
+                    tradingPeer.getPayoutAddressString(),
+                    walletService,
+                    id,
+                    "Buyer");
+            String sellerPayoutAddressString = checkTradePayoutAddressEntry(contract.getSellerPayoutAddressString(),
+                    walletService,
+                    id,
+                    "Seller");
 
             final byte[] buyerMultiSigPubKey = tradingPeer.getMultiSigPubKey();
             byte[] sellerMultiSigPubKey = processModel.getMyMultiSigPubKey();

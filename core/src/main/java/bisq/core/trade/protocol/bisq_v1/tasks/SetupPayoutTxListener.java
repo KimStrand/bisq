@@ -58,7 +58,10 @@ public abstract class SetupPayoutTxListener extends TradeTask {
             if (!trade.isPayoutPublished()) {
                 BtcWalletService walletService = processModel.getBtcWalletService();
                 String id = processModel.getOffer().getId();
-                Address address = walletService.getOrCreateAddressEntry(id, AddressEntry.Context.TRADE_PAYOUT).getAddress();
+                Address address = checkNotNull(
+                        walletService.getAddressEntry(id, AddressEntry.Context.TRADE_PAYOUT).orElse(null),
+                        "Payout address entry must exist. tradeId=%s",
+                        id).getAddress();
                 Transaction depositTx = checkNotNull(trade.getDepositTx(), "trade.getDepositTx() must not be null");
 
                 // check if the payout already happened (ensuring it was > deposit block height, see GH #5725)

@@ -20,6 +20,7 @@ package bisq.core.trade.protocol.bisq_v1.tasks.buyer;
 import bisq.core.btc.model.AddressEntry;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.offer.Offer;
+import bisq.core.trade.model.bisq_v1.Contract;
 import bisq.core.trade.model.bisq_v1.Trade;
 import bisq.core.trade.protocol.bisq_v1.tasks.TradeTask;
 
@@ -33,6 +34,8 @@ import java.util.Arrays;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static bisq.core.trade.validation.PayoutTxValidation.checkTradePayoutAddressEntry;
+import static bisq.core.trade.validation.PayoutTxValidation.checkTradingPeerPayoutAddress;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -58,9 +61,18 @@ public class BuyerSignPayoutTx extends TradeTask {
             Coin buyerPayoutAmount = offer.getBuyerSecurityDeposit().add(trade.getAmount());
             Coin sellerPayoutAmount = offer.getSellerSecurityDeposit();
 
-            String buyerPayoutAddressString = walletService.getOrCreateAddressEntry(id,
-                    AddressEntry.Context.TRADE_PAYOUT).getAddressString();
-            final String sellerPayoutAddressString = processModel.getTradePeer().getPayoutAddressString();
+            Contract contract = checkNotNull(trade.getContract(), "contract must not be null");
+
+            String buyerPayoutAddressString = checkTradePayoutAddressEntry(contract.getBuyerPayoutAddressString(),
+                    walletService,
+                    id,
+                    "Buyer");
+
+            String sellerPayoutAddressString = checkTradingPeerPayoutAddress(contract.getSellerPayoutAddressString(),
+                    processModel.getTradePeer().getPayoutAddressString(),
+                    walletService,
+                    id,
+                    "Seller");
 
             DeterministicKey buyerMultiSigKeyPair = walletService.getMultiSigKeyPair(id, processModel.getMyMultiSigPubKey());
 
@@ -92,4 +104,3 @@ public class BuyerSignPayoutTx extends TradeTask {
         }
     }
 }
-

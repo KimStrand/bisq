@@ -21,6 +21,7 @@ import bisq.core.btc.model.AddressEntry;
 import bisq.core.btc.wallet.BtcWalletService;
 import bisq.core.btc.wallet.utils.PayoutTransactionUtil;
 import bisq.core.offer.Offer;
+import bisq.core.trade.model.bisq_v1.Contract;
 import bisq.core.trade.model.bisq_v1.Trade;
 
 import org.bitcoinj.core.Address;
@@ -142,14 +143,69 @@ public final class PayoutTxValidation {
     // Payout transaction signature
     /* --------------------------------------------------------------------- */
 
+    public static String checkTradePayoutAddressEntry(String contractPayoutAddress,
+                                                      BtcWalletService btcWalletService,
+                                                      String tradeId,
+                                                      String roleName) {
+        String checkedContractPayoutAddress = checkNonBlankString(contractPayoutAddress, "contractPayoutAddress");
+        NetworkParameters params = checkNotNull(checkNotNull(btcWalletService, "btcWalletService must not be null").getParams(),
+                "btcWalletService.getParams() must not be null");
+        AddressEntry payoutAddressEntry = checkNotNull(
+                btcWalletService.getAddressEntry(tradeId, AddressEntry.Context.TRADE_PAYOUT).orElse(null),
+                "%s payout address entry must exist. tradeId=%s, contractAddress=%s",
+                roleName,
+                tradeId,
+                checkedContractPayoutAddress);
+        Address contractAddress = Address.fromString(params, checkedContractPayoutAddress);
+        Address addressEntryAddress = Address.fromString(params,
+                checkNonBlankString(payoutAddressEntry.getAddressString(), "payoutAddressEntry.getAddressString()"));
+        checkArgument(contractAddress.equals(addressEntryAddress),
+                "%s payout address from AddressEntry must match the contract. " +
+                        "tradeId=%s, contractAddress=%s, addressEntry=%s",
+                roleName, tradeId, checkedContractPayoutAddress, payoutAddressEntry);
+        return checkedContractPayoutAddress;
+    }
+
+    public static String checkTradingPeerPayoutAddress(String contractPayoutAddress,
+                                                       String tradingPeerPayoutAddress,
+                                                       BtcWalletService btcWalletService,
+                                                       String tradeId,
+                                                       String roleName) {
+        String checkedContractPayoutAddress = checkNonBlankString(contractPayoutAddress, "contractPayoutAddress");
+        String checkedTradingPeerPayoutAddress = checkNonBlankString(tradingPeerPayoutAddress,
+                "tradingPeerPayoutAddress");
+        NetworkParameters params = checkNotNull(checkNotNull(btcWalletService, "btcWalletService must not be null").getParams(),
+                "btcWalletService.getParams() must not be null");
+        Address contractAddress = Address.fromString(params, checkedContractPayoutAddress);
+        Address tradingPeerAddress = Address.fromString(params, checkedTradingPeerPayoutAddress);
+        checkArgument(contractAddress.equals(tradingPeerAddress),
+                "%s payout address from TradingPeer must match the contract. " +
+                        "tradeId=%s, contractAddress=%s, tradingPeerAddress=%s",
+                roleName, tradeId, checkedContractPayoutAddress, checkedTradingPeerPayoutAddress);
+        return checkedContractPayoutAddress;
+    }
+
     public static byte[] checkBuyersPayoutTxSignature(byte[] buyerSignature,
                                                       String buyerPayoutAddress,
                                                       Trade trade,
                                                       byte[] buyerMultiSigPubKey,
                                                       byte[] sellerMultiSigPubKey,
                                                       BtcWalletService btcWalletService) {
-        String sellerPayoutAddress = btcWalletService.getOrCreateAddressEntry(trade.getId(),
-                AddressEntry.Context.TRADE_PAYOUT).getAddressString();
+        Contract contract = checkNotNull(trade.getContract(), "trade.getContract() must not be null");
+        String buyerPayoutAddressFromContract = contract.getBuyerPayoutAddressString();
+        NetworkParameters params = checkNotNull(checkNotNull(btcWalletService, "btcWalletService must not be null").getParams(),
+                "btcWalletService.getParams() must not be null");
+        Address contractBuyerPayoutAddress = Address.fromString(params,
+                checkNonBlankString(buyerPayoutAddressFromContract, "buyerPayoutAddressFromContract"));
+        Address buyerPayoutAddressFromMessage = Address.fromString(params,
+                checkNonBlankString(buyerPayoutAddress, "buyerPayoutAddress"));
+        checkArgument(contractBuyerPayoutAddress.equals(buyerPayoutAddressFromMessage),
+                "Buyer payout address must match the contract. tradeId=%s, contractAddress=%s, buyerPayoutAddress=%s",
+                trade.getId(), buyerPayoutAddressFromContract, buyerPayoutAddress);
+        String sellerPayoutAddress = checkTradePayoutAddressEntry(contract.getSellerPayoutAddressString(),
+                btcWalletService,
+                trade.getId(),
+                "Seller");
         Offer offer = checkNotNull(trade.getOffer(), "trade.getOffer() must not be null");
         Transaction depositTx = checkNotNull(trade.getDepositTx(), "trade.getDepositTx() must not be null");
         Coin tradeAmount = checkNotNull(trade.getAmount(), "trade.getAmount() must not be null");
