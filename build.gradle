@@ -6,6 +6,10 @@ buildscript {
     }
 }
 
+import org.gradle.jvm.tasks.Jar
+
+import java.security.MessageDigest
+
 plugins {
     id 'bisq.gradle.regtest_plugin.RegtestPlugin'
 }
@@ -516,5 +520,58 @@ if (hasProperty('buildScan')) {
     buildScan {
         termsOfServiceUrl = 'https://gradle.com/terms-of-service'
         termsOfServiceAgree = 'yes'
+    }
+}
+
+def sha256 = { File file ->
+    MessageDigest digest = MessageDigest.getInstance('SHA-256')
+    file.withInputStream { input ->
+        byte[] buffer = new byte[8192]
+        int read
+        while ((read = input.read(buffer)) != -1) {
+            digest.update(buffer, 0, read)
+        }
+    }
+    digest.digest().collect { String.format('%02x', it) }.join()
+}
+
+tasks.register('generateJarHashes') {
+    group = 'verification'
+    description = 'Builds all project Jar task outputs and writes a canonical SHA-256 and size manifest.'
+
+    def jarTasks = provider {
+        allprojects.collectMany { project ->
+            project.tasks.withType(Jar).findAll { it.enabled }
+        }
+    }
+
+    dependsOn { jarTasks.get() }
+    inputs.files(provider {
+        jarTasks.get()
+                .collect { jarTask -> jarTask.archiveFile.get().asFile }
+                .findAll { it.exists() }
+    })
+
+    def outputFile = layout.buildDirectory.file('reports/checksums/jars.sha256')
+    outputs.file(outputFile)
+
+    doLast {
+        def lines = jarTasks.get()
+                .collect { jarTask -> jarTask.archiveFile.get().asFile }
+                .findAll { it.exists() }
+                .collect { jarFile ->
+                    [
+                            path: rootProject.relativePath(jarFile),
+                            line: "${sha256(jarFile)}  ${jarFile.length()}  ${rootProject.relativePath(jarFile)}"
+                    ]
+                }
+                .sort { left, right -> left.path <=> right.path }
+                .collect { it.line }
+
+        def output = outputFile.get().asFile
+        output.parentFile.mkdirs()
+        output.text = lines.join('\n') + '\n'
+
+        logger.lifecycle("Wrote ${lines.size()} jar checksums to ${rootProject.relativePath(output)}")
     }
 }
