@@ -113,6 +113,9 @@ import java.util.Map;
 
 @FxmlView
 public class PendingTradesView extends ActivatableViewAndModel<VBox, PendingTradesViewModel> {
+    private static final double CHAT_WINDOW_WIDTH = 760;
+    private static final double CHAT_WINDOW_HEIGHT = 500;
+
     public interface ChatCallback {
         void onOpenChat(Trade trade);
     }
@@ -459,7 +462,8 @@ public class PendingTradesView extends ActivatableViewAndModel<VBox, PendingTrad
         chatView.initialize();
 
         AnchorPane pane = new AnchorPane(chatView);
-        pane.setPrefSize(760, 500);
+        pane.setPrefSize(CHAT_WINDOW_WIDTH, CHAT_WINDOW_HEIGHT);
+        pane.setMinSize(CHAT_WINDOW_WIDTH, CHAT_WINDOW_HEIGHT);
         AnchorPane.setLeftAnchor(chatView, 10d);
         AnchorPane.setRightAnchor(chatView, 10d);
         AnchorPane.setTopAnchor(chatView, -20d);
@@ -515,7 +519,7 @@ public class PendingTradesView extends ActivatableViewAndModel<VBox, PendingTrad
             traderChatManager.requestPersistence();
         });
 
-        Scene scene = new Scene(pane);
+        Scene scene = new Scene(pane, CHAT_WINDOW_WIDTH, CHAT_WINDOW_HEIGHT);
         CssTheme.loadSceneStyles(scene, preferences.getCssTheme(), useDevModeHeader);
         scene.addEventHandler(KeyEvent.KEY_RELEASED, ev -> {
             if (ev.getCode() == KeyCode.ESCAPE) {
@@ -524,6 +528,8 @@ public class PendingTradesView extends ActivatableViewAndModel<VBox, PendingTrad
             }
         });
         chatPopupStage.setScene(scene);
+        chatPopupStage.setMinWidth(CHAT_WINDOW_WIDTH);
+        chatPopupStage.setMinHeight(CHAT_WINDOW_HEIGHT);
 
         chatPopupStage.setOpacity(0);
         chatPopupStage.show();
