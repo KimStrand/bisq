@@ -24,12 +24,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AckMessageTest {
     @Test
-    public void ackMessageIsSenderNodeAddressAwareEnvelopeForRawDirectTransferAcks() {
+    public void ackMessageIsSenderNodeAddressAwareEnvelope() {
         NodeAddress senderNodeAddress = new NodeAddress("sender.onion", 9999);
 
         AckMessage ackMessage = new AckMessage(senderNodeAddress,
-                AckMessageSourceType.LOG_TRANSFER,
-                FileTransferPart.class.getSimpleName(),
+                AckMessageSourceType.TRADE_MESSAGE,
+                "TestMessage",
                 "sourceUid",
                 "sourceId",
                 true,

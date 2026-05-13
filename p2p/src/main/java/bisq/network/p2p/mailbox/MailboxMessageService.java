@@ -176,8 +176,7 @@ public class MailboxMessageService implements HashMapChangedListener, PersistedD
                             .forEach(mailboxItem -> {
                                 ProtectedMailboxStorageEntry protectedMailboxStorageEntry = mailboxItem.getProtectedMailboxStorageEntry();
                                 int serializedSize = protectedMailboxStorageEntry.toProtoMessage().getSerializedSize();
-                                // Usual size is 3-4kb. A few are about 15kb and very few are larger and about 100kb or
-                                // more (probably attachments in disputes)
+                                // Usual size is 3-4kb. A few are about 15kb and very few are larger and about 100kb or more.
                                 String date = new Date(protectedMailboxStorageEntry.getCreationTimeStamp()).toString();
                                 String day = date.substring(4, 10);
                                 numItemsPerDay.putIfAbsent(day, new Tuple2<>(new AtomicLong(0), new ArrayList<>()));

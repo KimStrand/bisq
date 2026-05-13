@@ -454,7 +454,7 @@ public class PendingTradesView extends ActivatableViewAndModel<VBox, PendingTrad
         tradeIdOfOpenChat = trade.getId();
 
         ChatView chatView = new ChatView(traderChatManager, Res.get("offerbook.trader"));
-        chatView.setAllowAttachments(false);
+        chatView.setShowClipboardButton(false);
         chatView.setDisplayHeader(false);
         chatView.initialize();
 

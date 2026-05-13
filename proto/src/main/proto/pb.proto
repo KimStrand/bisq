@@ -97,7 +97,7 @@ message NetworkEnvelope {
         BsqSwapFinalizeTxRequest bsq_swap_finalize_tx_request = 58;
         BsqSwapFinalizedTxMessage bsq_swap_finalized_tx_message = 59;
 
-        FileTransferPart file_transfer_part = 60;
+        FileTransferPart file_transfer_part = 60 [deprecated = true]; // Java class removed in 1.10.0
 
         GetAccountingBlocksRequest get_accounting_blocks_request = 61;
         GetAccountingBlocksResponse get_accounting_blocks_response = 62;
@@ -132,7 +132,7 @@ message GetUpdatedDataRequest {
     string version = 4;
 }
 
-message FileTransferPart {
+message FileTransferPart { // Deprecated; kept to reserve the old wire format.
     NodeAddress sender_node_address = 1;
     string uid = 2;
     string trade_id = 3;
@@ -472,7 +472,7 @@ message ChatMessage {
     int32 trader_id = 3;
     bool sender_is_trader = 4;
     string message = 5;
-    repeated Attachment attachments = 6;
+    repeated Attachment attachments = 6 [deprecated = true]; // Java handling removed in 1.10.0
     bool arrived = 7;
     bool stored_in_mailbox = 8;
     bool is_system_message = 9;
@@ -950,7 +950,7 @@ message Dispute {
     int64 trade_tx_fee = 32;  // Added in v 1.9.7
 }
 
-message Attachment {
+message Attachment { // Deprecated; kept to reserve the old wire format.
     string file_name = 1;
     bytes bytes = 2;
 }

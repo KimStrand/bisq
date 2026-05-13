@@ -19,7 +19,6 @@ package bisq.core.support.messages;
 
 import bisq.core.locale.Res;
 import bisq.core.support.SupportType;
-import bisq.core.support.dispute.Attachment;
 import bisq.core.support.dispute.Dispute;
 import bisq.core.support.dispute.DisputeResult;
 
@@ -36,13 +35,10 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import java.lang.ref.WeakReference;
 
@@ -76,7 +72,6 @@ public final class ChatMessage extends SupportMessage {
     // If senderIsTrader == true then the sender is the client
     private final boolean senderIsTrader;
     private final String message;
-    private final ArrayList<Attachment> attachments = new ArrayList<>();
     private final NodeAddress senderNodeAddress;
     private final long date;
     @Setter
@@ -106,32 +101,6 @@ public final class ChatMessage extends SupportMessage {
                 traderId,
                 senderIsTrader,
                 message,
-                null,
-                senderNodeAddress,
-                new Date().getTime(),
-                false,
-                false,
-                UUID.randomUUID().toString(),
-                Version.getP2PMessageVersion(),
-                false,
-                null,
-                null,
-                false);
-    }
-
-    public ChatMessage(SupportType supportType,
-                       String tradeId,
-                       int traderId,
-                       boolean senderIsTrader,
-                       String message,
-                       NodeAddress senderNodeAddress,
-                       ArrayList<Attachment> attachments) {
-        this(supportType,
-                tradeId,
-                traderId,
-                senderIsTrader,
-                message,
-                attachments,
                 senderNodeAddress,
                 new Date().getTime(),
                 false,
@@ -156,7 +125,6 @@ public final class ChatMessage extends SupportMessage {
                 traderId,
                 senderIsTrader,
                 message,
-                null,
                 senderNodeAddress,
                 date,
                 false,
@@ -179,7 +147,6 @@ public final class ChatMessage extends SupportMessage {
                         int traderId,
                         boolean senderIsTrader,
                         String message,
-                        @Nullable List<Attachment> attachments,
                         NodeAddress senderNodeAddress,
                         long date,
                         boolean arrived,
@@ -196,7 +163,6 @@ public final class ChatMessage extends SupportMessage {
         this.senderIsTrader = senderIsTrader;
         this.message = message;
         this.wasDisplayed = wasDisplayed;
-        Optional.ofNullable(attachments).ifPresent(e -> addAllAttachments(attachments));
         this.senderNodeAddress = senderNodeAddress;
         this.date = date;
         arrivedProperty = new SimpleBooleanProperty(arrived);
@@ -216,7 +182,6 @@ public final class ChatMessage extends SupportMessage {
                 .setTraderId(traderId)
                 .setSenderIsTrader(senderIsTrader)
                 .setMessage(message)
-                .addAllAttachments(attachments.stream().map(Attachment::toProtoMessage).collect(Collectors.toList()))
                 .setSenderNodeAddress(senderNodeAddress.toProtoMessage())
                 .setDate(date)
                 .setArrived(arrivedProperty.get())
@@ -243,7 +208,6 @@ public final class ChatMessage extends SupportMessage {
                 proto.getTraderId(),
                 proto.getSenderIsTrader(),
                 proto.getMessage(),
-                new ArrayList<>(proto.getAttachmentsList().stream().map(Attachment::fromProto).collect(Collectors.toList())),
                 NodeAddress.fromProto(proto.getSenderNodeAddress()),
                 proto.getDate(),
                 proto.getArrived(),
@@ -270,10 +234,6 @@ public final class ChatMessage extends SupportMessage {
     ///////////////////////////////////////////////////////////////////////////////////////////
     // API
     ///////////////////////////////////////////////////////////////////////////////////////////
-
-    private void addAllAttachments(List<Attachment> attachments) {
-        this.attachments.addAll(attachments);
-    }
 
     public void setArrived(@SuppressWarnings("SameParameterValue") boolean arrived) {
         this.arrivedProperty.set(arrived);
@@ -375,7 +335,6 @@ public final class ChatMessage extends SupportMessage {
                 ",\n     traderId=" + traderId +
                 ",\n     senderIsTrader=" + senderIsTrader +
                 ",\n     message='" + message + '\'' +
-                ",\n     attachments=" + attachments +
                 ",\n     senderNodeAddress=" + senderNodeAddress +
                 ",\n     date=" + date +
                 ",\n     isSystemMessage=" + isSystemMessage +

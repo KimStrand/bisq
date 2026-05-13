@@ -30,21 +30,14 @@ import bisq.desktop.util.GUIUtil;
 import bisq.core.locale.Res;
 import bisq.core.support.SupportManager;
 import bisq.core.support.SupportSession;
-import bisq.core.support.dispute.Attachment;
 import bisq.core.support.messages.ChatMessage;
-
-import bisq.network.p2p.network.Connection;
 
 import bisq.common.Timer;
 import bisq.common.UserThread;
 import bisq.common.util.Utilities;
 
-import com.google.common.io.ByteStreams;
-
 import de.jensd.fx.fontawesome.AwesomeDude;
 import de.jensd.fx.fontawesome.AwesomeIcon;
-
-import javafx.stage.FileChooser;
 
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -79,15 +72,6 @@ import javafx.collections.transformation.SortedList;
 
 import javafx.util.Callback;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -118,7 +102,7 @@ public class ChatView extends AnchorPane {
     @Getter
     private ReadOnlyDoubleProperty widthProperty;
     @Setter
-    boolean allowAttachments;
+    boolean showClipboardButton;
     @Setter
     boolean displayHeader;
 
@@ -127,7 +111,6 @@ public class ChatView extends AnchorPane {
     private ObservableList<ChatMessage> chatMessages;
     private ListChangeListener<ChatMessage> disputeDirectMessageListListener;
     private Subscription inputTextAreaTextSubscription;
-    private final List<Attachment> tempAttachments = new ArrayList<>();
     private ChangeListener<Boolean> storedInMailboxPropertyListener, acknowledgedPropertyListener;
     private ChangeListener<String> sendMessageErrorPropertyListener;
 
@@ -139,7 +122,7 @@ public class ChatView extends AnchorPane {
     public ChatView(SupportManager supportManager, String counterpartyName) {
         this.supportManager = supportManager;
         this.counterpartyName = counterpartyName;
-        allowAttachments = true;
+        showClipboardButton = true;
         displayHeader = true;
     }
 
@@ -213,11 +196,8 @@ public class ChatView extends AnchorPane {
         sendButton.setOnAction(e -> onTrySendMessage());
         inputTextAreaTextSubscription = EasyBind.subscribe(inputTextArea.textProperty(), t -> sendButton.setDisable(t.isEmpty()));
 
-        Button uploadButton = new AutoTooltipButton(Res.get("support.addAttachments"));
-        uploadButton.setOnAction(e -> onRequestUpload());
         Button clipboardButton = new AutoTooltipButton(Res.get("shared.copyToClipboard"));
         clipboardButton.setOnAction(e -> copyChatMessagesToClipboard(clipboardButton));
-        uploadButton.setStyle("-fx-pref-width: 66; -fx-padding: 3 3 3 3;");
         clipboardButton.setStyle("-fx-pref-width: 50; -fx-padding: 3 3 3 3;");
 
         sendMsgInfoLabel = new AutoTooltipLabel();
@@ -233,8 +213,8 @@ public class ChatView extends AnchorPane {
         if (supportSession.chatIsOpen()) {
             HBox buttonBox = new HBox();
             buttonBox.setSpacing(10);
-            if (allowAttachments)
-                buttonBox.getChildren().addAll(sendButton, uploadButton, clipboardButton, sendMsgBusyAnimation, sendMsgInfoLabel);
+            if (showClipboardButton)
+                buttonBox.getChildren().addAll(sendButton, clipboardButton, sendMsgBusyAnimation, sendMsgInfoLabel);
             else
                 buttonBox.getChildren().addAll(sendButton, sendMsgBusyAnimation, sendMsgInfoLabel);
 
@@ -271,13 +251,11 @@ public class ChatView extends AnchorPane {
                     Label headerLabel = new AutoTooltipLabel();
                     Label messageLabel = new AutoTooltipLabel();
                     Label copyIcon = new Label();
-                    HBox attachmentsBox = new HBox();
                     AnchorPane messageAnchorPane = new AnchorPane();
                     Label statusIcon = new Label();
                     Label statusInfoLabel = new Label();
                     HBox statusHBox = new HBox();
                     double arrowWidth = 15d;
-                    double attachmentsBoxHeight = 20d;
                     double border = 10d;
                     double bottomBorder = 25d;
                     double padding = border + 10d;
@@ -287,14 +265,13 @@ public class ChatView extends AnchorPane {
                         bg.setMinHeight(30);
                         messageLabel.setWrapText(true);
                         headerLabel.setTextAlignment(TextAlignment.CENTER);
-                        attachmentsBox.setSpacing(5);
                         statusIcon.getStyleClass().add("small-text");
                         statusInfoLabel.getStyleClass().add("small-text");
                         statusInfoLabel.setPadding(new Insets(3, 0, 0, 0));
                         copyIcon.setTooltip(new Tooltip(Res.get("shared.copyToClipboard")));
                         statusHBox.setSpacing(5);
                         statusHBox.getChildren().addAll(statusIcon, statusInfoLabel);
-                        messageAnchorPane.getChildren().addAll(bg, arrow, headerLabel, messageLabel, copyIcon, attachmentsBox, statusHBox);
+                        messageAnchorPane.getChildren().addAll(bg, arrow, headerLabel, messageLabel, copyIcon, statusHBox);
                     }
 
                     @Override
@@ -319,7 +296,6 @@ public class ChatView extends AnchorPane {
                             AnchorPane.clearConstraints(messageLabel);
                             AnchorPane.clearConstraints(copyIcon);
                             AnchorPane.clearConstraints(statusHBox);
-                            AnchorPane.clearConstraints(attachmentsBox);
 
                             AnchorPane.setTopAnchor(bg, 15d);
                             AnchorPane.setBottomAnchor(bg, bottomBorder);
@@ -327,7 +303,6 @@ public class ChatView extends AnchorPane {
                             AnchorPane.setBottomAnchor(arrow, bottomBorder + 5d);
                             AnchorPane.setTopAnchor(messageLabel, 25d);
                             AnchorPane.setTopAnchor(copyIcon, 25d);
-                            AnchorPane.setBottomAnchor(attachmentsBox, bottomBorder + 10);
 
                             boolean senderIsTrader = message.isSenderIsTrader();
                             boolean isMyMsg = supportSession.isClient() == senderIsTrader;
@@ -388,8 +363,6 @@ public class ChatView extends AnchorPane {
                                 AnchorPane.setLeftAnchor(messageLabel, padding);
                                 AnchorPane.setRightAnchor(messageLabel, msgLabelPaddingRight);
                                 AnchorPane.setRightAnchor(copyIcon, padding);
-                                AnchorPane.setLeftAnchor(attachmentsBox, padding);
-                                AnchorPane.setRightAnchor(attachmentsBox, padding);
                                 AnchorPane.setLeftAnchor(statusHBox, padding);
                             } else if (senderIsTrader) {
                                 AnchorPane.setLeftAnchor(headerLabel, padding + arrowWidth);
@@ -399,8 +372,6 @@ public class ChatView extends AnchorPane {
                                 AnchorPane.setLeftAnchor(messageLabel, padding + arrowWidth);
                                 AnchorPane.setRightAnchor(messageLabel, msgLabelPaddingRight);
                                 AnchorPane.setRightAnchor(copyIcon, padding);
-                                AnchorPane.setLeftAnchor(attachmentsBox, padding + arrowWidth);
-                                AnchorPane.setRightAnchor(attachmentsBox, padding);
                                 AnchorPane.setRightAnchor(statusHBox, padding);
                             } else {
                                 AnchorPane.setRightAnchor(headerLabel, padding + arrowWidth);
@@ -410,8 +381,6 @@ public class ChatView extends AnchorPane {
                                 AnchorPane.setLeftAnchor(messageLabel, padding);
                                 AnchorPane.setRightAnchor(messageLabel, msgLabelPaddingRight + arrowWidth);
                                 AnchorPane.setRightAnchor(copyIcon, padding + arrowWidth);
-                                AnchorPane.setLeftAnchor(attachmentsBox, padding);
-                                AnchorPane.setRightAnchor(attachmentsBox, padding + arrowWidth);
                                 AnchorPane.setLeftAnchor(statusHBox, padding);
                             }
                             AnchorPane.setBottomAnchor(statusHBox, 7d);
@@ -421,35 +390,7 @@ public class ChatView extends AnchorPane {
                                         + (isMyMsg ? "" : " from " + counterpartyName);
                             headerLabel.setText(metaData);
                             messageLabel.setText(message.getMessage());
-                            attachmentsBox.getChildren().clear();
-                            if (allowAttachments &&
-                                    message.getAttachments() != null &&
-                                    message.getAttachments().size() > 0) {
-                                AnchorPane.setBottomAnchor(messageLabel, bottomBorder + attachmentsBoxHeight + 10);
-                                attachmentsBox.getChildren().add(new AutoTooltipLabel(Res.get("support.attachments") + " ") {{
-                                    setPadding(new Insets(0, 0, 3, 0));
-                                    if (isMyMsg)
-                                        getStyleClass().add("my-message");
-                                    else
-                                        getStyleClass().add("message");
-                                }});
-                                message.getAttachments().forEach(attachment -> {
-                                    Label icon = new Label();
-                                    setPadding(new Insets(0, 0, 3, 0));
-                                    if (isMyMsg)
-                                        icon.getStyleClass().add("attachment-icon");
-                                    else
-                                        icon.getStyleClass().add("attachment-icon-black");
-
-                                    AwesomeDude.setIcon(icon, AwesomeIcon.FILE_TEXT);
-                                    icon.setPadding(new Insets(-2, 0, 0, 0));
-                                    icon.setTooltip(new Tooltip(attachment.getFileName()));
-                                    icon.setOnMouseClicked(event -> onOpenAttachment(attachment));
-                                    attachmentsBox.getChildren().add(icon);
-                                });
-                            } else {
-                                AnchorPane.setBottomAnchor(messageLabel, bottomBorder + 10);
-                            }
+                            AnchorPane.setBottomAnchor(messageLabel, bottomBorder + 10);
 
                             // Need to set it here otherwise style is not correct
                             AwesomeDude.setIcon(copyIcon, AwesomeIcon.COPY, "16.0");
@@ -535,67 +476,6 @@ public class ChatView extends AnchorPane {
         }
     }
 
-    private void onRequestUpload() {
-        if (!allowAttachments)
-            return;
-        int totalSize = tempAttachments.stream().mapToInt(a -> a.getBytes().length).sum();
-        if (tempAttachments.size() < 3) {
-            FileChooser fileChooser = new FileChooser();
-            int maxMsgSize = Connection.getPermittedMessageSize();
-            int maxSizeInKB = maxMsgSize / 1024;
-            fileChooser.setTitle(Res.get("support.openFile", maxSizeInKB));
-           /* if (Utilities.isUnix())
-                fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));*/
-            File result = fileChooser.showOpenDialog(getScene().getWindow());
-            if (result != null) {
-                try {
-                    URL url = result.toURI().toURL();
-                    try (InputStream inputStream = url.openStream()) {
-                        byte[] filesAsBytes = ByteStreams.toByteArray(inputStream);
-                        int size = filesAsBytes.length;
-                        int newSize = totalSize + size;
-                        if (newSize > maxMsgSize) {
-                            new Popup().warning(Res.get("support.attachmentTooLarge", (newSize / 1024), maxSizeInKB)).show();
-                        } else if (size > maxMsgSize) {
-                            new Popup().warning(Res.get("support.maxSize", maxSizeInKB)).show();
-                        } else {
-                            tempAttachments.add(new Attachment(result.getName(), filesAsBytes));
-                            inputTextArea.setText(inputTextArea.getText() + "\n[" + Res.get("support.attachment") + " " + result.getName() + "]");
-                        }
-                    } catch (java.io.IOException e) {
-                        e.printStackTrace();
-                        log.error(e.getMessage());
-                    }
-                } catch (MalformedURLException e2) {
-                    e2.printStackTrace();
-                    log.error(e2.getMessage());
-                }
-            }
-        } else {
-            new Popup().warning(Res.get("support.tooManyAttachments")).show();
-        }
-    }
-
-    public void onAttachText(String textAttachment, String name) {
-        if (!allowAttachments)
-            return;
-        try {
-            byte[] filesAsBytes = textAttachment.getBytes("UTF8");
-            int size = filesAsBytes.length;
-            int maxMsgSize = Connection.getPermittedMessageSize();
-            int maxSizeInKB = maxMsgSize / 1024;
-            if (size > maxMsgSize) {
-                new Popup().warning(Res.get("support.attachmentTooLarge", (size / 1024), maxSizeInKB)).show();
-            } else {
-                tempAttachments.add(new Attachment(name, filesAsBytes));
-                inputTextArea.setText(inputTextArea.getText() + "\n[" + Res.get("support.attachment") + " " + name + "]");
-            }
-        } catch (Exception e) {
-            log.error(e.toString());
-            e.printStackTrace();
-        }
-    }
-
     private void copyChatMessagesToClipboard(Button sourceBtn) {
         optionalSupportSession.ifPresent(session -> {
             StringBuilder stringBuilder = new StringBuilder();
@@ -614,25 +494,6 @@ public class ChatView extends AnchorPane {
         });
     }
 
-    private void onOpenAttachment(Attachment attachment) {
-        if (!allowAttachments)
-            return;
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(Res.get("support.save"));
-        fileChooser.setInitialFileName(attachment.getFileName());
-       /* if (Utilities.isUnix())
-            fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));*/
-        File file = fileChooser.showSaveDialog(getScene().getWindow());
-        if (file != null) {
-            try (FileOutputStream fileOutputStream = new FileOutputStream(file.getAbsolutePath())) {
-                fileOutputStream.write(attachment.getBytes());
-            } catch (IOException e) {
-                e.printStackTrace();
-                System.out.println(e.getMessage());
-            }
-        }
-    }
-
     private void onSendMessage(String inputText) {
         if (chatMessage != null) {
             chatMessage.acknowledgedProperty().removeListener(acknowledgedPropertyListener);
@@ -640,8 +501,7 @@ public class ChatView extends AnchorPane {
             chatMessage.sendMessageErrorProperty().removeListener(sendMessageErrorPropertyListener);
         }
 
-        chatMessage = sendDisputeDirectMessage(inputText, new ArrayList<>(tempAttachments));
-        tempAttachments.clear();
+        chatMessage = sendDisputeDirectMessage(inputText);
         scrollToBottom();
 
         inputTextArea.setDisable(true);
@@ -686,7 +546,7 @@ public class ChatView extends AnchorPane {
         }
     }
 
-    private ChatMessage sendDisputeDirectMessage(String text, ArrayList<Attachment> attachments) {
+    private ChatMessage sendDisputeDirectMessage(String text) {
         return optionalSupportSession.map(supportSession -> {
             ChatMessage message = new ChatMessage(
                     supportManager.getSupportType(),
@@ -694,8 +554,7 @@ public class ChatView extends AnchorPane {
                     supportSession.getClientId(),
                     supportSession.isClient(),
                     text,
-                    supportManager.getMyAddress(),
-                    attachments
+                    supportManager.getMyAddress()
             );
             supportManager.addAndPersistChatMessage(message);
             return supportManager.sendChatMessage(message);
