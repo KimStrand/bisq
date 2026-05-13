@@ -49,5 +49,9 @@ public class VersionTest {
         assertTrue(Version.isNewVersion("0.6.0", "0.5.1"));
         assertFalse(Version.isNewVersion("0.5.0", "1.5.0"));
         assertFalse(Version.isNewVersion("0.4.9", "0.5.0"));
+        assertTrue(Version.isNewVersion("1.10.0", "1.9.22"));
+        assertFalse(Version.isNewVersion("1.9.22", "1.10.0"));
+        assertTrue(Version.isNewVersion("1.9.22", "1.9.9"));
+        assertFalse(Version.isNewVersion("1.9.9", "1.9.22"));
     }
 }
