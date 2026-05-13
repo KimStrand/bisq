@@ -76,7 +76,7 @@ public class PaymentAccountTest extends AbstractPaymentAccountTest {
         test.testCreateTransferwiseAccountWith1TradeCurrency(testInfo);
         test.testCreateTransferwiseAccountWith10TradeCurrencies(testInfo);
         test.testCreateTransferwiseAccountWithSupportedTradeCurrencies(testInfo);
-        test.testCreateTransferwiseAccountWithInvalidBrlTradeCurrencyShouldThrowException(testInfo);
+        test.testCreateTransferwiseAccountWithInvalidUsdTradeCurrencyShouldThrowException(testInfo);
         test.testCreateTransferwiseAccountWithoutTradeCurrenciesShouldThrowException(testInfo);
 
         test.testCreateUpholdAccount(testInfo);
