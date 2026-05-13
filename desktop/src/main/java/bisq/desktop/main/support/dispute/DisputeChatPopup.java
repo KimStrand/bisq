@@ -58,7 +58,6 @@ import lombok.Getter;
 public class DisputeChatPopup {
     public interface ChatCallback {
         void onCloseDisputeFromChatWindow(Dispute dispute);
-        void onSendLogsFromChatWindow(Dispute dispute);
     }
 
     private Stage chatPopupStage;
@@ -119,11 +118,9 @@ public class DisputeChatPopup {
             } else {
                 MenuButton menuButton = new MenuButton(Res.get("support.moreButton"));
                 MenuItem menuItem1 = new MenuItem(Res.get("support.uploadTraderChat"));
-                MenuItem menuItem2 = new MenuItem(Res.get("support.sendLogFiles"));
                 menuItem1.setOnAction(e -> doTextAttachment(chatView));
                 setChatUploadEnabledState(menuItem1);
-                menuItem2.setOnAction(e -> chatCallback.onSendLogsFromChatWindow(selectedDispute));
-                menuButton.getItems().addAll(menuItem1, menuItem2);
+                menuButton.getItems().add(menuItem1);
                 menuButton.getStyleClass().add("jfx-button");
                 menuButton.setStyle("-fx-padding: 0 10 0 10;");
                 chatView.display(concreteDisputeSession, menuButton, pane.widthProperty());

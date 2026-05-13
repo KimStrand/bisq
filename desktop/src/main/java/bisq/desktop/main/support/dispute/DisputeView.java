@@ -28,7 +28,6 @@ import bisq.desktop.components.PeerInfoIconMap;
 import bisq.desktop.main.overlays.popups.Popup;
 import bisq.desktop.main.overlays.windows.ContractWindow;
 import bisq.desktop.main.overlays.windows.DisputeSummaryWindow;
-import bisq.desktop.main.overlays.windows.SendLogFilesWindow;
 import bisq.desktop.main.overlays.windows.SendPrivateNotificationWindow;
 import bisq.desktop.main.overlays.windows.TradeDetailsWindow;
 import bisq.desktop.main.overlays.windows.VerifyDisputeResultSignatureWindow;
@@ -1509,13 +1508,5 @@ public abstract class DisputeView extends ActivatableView<VBox, Void> implements
         } else {
             closeDisputeFromButton();
         }
-    }
-
-    @Override
-    public void onSendLogsFromChatWindow(Dispute dispute) {
-        if (!(disputeManager instanceof MediationManager))
-            return;
-        MediationManager mediationManager = (MediationManager) disputeManager;
-        new SendLogFilesWindow(dispute.getTradeId(), dispute.getTraderId(), mediationManager).show();
     }
 }
