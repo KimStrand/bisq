@@ -60,7 +60,6 @@ import javax.inject.Inject;
 import com.jfoenix.controls.JFXBadge;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXProgressBar;
-import com.jfoenix.skins.JFXProgressBarSkin;
 
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
@@ -165,8 +164,6 @@ public class MainView extends InitializableView<StackPane, MainViewModel>
     private Popup p2PNetworkWarnMsgPopup, btcNetworkWarnMsgPopup;
     private final DaoStateMonitoringService daoStateMonitoringService;
     private final TorNetworkSettingsWindow torNetworkSettingsWindow;
-    // pinned class which is used by reflection
-    private  JFXProgressBarSkin pinnedClass;
 
     @Inject
     public MainView(MainViewModel model,
