@@ -43,11 +43,8 @@ import bisq.core.trade.protocol.bisq_v1.DisputeProtocol;
 import bisq.core.trade.protocol.bisq_v1.model.ProcessModel;
 
 import bisq.network.p2p.AckMessageSourceType;
-import bisq.network.p2p.FileTransferPart;
 import bisq.network.p2p.NodeAddress;
 import bisq.network.p2p.P2PService;
-import bisq.network.p2p.network.Connection;
-import bisq.network.p2p.network.MessageListener;
 
 import bisq.common.Timer;
 import bisq.common.UserThread;
@@ -56,7 +53,6 @@ import bisq.common.config.Config;
 import bisq.common.crypto.KeyRing;
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ResultHandler;
-import bisq.common.proto.network.NetworkEnvelope;
 
 import org.bitcoinj.core.Coin;
 
@@ -76,7 +72,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 @Slf4j
 @Singleton
-public final class MediationManager extends DisputeManager<MediationDisputeList> implements MessageListener, FileTransferSession.FtpCallback {
+public final class MediationManager extends DisputeManager<MediationDisputeList> {
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Constructor
@@ -98,7 +94,6 @@ public final class MediationManager extends DisputeManager<MediationDisputeList>
                             PriceFeedService priceFeedService) {
         super(p2PService, tradeWalletService, walletService, walletsSetup, tradeManager, closedTradableManager, failedTradesManager,
                 openOfferManager, daoFacade, keyRing, mediationDisputeListService, config, priceFeedService);
-        p2PService.getNetworkNode().addMessageListener(this);   // listening for FileTransferPart message
     }
 
 
@@ -286,59 +281,13 @@ public final class MediationManager extends DisputeManager<MediationDisputeList>
         tradeManager.requestPersistence();
     }
 
+    /**
+     * @deprecated Log file transfer is disabled. This method remains as a fail-closed guard for stale callers.
+     */
+    @Deprecated
     public FileTransferSender initLogUpload(FileTransferSession.FtpCallback callback,
                                             String tradeId,
                                             int traderId) throws IOException {
-        Dispute dispute = findDispute(tradeId, traderId)
-                .orElseThrow(() -> new IOException("could not locate Dispute for tradeId/traderId"));
-        return dispute.createFileTransferSender(p2PService.getNetworkNode(),
-                dispute.getContract().getMediatorNodeAddress(), callback);
-    }
-
-    private void processFilePartReceived(FileTransferPart ftp) {
-        if (!ftp.isInitialRequest()) {
-            return; // existing sessions are processed by FileTransferSession object directly
-        }
-        // we create a new session which is related to an open dispute from our list
-        Optional<Dispute> dispute = findDispute(ftp.getTradeId(), ftp.getTraderId());
-        if (dispute.isEmpty()) {
-            log.error("Received log upload request for unknown TradeId/TraderId {}/{}", ftp.getTradeId(), ftp.getTraderId());
-            return;
-        }
-        if (dispute.get().isClosed()) {
-            log.error("Received a file transfer request for closed dispute {}", ftp.getTradeId());
-            return;
-        }
-        try {
-            FileTransferReceiver session = dispute.get().createOrGetFileTransferReceiver(
-                    p2PService.getNetworkNode(), ftp.getSenderNodeAddress(), this);
-            session.processFilePartReceived(ftp);
-        } catch (IOException e) {
-            log.error("Unable to process a received file message" + e);
-        }
-    }
-
-    @Override
-    public void onMessage(NetworkEnvelope networkEnvelope, Connection connection) {
-        if (networkEnvelope instanceof FileTransferPart) {              // mediator receiving log file data
-            FileTransferPart ftp = (FileTransferPart) networkEnvelope;
-            processFilePartReceived(ftp);
-        }
-    }
-
-    @Override
-    public void onFtpProgress(double progressPct) {
-        log.trace("ftp progress: {}", progressPct);
-    }
-
-    @Override
-    public void onFtpComplete(FileTransferSession session) {
-        Optional<Dispute> dispute = findDispute(session.getFullTradeId(), session.getTraderId());
-        dispute.ifPresent(d -> addMediationLogsReceivedMessage(d, session.getZipId()));
-    }
-
-    @Override
-    public void onFtpTimeout(String statusMsg, FileTransferSession session) {
-        session.resetSession();
+        throw new IOException("Log file transfer is disabled");
     }
 }
