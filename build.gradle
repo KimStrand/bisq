@@ -1819,11 +1819,18 @@ tasks.register('verifyGithubActionsSecurity') {
                     'git worktree add --detach build/release-builder-worktrees/b "$GITHUB_SHA"',
                     'git -C build/release-builder-worktrees/a submodule update --init --recursive',
                     'git -C build/release-builder-worktrees/b submodule update --init --recursive',
-                    '-v "$PWD:$PWD"',
+                    '-v "$PWD/.git:$PWD/.git"',
+                    '-v "$PWD/build/release-builder-worktrees/a:$PWD/build/release-builder-worktrees/a"',
+                    '-v "$PWD/build/release-builder-worktrees/b:$PWD/build/release-builder-worktrees/b"',
+                    '-v "$PWD/build/release-builder-worktrees/b:$PWD/build/release-builder-worktrees/b:ro"',
                     '-w "$PWD/build/release-builder-worktrees/a"',
                     '-w "$PWD/build/release-builder-worktrees/b"',
                     './gradlew compareReleaseEvidenceBundles \\',
                     './gradlew compareInstallerEvidenceBundles \\',
+                    '-PleftReleaseEvidence=build/reports/release/release-evidence.zip \\',
+                    '-PrightReleaseEvidence="$PWD/build/release-builder-worktrees/b/build/reports/release/release-evidence.zip"',
+                    '-PleftInstallerEvidence=build/reports/release/installer-evidence.zip \\',
+                    '-PrightInstallerEvidence="$PWD/build/release-builder-worktrees/b/build/reports/release/installer-evidence.zip"',
                     'release-builder-linux-java-21.0.6',
                     'release-builder-linux-installers-java-21.0.6',
                     'build/release-builder-worktrees/a/build/reports/release/release-evidence.zip',
@@ -1834,6 +1841,10 @@ tasks.register('verifyGithubActionsSecurity') {
                 if (!releaseBuilderWorkflowText.contains(requiredText)) {
                     violations << "${releaseBuilderWorkflowPath} must contain '${requiredText}'"
                 }
+            }
+            if (releaseBuilderWorkflowText.contains('-v "$PWD:$PWD"') ||
+                    releaseBuilderWorkflowText.contains('-v "$PWD:/workspace"')) {
+                violations << "${releaseBuilderWorkflowPath} must not mount the full checkout into release-builder containers"
             }
 
             def cleanEvidenceRuns = releaseBuilderWorkflowLines.count {

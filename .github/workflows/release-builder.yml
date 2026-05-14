@@ -47,7 +47,8 @@ jobs:
       run: |
         docker run --rm --platform linux/amd64 \
           --user "$(id -u):$(id -g)" \
-          -v "$PWD:$PWD" \
+          -v "$PWD/.git:$PWD/.git" \
+          -v "$PWD/build/release-builder-worktrees/a:$PWD/build/release-builder-worktrees/a" \
           -w "$PWD/build/release-builder-worktrees/a" \
           bisq-release-builder-linux:java-21.0.6 \
           ./gradlew clean verifyReleaseBuild verifyInstallerEvidenceBundle
@@ -57,7 +58,8 @@ jobs:
       run: |
         docker run --rm --platform linux/amd64 \
           --user "$(id -u):$(id -g)" \
-          -v "$PWD:$PWD" \
+          -v "$PWD/.git:$PWD/.git" \
+          -v "$PWD/build/release-builder-worktrees/b:$PWD/build/release-builder-worktrees/b" \
           -w "$PWD/build/release-builder-worktrees/b" \
           bisq-release-builder-linux:java-21.0.6 \
           ./gradlew clean verifyReleaseBuild verifyInstallerEvidenceBundle
@@ -67,24 +69,28 @@ jobs:
       run: |
         docker run --rm --platform linux/amd64 \
           --user "$(id -u):$(id -g)" \
-          -v "$PWD:/workspace" \
-          -w /workspace \
+          -v "$PWD/.git:$PWD/.git" \
+          -v "$PWD/build/release-builder-worktrees/a:$PWD/build/release-builder-worktrees/a" \
+          -v "$PWD/build/release-builder-worktrees/b:$PWD/build/release-builder-worktrees/b:ro" \
+          -w "$PWD/build/release-builder-worktrees/a" \
           bisq-release-builder-linux:java-21.0.6 \
           ./gradlew compareReleaseEvidenceBundles \
-            -PleftReleaseEvidence=build/release-builder-worktrees/a/build/reports/release/release-evidence.zip \
-            -PrightReleaseEvidence=build/release-builder-worktrees/b/build/reports/release/release-evidence.zip
+            -PleftReleaseEvidence=build/reports/release/release-evidence.zip \
+            -PrightReleaseEvidence="$PWD/build/release-builder-worktrees/b/build/reports/release/release-evidence.zip"
 
     - name: Compare release-builder installer evidence
       shell: bash
       run: |
         docker run --rm --platform linux/amd64 \
           --user "$(id -u):$(id -g)" \
-          -v "$PWD:/workspace" \
-          -w /workspace \
+          -v "$PWD/.git:$PWD/.git" \
+          -v "$PWD/build/release-builder-worktrees/a:$PWD/build/release-builder-worktrees/a" \
+          -v "$PWD/build/release-builder-worktrees/b:$PWD/build/release-builder-worktrees/b:ro" \
+          -w "$PWD/build/release-builder-worktrees/a" \
           bisq-release-builder-linux:java-21.0.6 \
           ./gradlew compareInstallerEvidenceBundles \
-            -PleftInstallerEvidence=build/release-builder-worktrees/a/build/reports/release/installer-evidence.zip \
-            -PrightInstallerEvidence=build/release-builder-worktrees/b/build/reports/release/installer-evidence.zip
+            -PleftInstallerEvidence=build/reports/release/installer-evidence.zip \
+            -PrightInstallerEvidence="$PWD/build/release-builder-worktrees/b/build/reports/release/installer-evidence.zip"
 
     - name: Upload release-builder evidence
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
