@@ -1251,18 +1251,18 @@ def compactMap = { Map<String, Object> values ->
 
 def execResult = { List<String> command ->
     def output = new ByteArrayOutputStream()
-    def errorOutput = new ByteArrayOutputStream()
+    def stderrOutput = new ByteArrayOutputStream()
     try {
         def result = exec {
             commandLine command
             standardOutput = output
-            errorOutput = errorOutput
+            errorOutput = stderrOutput
             ignoreExitValue = true
         }
         [
                 exitValue: result.exitValue,
                 stdout   : normalizeCommandOutput(output.toString(StandardCharsets.UTF_8.name())),
-                stderr   : normalizeCommandOutput(errorOutput.toString(StandardCharsets.UTF_8.name()))
+                stderr   : normalizeCommandOutput(stderrOutput.toString(StandardCharsets.UTF_8.name()))
         ]
     } catch (Exception ignored) {
         [
