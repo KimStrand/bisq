@@ -25,6 +25,7 @@ def dependencySignatureReport = layout.projectDirectory.file('docs/dependency-si
 def gradleWrapperChecksums = layout.projectDirectory.file('gradle/wrapper/gradle-wrapper.sha256')
 def linuxReleaseBuilderDockerfile = layout.projectDirectory.file('docker/release-builder/linux/Dockerfile')
 def linuxReleaseBuilderWorkflow = layout.projectDirectory.file('.github/workflows/release-builder.yml')
+def installerEvidenceWorkflow = layout.projectDirectory.file('.github/workflows/installer-evidence.yml')
 def gradleWrapperCommand = System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows') ? 'gradlew.bat' : './gradlew'
 
 def htmlEscape = { value ->
@@ -1840,6 +1841,29 @@ tasks.register('verifyGithubActionsSecurity') {
             }
             if (cleanEvidenceRuns < 2) {
                 violations << "${releaseBuilderWorkflowPath} must run clean verifyReleaseBuild verifyInstallerEvidenceBundle in both release-builder worktrees"
+            }
+        }
+
+        [
+                (linuxReleaseBuilderWorkflow.asFile): [
+                        'group: release-builder-${{ github.ref }}',
+                        'cancel-in-progress: false'
+                ],
+                (installerEvidenceWorkflow.asFile)  : [
+                        'group: installer-evidence-${{ github.ref }}',
+                        'cancel-in-progress: false'
+                ]
+        ].each { workflowFile, requiredTexts ->
+            if (!workflowFile.file) {
+                violations << "Missing workflow: ${rootProject.relativePath(workflowFile)}"
+            } else {
+                def workflowText = workflowFile.getText(StandardCharsets.UTF_8.name())
+                def workflowPath = rootProject.relativePath(workflowFile)
+                requiredTexts.each { requiredText ->
+                    if (!workflowText.contains(requiredText)) {
+                        violations << "${workflowPath} must contain '${requiredText}'"
+                    }
+                }
             }
         }
 
