@@ -59,8 +59,6 @@ import org.bitcoinj.core.Coin;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import java.io.IOException;
-
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
@@ -281,13 +279,4 @@ public final class MediationManager extends DisputeManager<MediationDisputeList>
         tradeManager.requestPersistence();
     }
 
-    /**
-     * @deprecated Log file transfer is disabled. This method remains as a fail-closed guard for stale callers.
-     */
-    @Deprecated
-    public FileTransferSender initLogUpload(FileTransferSession.FtpCallback callback,
-                                            String tradeId,
-                                            int traderId) throws IOException {
-        throw new IOException("Log file transfer is disabled");
-    }
 }

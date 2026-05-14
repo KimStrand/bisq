@@ -21,14 +21,12 @@ import bisq.desktop.components.AutoTooltipButton;
 import bisq.desktop.main.MainView;
 import bisq.desktop.main.shared.ChatView;
 import bisq.desktop.util.CssTheme;
-import bisq.desktop.util.DisplayUtils;
 
 import bisq.core.locale.Res;
 import bisq.core.support.dispute.Dispute;
 import bisq.core.support.dispute.DisputeList;
 import bisq.core.support.dispute.DisputeManager;
 import bisq.core.support.dispute.DisputeSession;
-import bisq.core.support.messages.ChatMessage;
 import bisq.core.user.Preferences;
 import bisq.core.util.coin.CoinFormatter;
 
@@ -41,17 +39,12 @@ import javafx.stage.Window;
 
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.MenuButton;
-import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 
 import javafx.beans.value.ChangeListener;
-
-import java.util.Date;
-import java.util.List;
 
 import lombok.Getter;
 
@@ -96,7 +89,7 @@ public class DisputeChatPopup {
         disputeManager.requestPersistence();
 
         ChatView chatView = new ChatView(disputeManager, counterpartyName);
-        chatView.setAllowAttachments(true);
+        chatView.setShowClipboardButton(true);
         chatView.setDisplayHeader(false);
         chatView.initialize();
 
@@ -116,14 +109,7 @@ public class DisputeChatPopup {
                 closeDisputeButton.setOnAction(e -> chatCallback.onCloseDisputeFromChatWindow(selectedDispute));
                 chatView.display(concreteDisputeSession, closeDisputeButton, pane.widthProperty());
             } else {
-                MenuButton menuButton = new MenuButton(Res.get("support.moreButton"));
-                MenuItem menuItem1 = new MenuItem(Res.get("support.uploadTraderChat"));
-                menuItem1.setOnAction(e -> doTextAttachment(chatView));
-                setChatUploadEnabledState(menuItem1);
-                menuButton.getItems().add(menuItem1);
-                menuButton.getStyleClass().add("jfx-button");
-                menuButton.setStyle("-fx-padding: 0 10 0 10;");
-                chatView.display(concreteDisputeSession, menuButton, pane.widthProperty());
+                chatView.display(concreteDisputeSession, null, pane.widthProperty());
             }
         }
         chatView.activate();
@@ -176,30 +162,4 @@ public class DisputeChatPopup {
         UserThread.execute(() -> chatPopupStage.setOpacity(1));
     }
 
-    private void doTextAttachment(ChatView chatView) {
-        disputeManager.findTrade(selectedDispute).ifPresent(t -> {
-            List<ChatMessage> chatMessages = t.getChatMessages();
-            if (chatMessages.size() > 0) {
-                StringBuilder stringBuilder = new StringBuilder();
-                chatMessages.forEach(i -> {
-                    boolean isMyMsg = i.isSenderIsTrader();
-                    String metaData = DisplayUtils.formatDateTime(new Date(i.getDate()));
-                    if (!i.isSystemMessage())
-                        metaData = (isMyMsg ? "Sent " : "Received ") + metaData
-                                + (isMyMsg ? "" : " from Trader");
-                    stringBuilder.append(metaData).append("\n").append(i.getMessage()).append("\n\n");
-                });
-                String fileName = selectedDispute.getShortTradeId() + "_" + selectedDispute.getRoleStringForLogFile() + "_TraderChat.txt";
-                chatView.onAttachText(stringBuilder.toString(), fileName);
-            }
-        });
-    }
-
-    private void setChatUploadEnabledState(MenuItem menuItem) {
-        disputeManager.findTrade(selectedDispute).ifPresentOrElse(t -> {
-            menuItem.setDisable(t.getChatMessages().size() == 0);
-        }, () -> {
-            menuItem.setDisable(true);
-        });
-    }
 }
