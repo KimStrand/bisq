@@ -44,6 +44,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
@@ -57,6 +58,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 
 import org.fxmisc.easybind.EasyBind;
 import org.fxmisc.easybind.Subscription;
@@ -95,6 +97,8 @@ public class ChatView extends AnchorPane {
     private BusyAnimation sendMsgBusyAnimation;
     private TableGroupHeadline tableGroupHeadline;
     private VBox messagesInputBox;
+    @Nullable
+    private ScrollBar verticalScrollBar;
 
     // Options
     @Getter
@@ -159,6 +163,7 @@ public class ChatView extends AnchorPane {
         optionalSupportSession = Optional.of(supportSession);
         removeListenersOnSessionChange();
         this.getChildren().clear();
+        verticalScrollBar = null;
         this.extraButton = extraButton;
         this.widthProperty = widthProperty;
 
@@ -172,7 +177,7 @@ public class ChatView extends AnchorPane {
 
         chatMessages = supportSession.getObservableChatMessageList();
         SortedList<ChatMessage> sortedList = new SortedList<>(chatMessages);
-        sortedList.setComparator(Comparator.comparing(o -> new Date(o.getDate())));
+        sortedList.setComparator(Comparator.comparingLong(ChatMessage::getDate));
         messageListView = new ListView<>(sortedList);
         messageListView.setId("message-list-view");
 
@@ -577,8 +582,37 @@ public class ChatView extends AnchorPane {
     }
 
     public void scrollToBottom() {
-        if (messageListView != null)
-            UserThread.execute(() -> messageListView.scrollTo(Integer.MAX_VALUE));
+        if (messageListView != null) {
+            UserThread.execute(() -> {
+                int lastIndex = messageListView.getItems().size() - 1;
+                if (lastIndex >= 0) {
+                    messageListView.scrollTo(lastIndex);
+                    UserThread.execute(this::scrollVerticalBarToBottom);
+                }
+            });
+        }
+    }
+
+    private void scrollVerticalBarToBottom() {
+        if (messageListView != null) {
+            ScrollBar scrollBar = getVerticalScrollBar();
+            if (scrollBar != null) {
+                scrollBar.setValue(scrollBar.getMax());
+            }
+        }
+    }
+
+    @Nullable
+    private ScrollBar getVerticalScrollBar() {
+        if (verticalScrollBar == null || verticalScrollBar.getScene() == null) {
+            verticalScrollBar = messageListView.lookupAll(".scroll-bar").stream()
+                    .filter(node -> node instanceof ScrollBar)
+                    .map(node -> (ScrollBar) node)
+                    .filter(scrollBar -> scrollBar.getOrientation() == Orientation.VERTICAL)
+                    .findFirst()
+                    .orElse(null);
+        }
+        return verticalScrollBar;
     }
 
     public void setInputBoxVisible(boolean visible) {
