@@ -1483,12 +1483,7 @@ def buildInfoForManifest = { Collection entries, File manifest, File checksums -
                             gzip     : commandVersionInfo(['gzip', '--version']),
                             xz       : commandVersionInfo(['xz', '--version'])
                     ] : null
-            ]),
-            gradleStart     : [
-                    taskNames        : gradle.startParameter.taskNames,
-                    excludedTaskNames: gradle.startParameter.excludedTaskNames,
-                    projectProperties: gradle.startParameter.projectProperties.keySet().sort()
-            ]
+            ])
     ]
 }
 
