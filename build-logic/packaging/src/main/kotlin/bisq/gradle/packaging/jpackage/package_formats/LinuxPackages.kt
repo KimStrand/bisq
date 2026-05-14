@@ -16,14 +16,11 @@ class LinuxPackages(private val resourcesPath: Path) : JPackagePackageFormatConf
 
                 "--linux-menu-group", "Network",
                 "--linux-shortcut",
-
-                "--linux-deb-maintainer",
-                "noreply@bisq.network",
         )
 
         if (packageFormat == PackageFormat.DEB) {
             arguments.add("--linux-deb-maintainer")
-            arguments.add("noreply@bisq.network")
+            arguments.add("Bisq developers (Bisq does not operate an email address)")
         }
 
         if (packageFormat == PackageFormat.RPM) {
