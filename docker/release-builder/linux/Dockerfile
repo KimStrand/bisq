@@ -11,10 +11,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HOME=/tmp/bisq-home \
     GRADLE_USER_HOME=/tmp/bisq-home/.gradle
 
-# The temporary APT HTTPS peer-verification override below is only used
-# for the ca-certificates bootstrap. APT repository signatures still
-# authenticate package metadata and packages, and the override is removed
-# before the main release-builder toolchain install.
+# If the pinned base image lacks a CA bundle, temporarily disable APT HTTPS
+# peer verification only for the ca-certificates bootstrap. APT repository
+# signatures still authenticate package metadata and packages; the override is
+# removed and package lists are refreshed before installing the main toolchain.
 RUN set -eux; \
     rm -f /etc/apt/sources.list.d/zulu.list; \
     if [ -f /etc/apt/sources.list ]; then \
@@ -24,11 +24,13 @@ RUN set -eux; \
         sed -i '/^Signed-By:/a Snapshot: yes' /etc/apt/sources.list.d/ubuntu.sources; \
     fi; \
     printf 'APT::Snapshot "%s";\n' "$UBUNTU_APT_SNAPSHOT" > /etc/apt/apt.conf.d/50snapshot; \
-    printf 'Acquire::https::Verify-Peer "false";\n' > /etc/apt/apt.conf.d/49bootstrap-no-verify-peer; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends ca-certificates; \
-    rm -f /etc/apt/apt.conf.d/49bootstrap-no-verify-peer; \
-    rm -rf /var/lib/apt/lists/*; \
+    if [ ! -s /etc/ssl/certs/ca-certificates.crt ]; then \
+        printf 'Acquire::https::Verify-Peer "false";\n' > /etc/apt/apt.conf.d/49bootstrap-no-verify-peer; \
+        apt-get update; \
+        apt-get install -y --no-install-recommends ca-certificates; \
+        rm -f /etc/apt/apt.conf.d/49bootstrap-no-verify-peer; \
+        rm -rf /var/lib/apt/lists/*; \
+    fi; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
         binutils \
