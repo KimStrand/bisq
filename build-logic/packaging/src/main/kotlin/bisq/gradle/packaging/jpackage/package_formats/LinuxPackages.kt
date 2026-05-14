@@ -20,7 +20,7 @@ class LinuxPackages(private val resourcesPath: Path) : JPackagePackageFormatConf
 
         if (packageFormat == PackageFormat.DEB) {
             arguments.add("--linux-deb-maintainer")
-            arguments.add("noreply@bisq.network")
+            arguments.add("Bisq developers (Bisq does not operate an email address)")
         }
 
         if (packageFormat == PackageFormat.RPM) {
