@@ -18,7 +18,29 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN set -eux; \
     rm -f /etc/apt/sources.list.d/zulu.list; \
     if [ -f /etc/apt/sources.list ]; then \
-        sed -i -E 's#^deb (http://(archive|security).ubuntu.com/ubuntu/?[[:space:]])#deb [snapshot=yes] \1#' /etc/apt/sources.list; \
+        awk ' \
+            BEGIN { ubuntu_snapshot_uri = "[[:space:]]https?://(archive|security)\\.ubuntu\\.com/ubuntu/?[[:space:]]" } \
+            /^[[:space:]]*#/ { print; next } \
+            $0 ~ /^[[:space:]]*deb(-src)?[[:space:]]+/ && $0 ~ ubuntu_snapshot_uri { \
+                if ($0 ~ /^[[:space:]]*deb(-src)?[[:space:]]+\[/) { \
+                    if ($0 !~ /\[[^]]*snapshot=yes[^]]*\]/) { \
+                        sub(/\[/, "[snapshot=yes "); \
+                    } \
+                } else { \
+                    sub(/^[[:space:]]*deb(-src)?[[:space:]]+/, "&[snapshot=yes] "); \
+                } \
+            } \
+            { print } \
+        ' /etc/apt/sources.list > /etc/apt/sources.list.snapshot; \
+        mv /etc/apt/sources.list.snapshot /etc/apt/sources.list; \
+        awk ' \
+            BEGIN { ubuntu_snapshot_uri = "[[:space:]]https?://(archive|security)\\.ubuntu\\.com/ubuntu/?[[:space:]]" } \
+            /^[[:space:]]*#/ { next } \
+            $0 ~ /^[[:space:]]*deb(-src)?[[:space:]]+/ && $0 ~ ubuntu_snapshot_uri && $0 !~ /\[[^]]*snapshot=yes[^]]*\]/ { \
+                print "Legacy Ubuntu apt source must be snapshot-pinned: " $0 > "/dev/stderr"; \
+                exit 1; \
+            } \
+        ' /etc/apt/sources.list; \
     fi; \
     if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then \
         sed -i '/^Signed-By:/a Snapshot: yes' /etc/apt/sources.list.d/ubuntu.sources; \
