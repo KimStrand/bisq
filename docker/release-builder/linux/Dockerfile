@@ -11,6 +11,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HOME=/tmp/bisq-home \
     GRADLE_USER_HOME=/tmp/bisq-home/.gradle
 
+# The temporary APT HTTPS peer-verification override below is only used
+# for the ca-certificates bootstrap. APT repository signatures still
+# authenticate package metadata and packages, and the override is removed
+# before the main release-builder toolchain install.
 RUN set -eux; \
     rm -f /etc/apt/sources.list.d/zulu.list; \
     if [ -f /etc/apt/sources.list ]; then \
